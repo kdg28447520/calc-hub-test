@@ -111,8 +111,19 @@
   td.num,th.num{text-align:right; white-space:nowrap}
   tr.clickable{cursor:pointer}
   tr.clickable:hover td{background:#f8fafc}
-  .tablewrap{overflow-x:auto; border-radius:0 0 var(--radius) var(--radius)}
-  .tablewrap table{min-width:760px}
+  .tablewrap{overflow-x:auto; border-radius:0 0 var(--radius) var(--radius); -webkit-overflow-scrolling:touch}
+  #sampleTable{min-width:720px}
+  @media (max-width:640px){
+    #sampleTable{min-width:0}
+    #sampleTable thead{display:none}
+    #sampleTable tbody tr{display:block; padding:12px 14px; border-bottom:1px solid var(--line-2)}
+    #sampleTable td{display:flex; justify-content:space-between; align-items:baseline; gap:12px; padding:3px 0; border:0; text-align:right; font-size:12.5px}
+    #sampleTable td::before{content:attr(data-l); color:var(--muted); font-size:11.5px; font-weight:500; text-align:left}
+    #sampleTable td:first-child{display:block; text-align:left; margin-bottom:6px; padding:0}
+    #sampleTable td:first-child::before{content:none}
+    #sampleTable td br{display:none}
+    #sampleTable td div{display:inline; font-size:11px; margin-left:4px}
+  }
   .tag{display:inline-block; font-size:11px; padding:2px 7px; border-radius:6px; background:#f1f5f9; color:var(--ink-2); margin:0 4px 3px 0; white-space:nowrap}
   .tag.acc{background:var(--accent-weak); color:var(--accent)}
   .btn{appearance:none; border:1px solid var(--line); background:#fff; color:var(--ink); font:inherit; font-size:13px; font-weight:550;
@@ -730,14 +741,14 @@ function renderSamples(){
     const cls = r.profit>=0 ? 'var(--good)' : 'var(--bad)';
     const short = r.profit < 0 ? '적자' : (r.margin < 0.05 ? '위험' : (r.margin >= 0.15 ? '추천' : '박리다매'));
     return `<tr class="clickable" data-idx="${i}">
-      <td><b>${s.name}</b><div style="font-size:11px;color:var(--muted);margin-top:2px">${s.cat}</div></td>
-      <td class="num">${won(s.buy + s.domShip)}</td>
-      <td class="num">$${fmt2(s.price)}${s.buyerShip?`<div style="font-size:11px;color:var(--muted)">+$${fmt2(s.buyerShip)}</div>`:''}</td>
-      <td class="num">${fmt0(s.weight)}g</td>
-      <td class="num">${won(r.ship.cost||0)}<div style="font-size:11px;color:var(--muted)">${r.ship.way.split(' ')[0]}</div></td>
-      <td class="num" style="color:${cls};font-weight:650">${won(r.profit)}</td>
-      <td class="num" style="color:${cls}">${(r.margin<0?'−':'')}${Math.abs(r.margin*100).toFixed(1)}%</td>
-      <td><span class="badge ${v.cls}" style="font-size:11px;padding:3px 8px">${short}</span></td>
+      <td data-l="품목"><b>${s.name}</b><div style="font-size:11px;color:var(--muted);margin-top:2px">${s.cat}</div></td>
+      <td class="num" data-l="국내 매입가">${won(s.buy + s.domShip)}</td>
+      <td class="num" data-l="eBay 시세">$${fmt2(s.price)}${s.buyerShip?`<div style="font-size:11px;color:var(--muted)">+$${fmt2(s.buyerShip)}</div>`:''}</td>
+      <td class="num" data-l="무게">${fmt0(s.weight)}g</td>
+      <td class="num" data-l="국제배송">${won(r.ship.cost||0)}<div style="font-size:11px;color:var(--muted)">${r.ship.way.split(' ')[0]}</div></td>
+      <td class="num" data-l="순이익" style="color:${cls};font-weight:650">${won(r.profit)}</td>
+      <td class="num" data-l="마진" style="color:${cls}">${(r.margin<0?'−':'')}${Math.abs(r.margin*100).toFixed(1)}%</td>
+      <td data-l="판정"><span class="badge ${v.cls}" style="font-size:11px;padding:3px 8px">${short}</span></td>
     </tr>`;
   }).join('');
   tb.querySelectorAll('tr').forEach(tr=>{
