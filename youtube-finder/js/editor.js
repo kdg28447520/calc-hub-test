@@ -523,6 +523,7 @@ export function initEditor() {
   // 파일 넣기
   $('#pickFile').addEventListener('click', () => $('#fileInput').click());
   $('#dropZone').addEventListener('click', () => $('#fileInput').click());
+  view.addEventListener('click', () => { if (!S.file) $('#fileInput').click(); });
   $('#fileInput').addEventListener('change', e => { const f = e.target.files?.[0]; if (f) loadFile(f); e.target.value = ''; });
   const zone = $('#previewWrap');
   ['dragenter', 'dragover'].forEach(ev => zone.addEventListener(ev, e => { e.preventDefault(); $('#dropZone').classList.add('over'); }));
