@@ -1011,6 +1011,10 @@ render();
 updateListing();
 const hashView = (location.hash||'').replace('#','');
 if (['calc','samples','listing','reality'].includes(hashView)) switchView(hashView);
+window.addEventListener('hashchange', ()=>{
+  const v = (location.hash||'').replace('#','');
+  if (['calc','samples','listing','reality'].includes(v)) switchView(v);
+});
 fetchFX();
 </script>
 </body>
