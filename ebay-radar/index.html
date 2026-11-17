@@ -789,8 +789,8 @@ function renderDB(){
     const [cls, label] = dbVerdict(i.margin);
     const pc = i.profit >= 0 ? 'var(--good)' : 'var(--bad)';
     return `<tr class="clickable" data-key="${i.key}">
-      <td class="nm" data-l="품목"><b>${i.name}</b><div class="memo">${i.cat} · ${i.seller||'—'}${i.sold?` · ${i.sold}건 판매`:''}${i.origin&&i.origin!=='-'?` · ${i.origin}`:''}</div></td>
-      <td class="num" data-l="국내 최저가">${won(i.buy)}<div class="memo" style="font-size:11px;color:var(--muted)">${i.buyShop||''}</div></td>
+      <td class="nm" data-l="품목" title="${(i.memo||'').replace(/"/g,'')}"><b>${i.name}</b><div class="memo">${i.cat} · ${i.seller||'—'}${i.sold?` · ${i.sold}건 판매`:''}${i.origin&&i.origin!=='-'?` · ${i.origin}`:''}</div></td>
+      <td class="num" data-l="국내 최저가" title="${(i.buyName||'').replace(/"/g,'')}">${won(i.buy)}<div class="memo" style="font-size:11px;color:var(--muted)">${i.buyShop||'다나와'}</div></td>
       <td class="num" data-l="eBay 시세"><span>$${fmt2(i.price)}</span>${i.buyerShip?`<div class="memo" style="font-size:11px;color:var(--muted)">+$${fmt2(i.buyerShip)}</div>`:'<div class="memo" style="font-size:11px;color:var(--muted)">무료배송</div>'}</td>
       <td class="num" data-l="무게">${fmt0(i.weight)}g</td>
       <td class="num" data-l="국제배송">${won(i.shipKrw)}<div class="memo" style="font-size:11px;color:var(--muted)">${(i.shipWay||'').split(' ')[0]}</div></td>
