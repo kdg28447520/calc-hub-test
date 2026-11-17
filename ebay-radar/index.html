@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>이베이 역직구 수익성 레이더 — 국내에서 사서 eBay에 팔면 얼마가 남나</title>
+<meta name="description" content="국내 매입가·국제배송비(K-Packet·EMS 2026 요금표)·eBay 실제 수수료·환전 수수료를 그대로 반영해, eBay 역직구 한 건의 순이익과 손익분기 판매가를 계산합니다.">
+<meta name="theme-color" content="#0f766e">
+<style>
+  :root{
+    --ink:#0f172a; --ink-2:#334155; --muted:#64748b; --muted-2:#94a3b8;
+    --line:#e2e8f0; --line-2:#eef2f6; --bg:#f7f9fb; --card:#ffffff;
+    --accent:#0f766e; --accent-weak:#ecfdf5; --accent-line:#99f6e4;
+    --good:#15803d; --good-bg:#f0fdf4; --good-line:#bbf7d0;
+    --warn:#b45309; --warn-bg:#fffbeb; --warn-line:#fde68a;
+    --bad:#b91c1c; --bad-bg:#fef2f2; --bad-line:#fecaca;
+    --radius:14px; --shadow:0 1px 2px rgba(15,23,42,.04), 0 8px 24px -16px rgba(15,23,42,.18);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Segoe UI",Roboto,sans-serif;
+    font-size:15px; line-height:1.55; -webkit-text-size-adjust:100%;
+    font-variant-numeric:tabular-nums;
+  }
+  a{color:var(--accent); text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:1180px; margin:0 auto; padding:0 20px}
+  header.top{border-bottom:1px solid var(--line); background:#fff}
+  .top-in{max-width:1180px; margin:0 auto; padding:18px 20px 16px; display:flex; align-items:center; gap:14px; flex-wrap:wrap}
+  .mark{width:38px; height:38px; border-radius:11px; background:#0f172a; color:#fff; display:flex; align-items:center; justify-content:center;
+        font-weight:700; font-size:13px; letter-spacing:.06em}
+  .titles h1{font-size:19px; margin:0; letter-spacing:-.01em; font-weight:700}
+  .titles p{margin:2px 0 0; font-size:12.5px; color:var(--muted)}
+  .top-meta{margin-left:auto; text-align:right; font-size:12px; color:var(--muted)}
+  .top-meta b{color:var(--ink-2); font-weight:600}
+  nav.tabs{position:sticky; top:0; z-index:20; background:rgba(255,255,255,.94); backdrop-filter:saturate(1.4) blur(8px); border-bottom:1px solid var(--line)}
+  .tabs-in{max-width:1180px; margin:0 auto; padding:0 12px; display:flex; gap:2px; overflow-x:auto; scrollbar-width:none}
+  .tabs-in::-webkit-scrollbar{display:none}
+  .tabs button{
+    appearance:none; border:0; background:none; font:inherit; font-size:13.5px; color:var(--muted);
+    padding:12px 14px; cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap; font-weight:500;
+  }
+  .tabs button[aria-selected="true"]{color:var(--ink); border-bottom-color:var(--accent); font-weight:600}
+  main{padding:22px 0 60px}
+  section.view{display:none}
+  section.view.active{display:block}
+  .lede{font-size:13.5px; color:var(--muted); margin:0 0 16px; max-width:74ch}
+  .grid{display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,1fr); gap:18px; align-items:start}
+  @media (max-width:960px){ .grid{grid-template-columns:1fr} }
+  .card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow)}
+  .card-h{padding:15px 18px 12px; border-bottom:1px solid var(--line-2); display:flex; align-items:baseline; gap:10px; flex-wrap:wrap}
+  .card-h h2{font-size:14.5px; margin:0; font-weight:650; letter-spacing:-.01em}
+  .card-h .sub{font-size:12px; color:var(--muted)}
+  .card-b{padding:16px 18px 18px}
+  .fields{display:grid; grid-template-columns:1fr 1fr; gap:12px 12px}
+  @media (max-width:560px){ .fields{grid-template-columns:1fr} }
+  .f{display:flex; flex-direction:column; gap:5px; min-width:0}
+  .f.full{grid-column:1 / -1}
+  .f label{font-size:12px; color:var(--ink-2); font-weight:550; display:flex; align-items:center; gap:6px}
+  .f .hint{font-size:11px; color:var(--muted-2); font-weight:400}
+  .f input, .f select{
+    appearance:none; width:100%; padding:9px 11px; font:inherit; font-size:14px; color:var(--ink);
+    border:1px solid var(--line); border-radius:9px; background:#fff; transition:border-color .12s, box-shadow .12s;
+  }
+  .f input:focus, .f select:focus, .f textarea:focus{outline:0; border-color:var(--accent); box-shadow:0 0 0 3px rgba(15,118,110,.12)}
+  .f select{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M1 1l5 5 5-5' fill='none' stroke='%2364748b' stroke-width='1.5'/></svg>");
+    background-repeat:no-repeat; background-position:right 11px center; padding-right:30px}
+  .f textarea{width:100%; padding:9px 11px; font:inherit; font-size:13.5px; border:1px solid var(--line); border-radius:9px; resize:vertical; min-height:70px}
+  .unit{display:flex; align-items:stretch}
+  .unit input{border-top-right-radius:0; border-bottom-right-radius:0}
+  .unit .u{display:flex; align-items:center; padding:0 10px; border:1px solid var(--line); border-left:0; border-radius:0 9px 9px 0; background:#f8fafc; color:var(--muted); font-size:12.5px; white-space:nowrap}
+  .seg{display:flex; border:1px solid var(--line); border-radius:9px; overflow:hidden}
+  .seg button{appearance:none; border:0; background:#fff; font:inherit; font-size:12.5px; color:var(--muted); padding:8px 6px; flex:1; cursor:pointer}
+  .seg button + button{border-left:1px solid var(--line)}
+  .seg button[aria-pressed="true"]{background:var(--accent-weak); color:var(--accent); font-weight:600}
+  .adv{margin-top:14px; border-top:1px dashed var(--line); padding-top:12px}
+  .adv summary{cursor:pointer; font-size:12.5px; color:var(--ink-2); font-weight:550; list-style:none}
+  .adv summary::-webkit-details-marker{display:none}
+  .adv summary::before{content:"＋ "; color:var(--muted)}
+  .adv[open] summary::before{content:"－ "}
+  .adv .fields{margin-top:12px}
+  .result{padding:18px}
+  .badge{display:inline-flex; align-items:center; gap:6px; padding:5px 11px; border-radius:999px; font-size:12.5px; font-weight:650; border:1px solid}
+  .badge.good{background:var(--good-bg); color:var(--good); border-color:var(--good-line)}
+  .badge.warn{background:var(--warn-bg); color:var(--warn); border-color:var(--warn-line)}
+  .badge.bad{background:var(--bad-bg); color:var(--bad); border-color:var(--bad-line)}
+  .big{display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--line-2); border:1px solid var(--line-2); border-radius:12px; overflow:hidden; margin:14px 0}
+  .big > div{background:#fff; padding:13px 14px}
+  .big .k{font-size:11.5px; color:var(--muted); margin-bottom:3px}
+  .big .v{font-size:19px; font-weight:700; letter-spacing:-.02em}
+  .big .v small{font-size:12px; font-weight:500; color:var(--muted); margin-left:3px}
+  .v.pos{color:var(--good)} .v.neg{color:var(--bad)}
+  .rows{margin:0; padding:0; list-style:none; border-top:1px solid var(--line-2)}
+  .rows li{display:flex; justify-content:space-between; gap:10px; padding:8px 0; border-bottom:1px solid var(--line-2); font-size:13px}
+  .rows li .l{color:var(--ink-2)}
+  .rows li .l span{display:block; font-size:11px; color:var(--muted-2); line-height:1.35}
+  .rows li .r{color:var(--ink); font-weight:550; white-space:nowrap}
+  .rows li.sum{border-bottom:0; padding-top:10px; font-weight:700}
+  .rows li.sum .r{color:var(--ink)}
+  .note{font-size:11.8px; color:var(--muted); line-height:1.5}
+  .note b{color:var(--ink-2); font-weight:600}
+  .split{display:flex; gap:16px; flex-wrap:wrap; align-items:baseline}
+  .kpi{font-size:12px; color:var(--muted)}
+  .kpi b{display:block; font-size:15px; color:var(--ink); font-weight:650}
+  table{width:100%; border-collapse:collapse; font-size:13px}
+  th,td{text-align:left; padding:9px 10px; border-bottom:1px solid var(--line-2); vertical-align:top}
+  th{font-size:11.5px; color:var(--muted); font-weight:600; background:#fbfcfd; border-bottom:1px solid var(--line); white-space:nowrap}
+  td.num,th.num{text-align:right; white-space:nowrap}
+  tr.clickable{cursor:pointer}
+  tr.clickable:hover td{background:#f8fafc}
+  .tablewrap{overflow-x:auto; border-radius:0 0 var(--radius) var(--radius)}
+  .tablewrap table{min-width:760px}
+  .tag{display:inline-block; font-size:11px; padding:2px 7px; border-radius:6px; background:#f1f5f9; color:var(--ink-2); margin:0 4px 3px 0; white-space:nowrap}
+  .tag.acc{background:var(--accent-weak); color:var(--accent)}
+  .btn{appearance:none; border:1px solid var(--line); background:#fff; color:var(--ink); font:inherit; font-size:13px; font-weight:550;
+       padding:9px 13px; border-radius:9px; cursor:pointer; display:inline-flex; align-items:center; gap:7px}
+  .btn:hover{border-color:var(--muted-2)}
+  .btn.primary{background:var(--accent); border-color:var(--accent); color:#fff}
+  .btn.primary:hover{background:#0d6a63}
+  .btn.sm{font-size:12px; padding:6px 10px}
+  .btnrow{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px}
+  .samples{display:grid; gap:10px}
+  .sample{border:1px solid var(--line); border-radius:12px; padding:13px 14px; background:#fff; cursor:pointer; transition:border-color .12s, box-shadow .12s}
+  .sample:hover{border-color:var(--accent-line); box-shadow:0 6px 18px -14px rgba(15,118,110,.6)}
+  .sample .h{display:flex; justify-content:space-between; gap:10px; align-items:baseline}
+  .sample .name{font-weight:600; font-size:13.5px; letter-spacing:-.01em}
+  .sample .meta{font-size:11.5px; color:var(--muted); margin-top:4px}
+  .sample .figs{display:flex; gap:14px; flex-wrap:wrap; margin-top:8px; font-size:12px; color:var(--muted)}
+  .sample .figs b{color:var(--ink); font-weight:650}
+  .callout{border:1px solid var(--line); border-left:3px solid var(--accent); border-radius:10px; padding:12px 14px; background:#fff; font-size:12.8px; color:var(--ink-2)}
+  .callout.warn{border-left-color:var(--warn)}
+  .callout b{color:var(--ink)}
+  .stack > * + *{margin-top:14px}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:12.5px}
+  .count{font-size:12px; color:var(--muted); font-weight:600}
+  .count.over{color:var(--bad)}
+  pre.out{white-space:pre-wrap; word-break:break-word; background:#0f172a; color:#e2e8f0; border-radius:10px; padding:13px; font-size:12.5px; line-height:1.6; margin:0; max-height:340px; overflow:auto}
+  .kv{display:grid; grid-template-columns:auto 1fr; gap:6px 12px; font-size:12.8px}
+  .kv dt{color:var(--muted)} .kv dd{margin:0}
+  footer.foot{border-top:1px solid var(--line); background:#fff; padding:24px 0 40px; font-size:12px; color:var(--muted)}
+  footer.foot h3{font-size:12.5px; color:var(--ink-2); margin:16px 0 6px}
+  footer.foot ul{margin:0; padding-left:16px} footer.foot li{margin:3px 0}
+  .sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0)}
+  @media (max-width:560px){
+    .big{grid-template-columns:1fr}
+    .top-meta{display:none}
+    .titles h1{font-size:17px}
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <div class="mark">EB</div>
+    <div class="titles">
+      <h1>이베이 역직구 수익성 레이더</h1>
+      <p>국내에서 사서 eBay에 팔면, 수수료·국제배송비·환전까지 빼고 얼마가 남는지</p>
+    </div>
+    <div class="top-meta">
+      기준 환율 <b id="fxTop">1,336.21</b>원 / USD<br>
+      <span id="fxMeta">ECB 고시 2026-11-17</span>
+    </div>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="화면 이동">
+  <div class="tabs-in">
+    <button role="tab" aria-selected="true" data-view="calc">마진 계산기</button>
+    <button role="tab" aria-selected="false" data-view="samples">실측 품목 6종</button>
+    <button role="tab" aria-selected="false" data-view="listing">eBay 영어 리스팅</button>
+    <button role="tab" aria-selected="false" data-view="reality">포장·발송 현실</button>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<!-- ================= CALC ================= -->
+<section class="view active" id="view-calc">
+  <p class="lede">숫자를 바꾸면 아래 결과가 즉시 다시 계산됩니다. 배송비는 우체국 2026년 고시 요금표를 무게 구간별로 그대로 적용하고, eBay 수수료는 한국 등록 셀러 기준(판매 수수료 13.6% + 국제 수수료 1.45% + 건당 $0.40)으로 계산합니다.</p>
+  <div class="grid">
+    <div class="card">
+      <div class="card-h"><h2>한 건의 조건</h2><span class="sub">원화 입력 · USD 판매가</span></div>
+      <div class="card-b">
+        <div class="fields">
+          <div class="f">
+            <label for="buy">국내 매입가 <span class="hint">배송비 제외</span></label>
+            <div class="unit"><input id="buy" type="number" inputmode="numeric" value="73520" min="0" step="100"><span class="u">원</span></div>
+          </div>
+          <div class="f">
+            <label for="domShip">국내 배송비</label>
+            <div class="unit"><input id="domShip" type="number" inputmode="numeric" value="0" min="0" step="100"><span class="u">원</span></div>
+          </div>
+          <div class="f">
+            <label for="pack">포장재비 <span class="hint">박스·완충·라벨</span></label>
+            <div class="unit"><input id="pack" type="number" inputmode="numeric" value="1000" min="0" step="100"><span class="u">원</span></div>
+          </div>
+          <div class="f">
+            <label for="weight">예상 무게 <span class="hint">포장 포함</span></label>
+            <div class="unit"><input id="weight" type="number" inputmode="numeric" value="400" min="1" step="10"><span class="u">g</span></div>
+          </div>
+          <div class="f full">
+            <label>발송 국가</label>
+            <div class="seg" id="destSeg">
+              <button data-dest="US" aria-pressed="true">미국</button>
+              <button data-dest="JP" aria-pressed="false">일본</button>
+              <button data-dest="UK" aria-pressed="false">유럽·영국</button>
+              <button data-dest="AU" aria-pressed="false">호주</button>
+            </div>
+          </div>
+          <div class="f">
+            <label for="price">eBay 판매가</label>
+            <div class="unit"><input id="price" type="number" inputmode="decimal" value="75.83" min="0" step="0.01"><span class="u">USD</span></div>
+          </div>
+          <div class="f">
+            <label for="buyerShip">구매자 부담 배송비 <span class="hint">0 = 무료배송</span></label>
+            <div class="unit"><input id="buyerShip" type="number" inputmode="decimal" value="0" min="0" step="0.01"><span class="u">USD</span></div>
+          </div>
+          <div class="f full">
+            <label for="cat">eBay 카테고리 수수료</label>
+            <select id="cat">
+              <option value="0.136" selected>대부분 카테고리 — 13.6%</option>
+              <option value="0.153">도서·영화·음반 — 15.3%</option>
+              <option value="0.1325">수집품·트레이딩카드 — 13.25%</option>
+              <option value="0.08">운동화 $150 이상 — 8%</option>
+              <option value="0.15">보석·시계(≤$5,000) — 15%</option>
+            </select>
+          </div>
+        </div>
+
+        <details class="adv">
+          <summary>고급 설정 (환율·판매세·환전 수수료·부피무게)</summary>
+          <div class="fields">
+            <div class="f">
+              <label for="fx">적용 환율 <span class="hint" id="fxHint">자동</span></label>
+              <div class="unit"><input id="fx" type="number" inputmode="decimal" value="1336.21" min="500" step="0.01"><span class="u">원/USD</span></div>
+            </div>
+            <div class="f">
+              <label for="fxFee">환전·인출 수수료</label>
+              <div class="unit"><input id="fxFee" type="number" inputmode="decimal" value="2" min="0" max="10" step="0.1"><span class="u">%</span></div>
+            </div>
+            <div class="f">
+              <label for="tax">구매자 판매세 <span class="hint">수수료 기준에만 포함</span></label>
+              <div class="unit"><input id="tax" type="number" inputmode="decimal" value="0" min="0" max="15" step="0.5"><span class="u">%</span></div>
+            </div>
+            <div class="f">
+              <label for="vol">부피무게 <span class="hint">가로×세로×높이÷6,000</span></label>
+              <div class="unit"><input id="vol" type="number" inputmode="numeric" value="0" min="0" step="10"><span class="u">g</span></div>
+            </div>
+          </div>
+          <p class="note" style="margin:10px 0 0">부피무게는 실제무게보다 클 때만 적용됩니다. 모르면 0으로 두세요. 판매세는 구매자가 내고 셀러에게 오지 않지만, eBay 수수료는 판매세까지 포함한 총액에 매겨지므로 0이 아닌 값(예: 7)을 넣으면 실제와 가까워집니다.</p>
+        </details>
+
+        <div class="btnrow">
+          <button class="btn primary" id="recalc">계산하기</button>
+          <button class="btn" id="reset">기본값</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h">
+        <h2>한 건 정산</h2>
+        <span class="badge good" id="verdict">—</span>
+      </div>
+      <div class="result">
+        <div class="big">
+          <div><div class="k">총 매출</div><div class="v" id="rRevenue">—</div></div>
+          <div><div class="k">총 비용</div><div class="v" id="rCost">—</div></div>
+          <div><div class="k">순이익</div><div class="v" id="rProfit">—</div></div>
+          <div><div class="k">마진율 (매출 대비)</div><div class="v" id="rMargin">—</div></div>
+        </div>
+
+        <div class="split" style="margin:2px 0 12px">
+          <div class="kpi">손익분기 최소 판매가<b id="rBep">—</b></div>
+          <div class="kpi">적용 국제배송<b id="rShipWay">—</b></div>
+          <div class="kpi">eBay에 남는 달러<b id="rNetUsd">—</b></div>
+        </div>
+
+        <ul class="rows" id="breakdown"></ul>
+
+        <p class="note" id="shipNote" style="margin-top:12px"></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SAMPLES ================= -->
+<section class="view" id="view-samples">
+  <p class="lede">2026년 11월 17일 직접 조회한 실제 국내 최저가와 eBay 실제 리스팅 가격입니다. eBay 쪽은 <b>누적 판매 수가 표시된 활성 리스팅의 현재가</b>이며(로그인 없이는 실제 체결가 필터를 볼 수 없습니다), 행을 누르면 그 조건이 계산기에 그대로 들어갑니다.</p>
+  <div class="card">
+    <div class="card-h"><h2>실측 비교 — 같은 조건(미국·무료배송·환율 1,336원)으로 계산</h2><span class="sub">행 클릭 → 계산기로 이동</span></div>
+    <div class="tablewrap">
+      <table id="sampleTable">
+        <thead>
+          <tr>
+            <th>품목</th>
+            <th class="num">국내 매입가</th>
+            <th class="num">eBay 시세</th>
+            <th class="num">무게</th>
+            <th class="num">국제배송</th>
+            <th class="num">순이익</th>
+            <th class="num">마진</th>
+            <th>판정</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <div class="card-h"><h2>어디서 확인했나</h2><span class="sub">국내 · eBay 원문 링크</span></div>
+    <div class="card-b"><div class="samples" id="sampleSrc"></div></div>
+  </div>
+  <div class="stack" style="margin-top:16px">
+    <div class="callout" id="sampleRead"></div>
+    <div class="callout warn">
+      <b>읽는 법.</b> 국내 최저가와 eBay 최저가를 나란히 놓으면 대부분 적자입니다. 이 표가 보여주는 건 “무엇을 팔면 남는가”가 아니라 <b>“어떤 조건에서만 남는가”</b>입니다. 국내에서 구하기 어렵고, 한국에서만 풀리는 물건이면서, 무게 대비 단가가 높아야 합니다.
+    </div>
+  </div>
+</section>
+
+<!-- ================= LISTING ================= -->
+<section class="view" id="view-listing">
+  <p class="lede">한국어 상품명과 키워드를 넣으면 eBay 검색에 걸리는 영어 제목(80자 제한)과 상세설명을 조립합니다. 번역기가 아니라 <b>키워드 사전 + eBay 판매 관행 템플릿</b>이므로, 리스팅 전에 표현이 자연스러운지 한 번 읽어보세요.</p>
+  <div class="grid">
+    <div class="card">
+      <div class="card-h"><h2>상품 정보</h2><span class="sub">한국어로 입력</span></div>
+      <div class="card-b">
+        <div class="fields">
+          <div class="f full">
+            <label for="pName">한국어 상품명</label>
+            <input id="pName" type="text" placeholder="예: 방탄소년단 공식 응원봉 Ver.4 아미밤 미개봉" value="방탄소년단 공식 응원봉 Ver.4 아미밤 미개봉">
+          </div>
+          <div class="f full">
+            <label for="pFeat">특징·구성 키워드 <span class="hint">쉼표로 구분</span></label>
+            <input id="pFeat" type="text" placeholder="예: 정품, 포토카드 7장, 박스 포함, 2026" value="정품, 포토카드 포함, 박스 포함">
+          </div>
+          <div class="f">
+            <label for="pCond">상태</label>
+            <select id="pCond">
+              <option value="new" selected>새상품 (미개봉)</option>
+              <option value="openbox">새상품 (개봉·검수)</option>
+              <option value="used">중고</option>
+            </select>
+          </div>
+          <div class="f">
+            <label for="pCat">카테고리</label>
+            <select id="pCat">
+              <option value="kpop" selected>K-POP·굿즈</option>
+              <option value="character">캐릭터·장난감</option>
+              <option value="beauty">화장품</option>
+              <option value="camera">카메라·취미</option>
+              <option value="stationery">문구·생활</option>
+            </select>
+          </div>
+          <div class="f">
+            <label for="pQty">수량·사이즈 <span class="hint">선택</span></label>
+            <input id="pQty" type="text" placeholder="예: 1 Set / 50ml / 400g">
+          </div>
+          <div class="f">
+            <label for="pShip">배송 방식 문구</label>
+            <select id="pShip">
+              <option value="kpacket" selected>K-Packet (추적)</option>
+              <option value="ems">EMS (빠른 배송)</option>
+              <option value="free">무료배송 (가격에 포함)</option>
+            </select>
+          </div>
+        </div>
+        <div class="btnrow">
+          <button class="btn primary" id="genBtn">제목·설명 생성</button>
+          <button class="btn" id="copyTitle">제목 복사</button>
+          <button class="btn" id="copyDesc">설명 복사</button>
+        </div>
+      </div>
+    </div>
+    <div class="stack">
+      <div class="card">
+        <div class="card-h"><h2>영어 제목</h2><span class="count" id="titleCount">0 / 80</span></div>
+        <div class="card-b"><pre class="out" id="titleOut" style="max-height:none"></pre></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h2>상세설명 템플릿</h2><span class="sub">그대로 붙여넣고 값만 고치세요</span></div>
+        <div class="card-b"><pre class="out" id="descOut"></pre></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= REALITY ================= -->
+<section class="view" id="view-reality">
+  <p class="lede">판매가 남는지와 별개로, 한 건이 팔릴 때마다 사람 손이 얼마나 들어가는지입니다. 아래 시간은 이 작업을 처음 하는 사람 기준의 추정치이고, 월 목표 계산은 위 계산기의 건당 순이익을 그대로 씁니다.</p>
+  <div class="grid">
+    <div class="card">
+      <div class="card-h"><h2>1건당 실제 작업</h2><span class="sub">합계 약 1시간 10분</span></div>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>단계</th><th>실제로 하는 일</th><th class="num">시간</th></tr></thead>
+          <tbody>
+            <tr><td>1. 국내 매입</td><td>번개장터·중고나라·쿠팡에서 검색, 판매자 문답, 결제</td><td class="num">15분</td></tr>
+            <tr><td>2. 수령·검수</td><td>택배 수령, 상태 확인, 흠집·구성품 사진 촬영</td><td class="num">10분</td></tr>
+            <tr><td>3. 리스팅</td><td>영어 제목·설명 작성, 사진 업로드, 가격·배송정책 설정</td><td class="num">15분</td></tr>
+            <tr><td>4. 포장</td><td>박스·완충재, 해외 배송지 라벨, 내용물 신고서</td><td class="num">10분</td></tr>
+            <tr><td>5. 우체국 접수</td><td>창구 접수(왕복 이동 포함), K-Packet/EMS 발송</td><td class="num">25분</td></tr>
+            <tr><td>6. 트래킹 입력</td><td>운송장 번호 eBay에 입력, 발송 처리</td><td class="num">3분</td></tr>
+            <tr><td>7. CS·반품</td><td>문의 응답, 도착 확인, (발생 시) 반품 대응</td><td class="num">7분</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h2>월 목표 역산</h2><span class="sub">위 계산기 조건 기준</span></div>
+      <div class="card-b">
+        <div class="fields">
+          <div class="f full">
+            <label for="goal">월 목표 순이익</label>
+            <div class="unit"><input id="goal" type="number" inputmode="numeric" value="1000000" min="0" step="100000"><span class="u">원</span></div>
+          </div>
+          <div class="f">
+            <label for="mins">건당 소요 시간</label>
+            <div class="unit"><input id="mins" type="number" inputmode="numeric" value="70" min="10" step="5"><span class="u">분</span></div>
+          </div>
+          <div class="f">
+            <label for="sellRate">판매 전환 <span class="hint">올린 것 중 팔리는 비율</span></label>
+            <div class="unit"><input id="sellRate" type="number" inputmode="numeric" value="30" min="5" max="100" step="5"><span class="u">%</span></div>
+          </div>
+        </div>
+        <div class="big" style="margin-top:14px">
+          <div><div class="k">필요한 월 판매 건수</div><div class="v" id="rUnits">—</div></div>
+          <div><div class="k">주당 판매</div><div class="v" id="rWeekly">—</div></div>
+          <div><div class="k">월 작업 시간</div><div class="v" id="rHours">—</div></div>
+          <div><div class="k">하루 평균</div><div class="v" id="rDaily">—</div></div>
+        </div>
+        <p class="note" id="goalNote"></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="stack" style="margin-top:16px">
+    <div class="card">
+      <div class="card-h"><h2>돈이 새는 곳 — 계산기 밖 변수</h2></div>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>항목</th><th>실제로 벌어지는 일</th><th class="num">부담</th></tr></thead>
+          <tbody>
+            <tr><td>반품</td><td>미국 구매자가 반품하면 왕복 국제배송비를 셀러가 부담하는 경우가 많습니다. 한 건 이익이 두 건 적자로 바뀝니다.</td><td class="num">2~5만원</td></tr>
+            <tr><td>분실·파손</td><td>K-Packet은 배상 한도가 낮습니다. 고가품은 EMS(배상 있음)가 안전하지만 요금이 2배 이상입니다.</td><td class="num">전액</td></tr>
+            <tr><td>정산 지연</td><td>판매 이력이 없는 계정은 첫 정산까지 최대 3주 걸립니다. 물건은 먼저 나가고 돈은 늦게 들어옵니다.</td><td class="num">현금흐름</td></tr>
+            <tr><td>계정 제한</td><td>신규 셀러는 판매 한도가 낮게 시작합니다. 갑자기 많이 팔면 검토가 걸립니다.</td><td class="num">판매 중단</td></tr>
+            <tr><td>상표권 신고(VeRO)</td><td>브랜드 정품이라도 권리자 신고로 리스팅이 내려갈 수 있습니다. 특히 캐릭터·연예인 굿즈.</td><td class="num">리스팅 삭제</td></tr>
+            <tr><td>환율</td><td>달러로 가격을 고정한 뒤 원화가 오르면, 원화로 받는 돈이 줄어듭니다.</td><td class="num">±3%</td></tr>
+            <tr><td>Payoneer 고정 수수료</td><td>1회 정산 $100 이하면 $1, 연 수취 $6,000 미만이면 연 $29.95가 별도로 나갑니다.</td><td class="num">$1~$30</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="callout warn">
+      <b>시작 전에 스스로 답해볼 세 가지.</b> ① 주 2~3회 우체국에 갈 수 있는가. ② 한 건이 적자일 때 그 물건을 국내에서 다시 팔 수 있는가. ③ 월 100만원을 위해 40건을 팔아야 한다면, 그 40건을 살 국내 재고가 매달 있는가. 세 번째가 “아니오”면 이 사업은 셀러가 아니라 <b>재고를 구하는 사람</b>의 일이 됩니다.
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <h3>요금·수수료 근거 (조회일 2026-11-17)</h3>
+    <ul>
+      <li>국제배송: 과학기술정보통신부 고시 제2026-46호 「국제우편에 관한 요금」(2026-07-01 시행) 별표4 K-Packet·별표5 EMS. EMS는 우정사업본부 2026년 요금표의 <b>비서류·추가운송수수료 포함</b> 금액입니다.</li>
+      <li>eBay: 미국 판매 수수료표(대부분 카테고리 13.6%, 도서·음반 15.3%, 수집품 13.25%, 주문당 $0.30~$0.40), 한국 등록 셀러 국제 수수료 1.45%. 수수료는 상품가+구매자 배송비+판매세를 합한 총액에 부과됩니다.</li>
+      <li>Payoneer: 원화 인출 시 환전 수수료 1.2~4%(이 계산기 기본값 2%), 1회 $100 이하 $1, 연 $6,000 미만 연 $29.95.</li>
+      <li>환율: ECB 기준 2026-11-17 USD/KRW 1,336.21 (페이지를 열 때 실시간 조회를 시도하고, 실패하면 이 값을 씁니다).</li>
+    </ul>
+    <h3>이 앱이 하지 않는 것</h3>
+    <ul>
+      <li>eBay 로그인 없이 볼 수 있는 가격만 씁니다. 실제 체결가(판매 완료 필터)는 로그인이 필요해 조회하지 못했고, 표의 eBay 가격은 <b>누적 판매 수가 표시된 활성 리스팅 가격</b>입니다.</li>
+      <li>판매세·주별 세율, 반품률, 광고비(eBay Promoted Listings)는 넣지 않았습니다. 필요하면 고급 설정에서 직접 올려 잡으세요.</li>
+      <li>무게는 상품별 포장 포함 추정치입니다. 실제 저울 무게와 다르면 계산기에서 고쳐서 다시 보세요.</li>
+    </ul>
+    <p style="margin-top:14px">© 2026 · 개인용 계산 도구. 투자·사업 판단의 최종 책임은 사용자에게 있습니다.</p>
+  </div>
+</footer>
+
+<script>
+/* ============ 요금표 (2026-07-01 시행 고시 / 2026 EMS 요금표) ============ */
+const KPACKET = {
+  US: [8090, 8980, 11060, 13170, 15280, 16910, 18530, 20160, 21780, 23430, 25780, 28130, 30480, 32810, 35160, 37270, 39350, 41440, 43530, 45690],
+  JP: [4550, 5730, 6930, 8120, 9340, 10290, 11240, 12190, 13130, 14090, 14930, 15770, 16610, 17450, 18330, 18840, 19340, 19840, 20350, 20880],
+  UK: [5170, 6740, 8300, 9870, 11470, 12690, 13910, 15120, 16340, 17590, 19090, 20590, 22090, 23590, 25090, 26590, 28090, 29590, 31090, 32590],
+  AU: [4670, 6080, 7500, 8920, 10360, 11460, 12560, 13660, 14770, 15890, 16910, 17930, 18950, 19970, 20990, 22010, 23030, 24050, 25070, 26090]
+};
+const EMS_W = [0.5,0.75,1,1.25,1.5,1.75,2,2.5,3,3.5,4,4.5,5];
+const EMS = {
+  US: [39000, 42500, 46000, 51000, 57000, 62500, 68500, 76500, 86000, 96500, 107000, 117500, 128500],
+  JP: [26000, 27000, 28500, 30000, 31500, 33500, 35500, 37000, 38000, 39000, 40500, 42000, 43500],
+  UK: [39500, 42000, 44500, 47500, 50000, 53000, 55500, 61000, 66500, 72000, 79000, 85000, 91000],
+  AU: [33500, 37000, 40500, 44000, 47500, 51000, 55000, 59000, 63000, 67000, 71500, 76000, 81000]
+};
+const DEST_NAME = {US:'미국', JP:'일본', UK:'유럽·영국', AU:'호주'};
+const ORDER_FEE_SMALL = 0.30, ORDER_FEE = 0.40, INTL_FEE = 0.0145;
+
+const fmt0 = n => isFinite(n) ? Math.round(n).toLocaleString('ko-KR') : '—';
+const fmt2 = n => isFinite(n) ? n.toLocaleString('ko-KR',{minimumFractionDigits:2, maximumFractionDigits:2}) : '—';
+const won = n => (n<0?'−':'') + '₩' + fmt0(Math.abs(n));
+const usd = n => (n<0?'−':'') + '$' + fmt2(Math.abs(n));
+
+/* ============ 배송비 조회 ============ */
+function shippingCost(dest, grams){
+  const g = Math.max(1, grams);
+  const kpIdx = Math.ceil(g/100) - 1;
+  let kp = null, ems = null, emsW = null;
+  if (kpIdx < KPACKET[dest].length) kp = KPACKET[dest][kpIdx];
+  const kg = g/1000;
+  for (let i=0;i<EMS_W.length;i++){ if (kg <= EMS_W[i] + 1e-9){ ems = EMS[dest][i]; emsW = EMS_W[i]; break; } }
+  return {kp, ems, emsW, kg};
+}
+function chooseShipping(dest, grams, prefer){
+  const s = shippingCost(dest, grams);
+  if (prefer === 'ems') return {cost: s.ems, way: 'EMS' + (s.emsW ? ' ' + s.emsW + 'kg 구간' : ''), detail: s};
+  if (s.kp != null && s.kp <= (s.ems ?? Infinity)) return {cost: s.kp, way: 'K-Packet ' + (Math.ceil(Math.max(grams,1)/100)*100).toLocaleString('ko-KR') + 'g 구간', detail: s};
+  if (s.ems != null) return {cost: s.ems, way: 'EMS ' + s.emsW + 'kg 구간', detail: s};
+  return {cost: s.kp, way: 'K-Packet (2kg 초과 불가)', detail: s};
+}
+
+/* ============ 계산 ============ */
+function readInputs(){
+  const num = id => parseFloat(document.getElementById(id).value) || 0;
+  return {
+    buy: num('buy'), domShip: num('domShip'), pack: num('pack'),
+    weight: Math.max(num('weight'), num('vol')),
+    dest: document.querySelector('#destSeg button[aria-pressed="true"]').dataset.dest,
+    price: num('price'), buyerShip: num('buyerShip'),
+    fvf: parseFloat(document.getElementById('cat').value),
+    fx: num('fx') || 1336.21,
+    fxFee: num('fxFee')/100,
+    tax: num('tax')/100
+  };
+}
+
+function compute(inp){
+  const ship = chooseShipping(inp.dest, inp.weight);
+  const fixedKRW = inp.buy + inp.domShip + inp.pack + (ship.cost || 0);
+  const totalSale = inp.price + inp.buyerShip;
+  const taxAmt = totalSale * inp.tax;
+  const feeBase = totalSale + taxAmt;
+  const orderFee = totalSale > 10 ? ORDER_FEE : ORDER_FEE_SMALL;
+  const fvfAmt = feeBase * inp.fvf;
+  const intlAmt = feeBase * INTL_FEE;
+  const feesUSD = fvfAmt + intlAmt + orderFee;
+  const afterFees = totalSale - feesUSD;
+  const fxAmtUSD = afterFees * inp.fxFee;
+  const netUSD = afterFees - fxAmtUSD;
+  const netKRW = netUSD * inp.fx;
+
+  const revenueKRW = totalSale * inp.fx;
+  const feesKRW = feesUSD * inp.fx;
+  const fxKRW = fxAmtUSD * inp.fx;
+  const totalCostKRW = fixedKRW + feesKRW + fxKRW;
+  const profit = revenueKRW - totalCostKRW;
+  const margin = revenueKRW > 0 ? profit / revenueKRW : 0;
+
+  // 손익분기 판매가 (반복 2회로 주문 수수료 구간 확정)
+  let bep = totalSale > 0 ? totalSale : 20;
+  for (let i=0;i<4;i++){
+    const of = (bep + inp.buyerShip) > 10 ? ORDER_FEE : ORDER_FEE_SMALL;
+    const needNet = fixedKRW / inp.fx;               // 필요한 달러 순액
+    const grossNeeded = needNet / (1 - inp.fxFee);   // 수수료 전 달러
+    // gross = total*(1 - fvf*(1+tax)) - of  →  total = (gross + of) / (1 - fvf*(1+tax))
+    const totalNeeded = (grossNeeded + of) / (1 - inp.fvf*(1+inp.tax));
+    bep = Math.max(0, totalNeeded - inp.buyerShip);
+  }
+  return {ship, fixedKRW, totalSale, taxAmt, orderFee, fvfAmt, intlAmt, feesUSD, afterFees, fxAmtUSD, netUSD,
+          netKRW, revenueKRW, feesKRW, fxKRW, totalCostKRW, profit, margin, bep};
+}
+
+function verdictOf(margin){
+  if (margin >= 0.15) return {cls:'good', text:'추천 — 마진 15% 이상'};
+  if (margin >= 0.05) return {cls:'warn', text:'박리다매 — 5~15%'};
+  return {cls:'bad', text: margin < 0 ? '적자 — 팔수록 손해' : '적자 위험 — 5% 미만'};
+}
+
+let last = null;
+function render(){
+  const inp = readInputs();
+  const r = compute(inp);
+  last = {inp, r};
+
+  document.getElementById('rRevenue').textContent = won(r.revenueKRW);
+  document.getElementById('rCost').textContent = won(r.totalCostKRW);
+  const p = document.getElementById('rProfit');
+  p.textContent = won(r.profit);
+  p.className = 'v ' + (r.profit >= 0 ? 'pos' : 'neg');
+  const m = document.getElementById('rMargin');
+  m.textContent = (r.margin*100).toFixed(1) + '%';
+  m.className = 'v ' + (r.margin >= 0.05 ? 'pos' : 'neg');
+  document.getElementById('rBep').textContent = '$' + fmt2(Math.max(0, r.bep)) + ' (' + won(Math.max(0,r.bep)*inp.fx) + ')';
+  document.getElementById('rShipWay').textContent = r.ship.way + ' · ' + won(r.ship.cost || 0);
+  document.getElementById('rNetUsd').textContent = usd(r.netUSD);
+
+  const v = verdictOf(r.margin);
+  const vb = document.getElementById('verdict');
+  vb.className = 'badge ' + v.cls; vb.textContent = v.text;
+
+  const rows = [
+    ['총 매출', '판매가 ' + usd(inp.price) + (inp.buyerShip>0?' + 배송비 '+usd(inp.buyerShip):' + 무료배송') + ' × ' + fmt2(inp.fx) + '원', r.revenueKRW],
+    ['국내 매입가', '', -inp.buy],
+    ['국내 배송비', '', -inp.domShip],
+    ['포장재비', '', -inp.pack],
+    ['국제배송비', r.ship.way, -(r.ship.cost||0)],
+    ['eBay 판매 수수료', (inp.fvf*100).toFixed(2) + '% × ' + usd(r.totalSale + r.taxAmt) + (inp.tax>0?' (판매세 포함)':''), -r.fvfAmt*inp.fx],
+    ['eBay 국제 수수료', '한국 등록 셀러 1.45%', -r.intlAmt*inp.fx],
+    ['건당 주문 수수료', r.orderFee===ORDER_FEE?'$0.40 (총액 $10 초과)':'$0.30 (총액 $10 이하)', -r.orderFee*inp.fx],
+    ['환전·인출 수수료', (inp.fxFee*100).toFixed(1) + '% × ' + usd(r.afterFees), -r.fxKRW]
+  ];
+  const ul = document.getElementById('breakdown');
+  ul.innerHTML = rows.map(([k,sub,val])=>`<li><span class="l">${k}${sub?`<span>${sub}</span>`:''}</span><span class="r">${won(val)}</span></li>`).join('')
+    + `<li class="sum"><span class="l">순이익</span><span class="r" style="color:${r.profit>=0?'var(--good)':'var(--bad)'}">${won(r.profit)}</span></li>`;
+
+  const s = r.ship.detail;
+  let note = `무게 ${fmt0(inp.weight)}g 기준 K-Packet ${s.kp?won(s.kp):'불가(2kg 초과)'}`;
+  if (s.ems) note += `, EMS ${won(s.ems)} (${s.emsW}kg 구간, 추가운송수수료 포함)`;
+  note += `. 우체국은 실제무게와 부피무게 중 큰 값으로 요금을 매깁니다.`;
+  if (inp.weight > 2000) note += ' 2kg을 넘으면 K-Packet을 쓸 수 없어 EMS로만 발송됩니다.';
+  document.getElementById('shipNote').textContent = note;
+
+  document.getElementById('fxTop').textContent = fmt2(inp.fx);
+  renderGoal();
+  saveState();
+}
+
+/* ============ 월 목표 ============ */
+function renderGoal(){
+  if (!last) return;
+  const goal = parseFloat(document.getElementById('goal').value) || 0;
+  const mins = parseFloat(document.getElementById('mins').value) || 70;
+  const rate = (parseFloat(document.getElementById('sellRate').value) || 30)/100;
+  const per = last.r.profit;
+  const unitsEl = document.getElementById('rUnits'), wEl = document.getElementById('rWeekly'),
+        hEl = document.getElementById('rHours'), dEl = document.getElementById('rDaily');
+  const note = document.getElementById('goalNote');
+  if (per <= 0){
+    unitsEl.textContent = '불가';
+    wEl.textContent = '—'; hEl.textContent = '—'; dEl.textContent = '—';
+    note.innerHTML = '현재 조건은 한 건당 순이익이 <b>0원 이하</b>라 월 목표를 채울 수 없습니다. 판매가를 올리거나 매입가·무게를 낮춰야 합니다.';
+    return;
+  }
+  const units = Math.ceil(goal/per);
+  const listing = Math.ceil(units/rate);
+  const weekly = (units/4.345).toFixed(1);
+  const hours = units*mins/60;
+  unitsEl.textContent = fmt0(units) + '건';
+  wEl.textContent = weekly + '건';
+  hEl.textContent = hours.toFixed(0) + '시간';
+  dEl.textContent = (hours/30).toFixed(1) + '시간';
+  note.innerHTML = `건당 순이익 <b>${won(per)}</b> 기준입니다. 판매 전환율 ${(rate*100).toFixed(0)}%라면 <b>월 ${fmt0(listing)}개</b>를 올려야 ${fmt0(units)}건이 팔립니다. 한 건에 ${mins}분씩, 하루 ${(hours/30).toFixed(1)}시간을 이 일에 쓰는 셈입니다.`;
+}
+
+/* ============ 샘플 ============ */
+const SAMPLES = [
+  {
+    name:'BTS 공식 응원봉 Ver.4 (미개봉)', cat:'K-POP 굿즈',
+    buy:73520, domShip:0, weight:400, price:75.83, buyerShip:0,
+    krNote:'다나와 최저가 73,520원(무료배송)',
+    krUrl:'https://search.danawa.com/dsearch.php?k1=BTS%20%EC%9D%91%EC%9B%90%EB%B4%89%20ver.4',
+    ebNote:'$75.83 · emoneshop · 216개 판매 · 무료배송',
+    ebUrl:'https://www.ebay.com/itm/293545143346',
+    memo:'같은 상품 상위 리스팅은 $100(133,564원)까지 형성. 시세 하단에서 팔면 적자, 상단이면 흑자 — 가격이 아니라 “얼마에 올릴 수 있나”가 승부처.'
+  },
+  {
+    name:'BTS 응원봉 SE (MOTS, 개봉·검수)', cat:'K-POP 굿즈',
+    buy:10000, domShip:0, weight:400, price:59.99, buyerShip:0,
+    krNote:'당근 중고 시세 10,000원(2026-11)',
+    krUrl:'https://www.daangn.com/kr/buy-sell/bts-%EC%95%84%EB%AF%B8%EB%B0%A4-ver-3-se-ver-a3qwpr5u926u/',
+    ebNote:'$59.99 · solefromearth(서울) · 33개 판매 · 무료 국제배송',
+    ebUrl:'https://www.ebay.com/itm/125198808635',
+    memo:'공식 정가는 49,000원 수준(2026-03 연합뉴스). 국내 중고가 1만원대일 때만 남는 구조라, 재고가 곧 수익.'
+  },
+  {
+    name:'포켓몬 카드 한국판 인페르노X 박스(30팩)', cat:'캐릭터·수집품',
+    buy:64410, domShip:0, weight:400, price:61.38, buyerShip:10,
+    krNote:'다나와 최저가 64,410원',
+    krUrl:'https://plan.danawa.com/info/index.php?nPlanSeq=13186',
+    ebNote:'$61.38 + 배송비 $10 · TCG Company(서울) · 197개 판매',
+    ebUrl:'https://www.ebay.com/itm/306618155440',
+    memo:'미국 내 재고 셀러는 $62.99 무료배송(111개 판매). 한국에서 보내면 배송비를 구매자가 내도 마진이 0에 붙는다.'
+  },
+  {
+    name:'조선미녀 맑은쌀 선크림 50ml', cat:'K-뷰티',
+    buy:13400, domShip:2500, weight:200, price:9.49, buyerShip:0,
+    krNote:'올리브영 13,400원 + 배송비 2,500원',
+    krUrl:'https://search.danawa.com/dsearch.php?k1=%EC%A1%B0%EC%84%A0%EB%AF%B8%EB%85%80%20%EC%84%A0%ED%81%AC%EB%A6%BC',
+    ebNote:'$9.49 · 미국 셀러(메릴랜드) · 배송비 $5.97',
+    ebUrl:'https://www.ebay.com/itm/407080547476',
+    memo:'미국 셀러가 이미 $9~18에 국내배송. 국제배송비가 상품값보다 커서 구조적으로 불가능한 영역.'
+  },
+  {
+    name:'뉴진스 How Sweet Standard 앨범 (미개봉)', cat:'K-POP 앨범',
+    buy:14940, domShip:0, weight:300, price:13.70, buyerShip:0,
+    krNote:'쿠팡 14,940원(로켓배송, 2026-11-17)',
+    krUrl:'https://www.lowchart.com/8133674885-23101784777',
+    ebNote:'약 $13.70 · 무료 국제배송 다수',
+    ebUrl:'https://www.ebay.com/sch/i.html?_nkw=NewJeans+How+Sweet+album+sealed',
+    memo:'무게 대비 단가가 낮은 대표 사례. K-Packet 요금이 상품값을 넘어서 앨범류는 역직구 대상이 아니다.'
+  },
+  {
+    name:'올림푸스 mju II (35mm f/2.8, 중고)', cat:'카메라',
+    buy:190000, domShip:0, weight:300, price:195, buyerShip:0,
+    krNote:'중고나라 최근 등록 190,000원(평균 253,675원)',
+    krUrl:'https://web.joongna.com/search/%EC%98%AC%EB%A6%BC%ED%91%B8%EC%8A%A4%EB%AE%A42',
+    ebNote:'£145 중위가(111건 체결 기록) ≈ $195',
+    ebUrl:'https://www.cameraworth.com/o/olympus/mju-ii/',
+    memo:'한국 필름카메라 시세가 이미 세계 수준이라 차익이 얇다. 게다가 검수·반품 리스크가 가장 큰 카테고리.'
+  }
+];
+
+function renderSamples(){
+  const tb = document.querySelector('#sampleTable tbody');
+  tb.innerHTML = SAMPLES.map((s,i)=>{
+    const inp = {buy:s.buy, domShip:s.domShip, pack:1000, weight:s.weight, dest:'US',
+                 price:s.price, buyerShip:s.buyerShip, fvf:0.136, fx:1336.21, fxFee:0.02, tax:0};
+    const r = compute(inp);
+    const v = verdictOf(r.margin);
+    const cls = r.profit>=0 ? 'var(--good)' : 'var(--bad)';
+    return `<tr class="clickable" data-idx="${i}">
+      <td><b>${s.name}</b><div style="font-size:11px;color:var(--muted);margin-top:2px">${s.cat}</div></td>
+      <td class="num">${won(s.buy + s.domShip)}</td>
+      <td class="num">$${fmt2(s.price)}${s.buyerShip?`<div style="font-size:11px;color:var(--muted)">+$${fmt2(s.buyerShip)}</div>`:''}</td>
+      <td class="num">${fmt0(s.weight)}g</td>
+      <td class="num">${won(r.ship.cost||0)}<div style="font-size:11px;color:var(--muted)">${r.ship.way.split(' ')[0]}</div></td>
+      <td class="num" style="color:${cls};font-weight:650">${won(r.profit)}</td>
+      <td class="num" style="color:${cls}">${(r.margin*100).toFixed(1)}%</td>
+      <td><span class="badge ${v.cls}" style="font-size:11px;padding:3px 8px">${v.cls==='good'?'추천':v.cls==='warn'?'박리다매':'적자'}</span></td>
+    </tr>`;
+  }).join('');
+  tb.querySelectorAll('tr').forEach(tr=>{
+    tr.addEventListener('click', ()=> loadSample(+tr.dataset.idx));
+  });
+
+  const src = document.getElementById('sampleSrc');
+  src.innerHTML = SAMPLES.map((s,i)=>`
+    <div class="sample" data-idx="${i}">
+      <div class="h"><span class="name">${s.name}</span><span class="tag acc">${s.cat}</span></div>
+      <div class="meta">${s.memo}</div>
+      <div class="figs">
+        <span>국내 <b>${s.krNote}</b><br><a href="${s.krUrl}" target="_blank" rel="noopener">원문 보기</a></span>
+        <span>eBay <b>${s.ebNote}</b><br><a href="${s.ebUrl}" target="_blank" rel="noopener">리스팅 보기</a></span>
+      </div>
+    </div>`).join('');
+  src.querySelectorAll('.sample').forEach(el=>el.addEventListener('click', ev=>{
+    if (ev.target.tagName === 'A') return;
+    loadSample(+el.dataset.idx);
+  }));
+
+  const wins = SAMPLES.map(s=>{
+    const inp = {buy:s.buy, domShip:s.domShip, pack:1000, weight:s.weight, dest:'US',
+                 price:s.price, buyerShip:s.buyerShip, fvf:0.136, fx:1336.21, fxFee:0.02, tax:0};
+    return {s, r:compute(inp)};
+  }).sort((a,b)=>b.r.profit-a.r.profit);
+  const best = wins[0], worst = wins[wins.length-1];
+  document.getElementById('sampleRead').innerHTML =
+    `6개 중 흑자는 <b>${wins.filter(w=>w.r.profit>0).length}개</b>입니다. 가장 좋은 것은 <b>${best.s.name}</b>(${won(best.r.profit)}), 가장 나쁜 것은 <b>${worst.s.name}</b>(${won(worst.r.profit)})입니다. 흑자 품목의 공통점은 <b>국내에서 싸게 구할 수 있고(중고·재고), 무게가 가볍고, 한국에서만 나오는 것</b>입니다. 반대로 미국에 이미 재고가 있는 물건(화장품·앨범·일반 장난감)은 배송비만 더 붙어 손해입니다.`;
+}
+
+function loadSample(i){
+  const s = SAMPLES[i];
+  document.getElementById('buy').value = s.buy;
+  document.getElementById('domShip').value = s.domShip;
+  document.getElementById('pack').value = 1000;
+  document.getElementById('weight').value = s.weight;
+  document.getElementById('vol').value = 0;
+  document.getElementById('price').value = s.price;
+  document.getElementById('buyerShip').value = s.buyerShip;
+  document.querySelectorAll('#destSeg button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.dest==='US'));
+  render();
+  switchView('calc');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+/* ============ 리스팅 생성기 ============ */
+const DICT = [
+  ['방탄소년단','BTS'],['BTS','BTS'],['뉴진스','NewJeans'],['스트레이키즈','Stray Kids'],['블랙핑크','BLACKPINK'],
+  ['세븐틴','SEVENTEEN'],['엔하이픈','ENHYPEN'],['아이브','IVE'],['에스파','aespa'],['트와이스','TWICE'],
+  ['엑소','EXO'],['투모로우바이투게더','TXT'],['있지','ITZY'],['르세라핌','LE SSERAFIM'],['샤이니','SHINee'],
+  ['소녀시대',"Girls' Generation"],['엔시티','NCT'],['더보이즈','THE BOYZ'],['에이티즈','ATEEZ'],['베이비몬스터','BABYMONSTER'],
+  ['공식 응원봉','Official Light Stick'],['응원봉','Official Light Stick'],['아미밤','ARMY Bomb'],['아미봉','ARMY Bomb'],
+  ['포토카드','Photocard'],['포카','Photocard'],['앨범','Album'],['굿즈','Merchandise'],['공식','Official'],['정품','Authentic'],
+  ['한정판','Limited Edition'],['한국 한정','Korea Exclusive'],['국내 한정','Korea Exclusive'],['미개봉','Sealed'],['미사용','Unused'],
+  ['새상품','Brand New'],['중고','Pre-owned'],['개봉','Opened'],['풀박스','Full Set'],['박스 포함','with Box'],['구성품 완비','Complete Set'],
+  ['절판','Out of Print'],['희귀','Rare'],['오리지널','Original'],['세트','Set'],['단품','Single Item'],
+  ['키링','Keyring'],['인형','Plush'],['봉제인형','Plush Doll'],['피규어','Figure'],['쿠션','Cushion'],['담요','Blanket'],
+  ['텀블러','Tumbler'],['머그컵','Mug'],['후드','Hoodie'],['티셔츠','T-shirt'],['모자','Cap'],['가방','Bag'],['파우치','Pouch'],
+  ['에코백','Tote Bag'],['스티커','Sticker'],['우산','Umbrella'],['양말','Socks'],['폰케이스','Phone Case'],['손거울','Hand Mirror'],
+  ['다이어리','Diary'],['문구','Stationery'],['볼펜','Ballpoint Pen'],['노트','Notebook'],['마스킹테이프','Washi Tape'],
+  ['화장품','Cosmetics'],['선크림','Sunscreen'],['세럼','Serum'],['앰플','Ampoule'],['마스크팩','Sheet Mask'],['쿠션팩트','Cushion Compact'],
+  ['립밤','Lip Balm'],['클렌저','Cleanser'],['토너','Toner'],['크림','Cream'],
+  ['필름카메라','Film Camera'],['카메라','Camera'],['렌즈','Lens'],['게임기','Console'],['게임팩','Game Cartridge'],
+  ['카트리지','Cartridge'],['보드게임','Board Game'],['퍼즐','Puzzle'],['피규어','Figure'],
+  ['산리오','Sanrio'],['포켓몬','Pokemon'],['마이멜로디','My Melody'],['쿠로미','Kuromi'],['시나모롤','Cinnamoroll'],
+  ['헬로키티','Hello Kitty'],['포차코','Pochacco'],['짱구','Crayon Shin-chan'],['카카오프렌즈','Kakao Friends'],
+  ['미개봉 새상품','Sealed Brand New'],['테스트 완료','Tested'],['작동 확인','Working'],['흠집','Scratch'],['박스 손상','Box Damage']
+];
+function translateKR(text){
+  let t = text;
+  const parts = t.split(/[,\s]+/).filter(Boolean);
+  const mapped = parts.map(p => {
+    let out = p;
+    for (const [kr, en] of DICT){
+      if (p === kr) { out = en; break; }
+      if (p.includes(kr)) out = p.replace(kr, en);
+    }
+    return out;
+  });
+  return mapped;
+}
+function buildTitle(){
+  const name = document.getElementById('pName').value.trim();
+  const feats = document.getElementById('pFeat').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const cond = document.getElementById('pCond').value;
+  const qty = document.getElementById('pQty').value.trim();
+  let tokens = [];
+  translateKR(name).forEach(t=>tokens.push(t));
+  feats.forEach(f=>translateKR(f).forEach(t=>tokens.push(t)));
+  if (cond === 'new') tokens.push('Brand New Sealed');
+  if (cond === 'openbox') tokens.push('Open Box Tested');
+  if (cond === 'used') tokens.push('Pre-owned');
+  tokens.push('Korea');
+  if (qty) tokens.push(qty);
+  // 중복 제거(대소문자 무시)
+  const seen = new Set(); const out = [];
+  for (let t of tokens){
+    const k = t.toLowerCase().replace(/[^a-z0-9가-힣]/g,'');
+    if (!k || seen.has(k)) continue;
+    seen.add(k); out.push(t);
+  }
+  let title = out.join(' ');
+  if (title.length > 80){
+    let kept = [], len = 0;
+    for (const t of out){
+      if (len + t.length + 1 > 80) break;
+      kept.push(t); len += t.length + 1;
+    }
+    title = kept.join(' ');
+  }
+  return title.slice(0,80);
+}
+function buildDesc(){
+  const name = document.getElementById('pName').value.trim();
+  const feats = document.getElementById('pFeat').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const cond = document.getElementById('pCond').value;
+  const cat = document.getElementById('pCat').value;
+  const qty = document.getElementById('pQty').value.trim();
+  const ship = document.getElementById('pShip').value;
+  const condText = cond==='new' ? 'Brand New / Sealed in original packaging'
+                 : cond==='openbox' ? 'Open Box — inspected and tested, never used'
+                 : 'Pre-owned — see photos for condition';
+  const shipText = ship==='ems' ? 'Korea Post EMS (express, tracked, insured)'
+                 : ship==='free' ? 'Free standard international shipping (tracked)'
+                 : 'Korea Post K-Packet (tracked)';
+  const specifics = {
+    kpop: 'Brand, Type, Artist, Country/Region of Manufacture: Korea, Republic of, Features: Official Merchandise',
+    character: 'Brand, Character Family, Type, Year Manufactured, Country/Region of Manufacture: Korea',
+    beauty: 'Brand, Type, Volume, Skin Type, Country/Region of Manufacture: South Korea, Expiration Date',
+    camera: 'Brand, Model, Type, Format, Features, Country/Region of Manufacture',
+    stationery: 'Brand, Type, Material, Color, Country/Region of Manufacture: Korea'
+  }[cat];
+  const lines = [
+    name ? translateKR(name).join(' ') : '(English title here)',
+    '',
+    '--- ITEM ---',
+    'Condition: ' + condText,
+    qty ? 'Size / Quantity: ' + qty : null,
+    'Ships from: South Korea',
+    'Country/Region of Manufacture: Korea, Republic of',
+    '',
+    '--- HIGHLIGHTS ---',
+    ...(feats.length ? feats.map(f => '- ' + translateKR(f).join(' ')) : ['- 100% authentic item purchased in Korea', '- Carefully packed for international shipping']),
+    '- Authentic Korean release (not a reprint or copy)',
+    '',
+    '--- SHIPPING ---',
+    '- ' + shipText,
+    '- Handling time: 1–3 business days after payment',
+    '- Delivery estimate: 7–14 business days (varies by destination and customs)',
+    '- Tracking number uploaded to eBay as soon as the parcel is accepted at the post office',
+    '- Import duties, VAT and customs fees, if any, are the buyer\'s responsibility',
+    '',
+    '--- RETURNS ---',
+    '- 30 days return accepted if the item is not as described',
+    '- Buyer pays return shipping; item must be returned in the condition it was received',
+    '',
+    '--- AUTHENTICITY ---',
+    '- Sourced and inspected in Korea. Photos in this listing are of the actual item.',
+    '- Any questions about condition or contents: please message before purchase.',
+    '',
+    '--- ITEM SPECIFICS (fill in the blank values) ---',
+    specifics
+  ].filter(v => v !== null);
+  return lines.join('\n');
+}
+function updateListing(){
+  const t = buildTitle();
+  document.getElementById('titleOut').textContent = t || '—';
+  const c = document.getElementById('titleCount');
+  c.textContent = t.length + ' / 80';
+  c.className = 'count' + (t.length > 80 ? ' over' : '');
+  document.getElementById('descOut').textContent = buildDesc();
+}
+async function copyText(elId, btn){
+  const text = document.getElementById(elId).textContent;
+  try{
+    await navigator.clipboard.writeText(text);
+    const old = btn.textContent; btn.textContent = '복사됨';
+    setTimeout(()=>btn.textContent = old, 1200);
+  }catch(e){
+    const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy'); ta.remove();
+    const old = btn.textContent; btn.textContent = '복사됨'; setTimeout(()=>btn.textContent = old, 1200);
+  }
+}
+
+/* ============ 화면 전환 ============ */
+function switchView(v){
+  document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected', b.dataset.view===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('active', s.id === 'view-'+v));
+}
+
+/* ============ 저장 / 초기화 ============ */
+const FIELDS = ['buy','domShip','pack','weight','vol','price','buyerShip','cat','fx','fxFee','tax','goal','mins','sellRate'];
+function saveState(){
+  const o = {}; FIELDS.forEach(id=>{ const el = document.getElementById(id); if (el) o[id]=el.value; });
+  o.dest = document.querySelector('#destSeg button[aria-pressed="true"]').dataset.dest;
+  try{ localStorage.setItem('ebayRadar', JSON.stringify(o)); }catch(e){}
+}
+function restoreState(){
+  try{
+    const o = JSON.parse(localStorage.getItem('ebayRadar')||'null'); if(!o) return;
+    FIELDS.forEach(id=>{ if (o[id] !== undefined && document.getElementById(id)) document.getElementById(id).value = o[id]; });
+    if (o.dest) document.querySelectorAll('#destSeg button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.dest===o.dest));
+  }catch(e){}
+}
+
+/* ============ 실시간 환율 ============ */
+async function fetchFX(){
+  const meta = document.getElementById('fxMeta');
+  const hint = document.getElementById('fxHint');
+  const setRate = (rate, label) => {
+    document.getElementById('fx').value = rate.toFixed(2);
+    meta.textContent = label;
+    hint.textContent = label;
+    render();
+  };
+  const getJSON = async (url, ms=5000) => {
+    const ctrl = new AbortController();
+    const t = setTimeout(()=>ctrl.abort(), ms);
+    try { const r = await fetch(url, {signal:ctrl.signal}); return await r.json(); }
+    finally { clearTimeout(t); }
+  };
+  try{
+    const j = await getJSON('https://open.er-api.com/v6/latest/USD');
+    const rate = j && j.rates && j.rates.KRW;
+    if (rate && rate > 500){
+      const d = new Date((j.time_last_update_unix||0)*1000);
+      setRate(rate, '실시간 조회 ' + d.toISOString().slice(0,10));
+      return;
+    }
+  }catch(e){}
+  try{
+    const j2 = await getJSON('https://api.frankfurter.dev/v1/latest?from=USD&to=KRW');
+    const rate2 = j2 && j2.rates && j2.rates.KRW;
+    if (rate2 && rate2 > 500){ setRate(rate2, 'ECB 고시 ' + j2.date); return; }
+  }catch(e){}
+  meta.textContent = 'ECB 고시 2026-11-17 (고정값)';
+  hint.textContent = '자동 조회 실패 · 수동 수정 가능';
+}
+
+/* ============ 이벤트 ============ */
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click', ()=>switchView(b.dataset.view)));
+document.querySelectorAll('#destSeg button').forEach(b=>b.addEventListener('click', ()=>{
+  document.querySelectorAll('#destSeg button').forEach(x=>x.setAttribute('aria-pressed','false'));
+  b.setAttribute('aria-pressed','true'); render();
+}));
+FIELDS.forEach(id=>{ const el = document.getElementById(id); if (el) el.addEventListener('input', render); });
+document.getElementById('recalc').addEventListener('click', render);
+document.getElementById('reset').addEventListener('click', ()=>{
+  const def = {buy:73520, domShip:0, pack:1000, weight:400, vol:0, price:75.83, buyerShip:0, fx:1336.21, fxFee:2, tax:0, goal:1000000, mins:70, sellRate:30};
+  Object.entries(def).forEach(([k,v])=>{ const el = document.getElementById(k); if (el) el.value = v; });
+  document.getElementById('cat').value = '0.136';
+  document.querySelectorAll('#destSeg button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.dest==='US'));
+  render();
+});
+['pName','pFeat','pCond','pCat','pQty','pShip'].forEach(id=>{
+  const el = document.getElementById(id);
+  el.addEventListener('input', updateListing);
+  el.addEventListener('change', updateListing);
+});
+document.getElementById('genBtn').addEventListener('click', updateListing);
+document.getElementById('copyTitle').addEventListener('click', e=>copyText('titleOut', e.currentTarget));
+document.getElementById('copyDesc').addEventListener('click', e=>copyText('descOut', e.currentTarget));
+
+restoreState();
+renderSamples();
+render();
+updateListing();
+fetchFX();
+</script>
+</body>
+</html>
