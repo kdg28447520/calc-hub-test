@@ -1,0 +1,16 @@
+{
+  "name": "남부사무소 현장별 자재 및 공도구 대장",
+  "short_name": "남부사무소 현장별 자재 및 공도구 대장",
+  "description": "남부사무소 44개 현장의 자재·공도구 재고와 전출가능 수량·시공 정보를 한 곳에서 보는 팀 공유 대장",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f6f8",
+  "theme_color": "#ffffff",
+  "lang": "ko",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
