@@ -743,9 +743,9 @@ function renderSamples(){
     return `<tr class="clickable" data-idx="${i}">
       <td data-l="품목"><b>${s.name}</b><div style="font-size:11px;color:var(--muted);margin-top:2px">${s.cat}</div></td>
       <td class="num" data-l="국내 매입가">${won(s.buy + s.domShip)}</td>
-      <td class="num" data-l="eBay 시세">$${fmt2(s.price)}${s.buyerShip?`<div style="font-size:11px;color:var(--muted)">+$${fmt2(s.buyerShip)}</div>`:''}</td>
+      <td class="num" data-l="eBay 시세"><span>$${fmt2(s.price)}${s.buyerShip?` <span style="font-size:11px;color:var(--muted)">+$${fmt2(s.buyerShip)}</span>`:''}</span></td>
       <td class="num" data-l="무게">${fmt0(s.weight)}g</td>
-      <td class="num" data-l="국제배송">${won(r.ship.cost||0)}<div style="font-size:11px;color:var(--muted)">${r.ship.way.split(' ')[0]}</div></td>
+      <td class="num" data-l="국제배송"><span>${won(r.ship.cost||0)} <span style="font-size:11px;color:var(--muted)">${r.ship.way.split(' ')[0]}</span></span></td>
       <td class="num" data-l="순이익" style="color:${cls};font-weight:650">${won(r.profit)}</td>
       <td class="num" data-l="마진" style="color:${cls}">${(r.margin<0?'−':'')}${Math.abs(r.margin*100).toFixed(1)}%</td>
       <td data-l="판정"><span class="badge ${v.cls}" style="font-size:11px;padding:3px 8px">${short}</span></td>
