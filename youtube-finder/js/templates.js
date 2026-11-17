@@ -30,6 +30,8 @@ export async function ensureFonts(allText) {
 }
 
 const clamp01 = v => Math.max(0, Math.min(1, v));
+// 글자 크기 기준: 가로 영상에서도 세로 영상과 같은 비례로 보이도록 짧은 쪽을 쓴다
+const sizeRef = (W, H) => (W > H ? H * 9 / 16 : W);
 const HEX = /^#?[0-9a-f]{6}$/i;
 
 function rgba(hex, a) {
@@ -339,7 +341,7 @@ function drawTitle(ctx, W, H, t, st) {
   if (!cfg) return;
   const scale = (st.opt?.title?.scale || 1);
   const family = st.opt?.title?.family || cfg.family;
-  const size = W * cfg.size * scale;
+  const size = sizeRef(W, H) * cfg.size * scale;
   const text = Array.isArray(st.title) ? st.title.filter(s => String(s).trim() !== '').slice(0, cfg.lines || 2) : String(st.title || '');
   if (!text.length) return;
   const cx = W / 2 + (st.opt?.title?.dx || 0);
@@ -352,17 +354,17 @@ function drawTitle(ctx, W, H, t, st) {
     ctx.save();
     ctx.font = fontCss(family, cfg.weight, size);
     const probe = drawMeasure(ctx, text, size, maxW, cfg.lines || 2, cfg.bubble ? 0.86 : 0.9);
-    const bw = probe.w + W * box.padX * 0.5, bh = probe.h + H * box.padY * 0.02;
+    const bw = probe.w + size * (box.padX || 0.45) * 0.9, bh = probe.h + size * 0.55;
     if (box.rot) { ctx.translate(cx, cy); ctx.rotate(box.rot); ctx.translate(-cx, -cy); }
     ctx.fillStyle = rgba(box.color, box.alpha ?? 1);
-    roundRect(ctx, cx - bw / 2, cy - bh / 2, bw, bh, W * (box.radius || 0.1));
+    roundRect(ctx, cx - bw / 2, cy - bh / 2, bw, bh, size * (box.radius || 0.2) * 2);
     ctx.fill();
     if (box.tail) {
       ctx.beginPath();
       const tx = cx, ty = cy + bh / 2;
-      ctx.moveTo(tx - W * 0.022, ty - 1);
-      ctx.lineTo(tx + W * 0.022, ty - 1);
-      ctx.lineTo(tx, ty + H * 0.022);
+      ctx.moveTo(tx - size * 0.3, ty - 1);
+      ctx.lineTo(tx + size * 0.3, ty - 1);
+      ctx.lineTo(tx, ty + size * 0.4);
       ctx.closePath(); ctx.fill();
     }
     ctx.restore();
@@ -397,7 +399,8 @@ function drawCue(ctx, W, H, t, st) {
   if (!cue) return;
   const scale = (st.opt?.cap?.scale || 1);
   const family = st.opt?.cap?.family || cfg.family;
-  const size = W * cfg.size * scale;
+  const M = sizeRef(W, H);
+  const size = M * cfg.size * scale;
   const y = H * (st.opt?.cap?.y ?? cfg.y);
   const cx = W / 2 + (st.opt?.cap?.dx || 0);
   const maxW = W * 0.86;
@@ -481,7 +484,7 @@ function drawBottom(ctx, W, H, t, st) {
   const text = String(st.bottom || '').trim();
   if (!text) return;
   const cfg = t.bottom || t.cap || {};
-  const size = W * 0.034;
+  const size = sizeRef(W, H) * 0.034;
   drawRichText(ctx, text, {
     x: W / 2, y: H * 0.955, size, weight: 700,
     family: st.opt?.bottom?.family || 'gowun', color: cfg.color || '#fff',
@@ -499,7 +502,7 @@ function drawStickers(ctx, W, H, st) {
     if (!text) return;
     const x = W * s.x, y = H * s.y;
     const fam = st.opt?.sticker?.family || 'black';
-    let size = W * 0.055;
+    let size = sizeRef(W, H) * 0.055;
     ctx.save();
     ctx.font = fontCss(fam, 900, size);
     let tw = ctx.measureText(text).width;
@@ -596,13 +599,13 @@ function drawProfile(ctx, W, H, t) {
   ctx.save();
   ctx.fillStyle = '#3182F6';
   ctx.beginPath(); ctx.arc(W * 0.09, y, W * 0.026, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#fff'; ctx.font = fontCss('pretendard', 800, W * 0.03);
+  ctx.fillStyle = '#fff'; ctx.font = fontCss('pretendard', 800, sizeRef(W, H) * 0.03);
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText('구독', W * 0.09, y);
   ctx.textAlign = 'left';
-  ctx.fillStyle = '#191F28'; ctx.font = fontCss('pretendard', 800, W * 0.03);
+  ctx.fillStyle = '#191F28'; ctx.font = fontCss('pretendard', 800, sizeRef(W, H) * 0.03);
   ctx.fillText('@mychannel', W * 0.133, y - W * 0.012);
-  ctx.fillStyle = '#8B95A1'; ctx.font = fontCss('pretendard', 600, W * 0.024);
+  ctx.fillStyle = '#8B95A1'; ctx.font = fontCss('pretendard', 600, sizeRef(W, H) * 0.024);
   ctx.fillText('방금 전 · 조회 1.2만회', W * 0.133, y + W * 0.018);
   ctx.restore();
 }
