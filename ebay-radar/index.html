@@ -44,6 +44,7 @@
   }
   .tabs button[aria-selected="true"]{color:var(--ink); border-bottom-color:var(--accent); font-weight:600}
   main{padding:22px 0 60px}
+  main.wrap{padding:22px 20px 60px}
   section.view{display:none}
   section.view.active{display:block}
   .lede{font-size:13.5px; color:var(--muted); margin:0 0 16px; max-width:74ch}
@@ -642,7 +643,9 @@ function renderGoal(){
   if (per <= 0){
     unitsEl.textContent = '불가';
     wEl.textContent = '—'; hEl.textContent = '—'; dEl.textContent = '—';
-    note.innerHTML = '현재 조건은 한 건당 순이익이 <b>0원 이하</b>라 월 목표를 채울 수 없습니다. 판매가를 올리거나 매입가·무게를 낮춰야 합니다.';
+    note.innerHTML = '현재 조건은 한 건당 순이익이 <b>0원 이하</b>라 월 목표를 채울 수 없습니다. 판매가를 올리거나 매입가·무게를 낮춰야 합니다. <a href="#" id="goSamples">실측 품목 6종</a>에서 흑자 품목을 계산기에 불러오면 이 숫자가 채워집니다.';
+    const link = document.getElementById('goSamples');
+    if (link) link.addEventListener('click', ev=>{ ev.preventDefault(); switchView('samples'); });
     return;
   }
   const units = Math.ceil(goal/per);
