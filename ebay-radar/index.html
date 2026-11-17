@@ -154,6 +154,42 @@
   footer.foot{border-top:1px solid var(--line); background:#fff; padding:24px 0 40px; font-size:12px; color:var(--muted)}
   footer.foot h3{font-size:12.5px; color:var(--ink-2); margin:16px 0 6px}
   footer.foot ul{margin:0; padding-left:16px} footer.foot li{margin:3px 0}
+  /* ===== 실측 DB 레이더 ===== */
+  .dbkpi{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin:0 0 14px}
+  @media (max-width:760px){ .dbkpi{grid-template-columns:1fr 1fr} }
+  .dbkpi > div{background:#fff; border:1px solid var(--line); border-radius:12px; padding:11px 13px; box-shadow:var(--shadow)}
+  .dbkpi .k{font-size:11.5px; color:var(--muted); display:flex; align-items:center; gap:4px}
+  .dbkpi .v{font-size:20px; font-weight:750; letter-spacing:-.02em; margin-top:2px}
+  .dbkpi .v small{font-size:12px; font-weight:500; color:var(--muted); margin-left:2px}
+  .dbkpi .v.g{color:var(--good)} .dbkpi .v.w{color:var(--warn)}
+  .dbctrl{display:flex; gap:8px; flex-wrap:wrap; align-items:center; padding:12px 18px; border-bottom:1px solid var(--line-2)}
+  .dbctrl input[type="search"]{flex:1 1 200px; min-width:150px; padding:8px 11px; font:inherit; font-size:13.5px; border:1px solid var(--line); border-radius:9px}
+  .dbctrl select{padding:8px 26px 8px 10px; font:inherit; font-size:13px; border:1px solid var(--line); border-radius:9px; background:#fff; appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M1 1l5 5 5-5' fill='none' stroke='%2364748b' stroke-width='1.5'/></svg>");
+    background-repeat:no-repeat; background-position:right 8px center}
+  .dbctrl .chk{display:inline-flex; align-items:center; gap:6px; font-size:13px; color:var(--ink-2); border:1px solid var(--line); border-radius:9px; padding:7px 11px; background:#fff; cursor:pointer; white-space:nowrap}
+  .dbctrl .chk input{accent-color:var(--accent); margin:0}
+  .dbctrl .chk:has(input:checked){background:var(--accent-weak); border-color:var(--accent-line); color:var(--accent); font-weight:600}
+  #dbTable{min-width:840px}
+  #dbTable td .src{display:flex; gap:8px; font-size:11.5px; margin-top:3px}
+  #dbTable td .src a{white-space:nowrap}
+  #dbTable td.nm{max-width:280px}
+  #dbTable td.nm b{font-weight:600}
+  #dbTable td.nm .memo{font-size:11px; color:var(--muted); margin-top:2px; line-height:1.4}
+  #dbTable tr.clickable:hover td{background:var(--accent-weak)}
+  @media (max-width:640px){
+    #dbTable{min-width:0}
+    #dbTable thead{display:none}
+    #dbTable tbody tr{display:block; padding:12px 14px; border-bottom:1px solid var(--line-2)}
+    #dbTable td{display:flex; justify-content:space-between; align-items:baseline; gap:12px; padding:3px 0; border:0; text-align:right; font-size:12.5px}
+    #dbTable td::before{content:attr(data-l); color:var(--muted); font-size:11.5px; font-weight:500; text-align:left}
+    #dbTable td.nm{display:block; text-align:left; max-width:none; margin-bottom:6px; padding:0}
+    #dbTable td.nm::before{content:none}
+    #dbTable td.srcs{display:block; text-align:left; padding-top:4px}
+    #dbTable td.srcs::before{content:none}
+  }
+  .dbempty{padding:28px 18px; text-align:center; color:var(--muted); font-size:13px}
+  .stamp{font-size:11.5px; color:var(--muted-2)}
   .sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0)}
   @media (max-width:560px){
     .big{grid-template-columns:1fr}
@@ -180,7 +216,7 @@
 <nav class="tabs" aria-label="화면 이동">
   <div class="tabs-in">
     <button role="tab" aria-selected="true" data-view="calc">마진 계산기</button>
-    <button role="tab" aria-selected="false" data-view="samples">실측 품목 6종</button>
+    <button role="tab" aria-selected="false" data-view="samples">실측 DB 레이더</button>
     <button role="tab" aria-selected="false" data-view="listing">eBay 영어 리스팅</button>
     <button role="tab" aria-selected="false" data-view="reality">포장·발송 현실</button>
   </div>
@@ -298,37 +334,55 @@
   </div>
 </section>
 
-<!-- ================= SAMPLES ================= -->
+<!-- ================= SAMPLES / DB ================= -->
 <section class="view" id="view-samples">
-  <p class="lede">2026년 11월 17일 직접 조회한 실제 국내 최저가와 eBay 실제 리스팅 가격입니다. eBay 쪽은 <b>누적 판매 수가 표시된 활성 리스팅의 현재가</b>이며(로그인 없이는 실제 체결가 필터를 볼 수 없습니다), 배송비는 각 리스팅이 실제로 받는 금액을 그대로 넣었습니다. 행을 누르면 그 조건이 계산기에 들어갑니다.</p>
+  <p class="lede">다나와 통합검색에서 <b>실행할 때마다 새로 긁어온 국내 최저가</b>와, eBay에서 실제로 판매 중인 리스팅 가격을 품목 단위로 1:1 맞춘 표입니다. eBay 가격은 <b>누적 판매 수가 표시된 활성 리스팅의 현재가</b>이고 배송지 기준은 미국(10001), 배송비는 각 리스팅이 실제로 받는 금액입니다. 행을 누르면 그 조건이 계산기에 그대로 들어갑니다.</p>
+
+  <div class="dbkpi" id="dbKpi">
+    <div><div class="k">총 수집 건수</div><div class="v" id="kpiTotal">—</div></div>
+    <div><div class="k">흑자 품목</div><div class="v g" id="kpiProfit">—</div></div>
+    <div><div class="k">추천 <span class="stamp">마진 20%↑</span></div><div class="v g" id="kpiRec">—</div></div>
+    <div><div class="k">마지막 수집</div><div class="v" id="kpiTime" style="font-size:14px;font-weight:600">—</div></div>
+  </div>
+
   <div class="card">
-    <div class="card-h"><h2>실측 비교 — 각 리스팅의 실제 조건(미국·환율 1,336원)으로 계산</h2><span class="sub">행 클릭 → 계산기로 이동</span></div>
+    <div class="card-h"><h2>실측 DB 레이더</h2><span class="sub" id="dbShown">—</span></div>
+    <div class="dbctrl">
+      <input type="search" id="dbSearch" placeholder="품목·셀러·카테고리 검색" aria-label="검색">
+      <select id="dbCat" aria-label="카테고리"><option value="">모든 카테고리</option></select>
+      <select id="dbSort" aria-label="정렬">
+        <option value="profit">순이익 높은 순</option>
+        <option value="margin">마진율 높은 순</option>
+        <option value="sold">판매량 순</option>
+        <option value="price">eBay 가격 높은 순</option>
+      </select>
+      <label class="chk"><input type="checkbox" id="dbProfitOnly"> 흑자만 보기</label>
+    </div>
     <div class="tablewrap">
-      <table id="sampleTable">
+      <table id="dbTable">
         <thead>
           <tr>
             <th>품목</th>
-            <th class="num">국내 매입가</th>
+            <th class="num">국내 최저가</th>
             <th class="num">eBay 시세</th>
             <th class="num">무게</th>
             <th class="num">국제배송</th>
             <th class="num">순이익</th>
             <th class="num">마진</th>
             <th>판정</th>
+            <th>출처</th>
           </tr>
         </thead>
         <tbody></tbody>
       </table>
+      <div class="dbempty" id="dbEmpty" style="display:none">조건에 맞는 품목이 없습니다.</div>
     </div>
   </div>
-  <div class="card" style="margin-top:16px">
-    <div class="card-h"><h2>어디서 확인했나</h2><span class="sub">국내 · eBay 원문 링크</span></div>
-    <div class="card-b"><div class="samples" id="sampleSrc"></div></div>
-  </div>
+
   <div class="stack" style="margin-top:16px">
-    <div class="callout" id="sampleRead"></div>
+    <div class="callout" id="dbRead"></div>
     <div class="callout warn">
-      <b>읽는 법.</b> 국내 최저가와 eBay 최저가를 나란히 놓으면 흑자라도 마진이 한 자릿수에 붙습니다. 이 표가 보여주는 건 “무엇을 팔면 남는가”가 아니라 <b>“어떤 조건에서만 남는가”</b>입니다. 국내에서 구하기 어렵고, 한국에서만 풀리는 물건이면서, 무게 대비 단가가 높아야 합니다.
+      <b>읽는 법.</b> 국내 최저가와 eBay 최저가를 나란히 놓으면 흑자라도 마진이 한 자릿수에 붙습니다. 이 표가 보여주는 건 “무엇을 팔면 남는가”가 아니라 <b>“어떤 조건에서만 남는가”</b>입니다. 흑자 품목의 공통점은 ① 한국에서만 풀리는 물량이고 ② 무게 대비 단가가 높고 ③ eBay에 같은 상품을 파는 셀러가 적다는 것입니다. 판정 기준은 DB 탭에서 마진 20% 이상 추천 / 5~20% 박리다매 / 0~5% 위험 / 0% 미만 적자입니다(계산기 배지는 15% 기준).
     </div>
   </div>
 </section>
@@ -482,7 +536,8 @@
       <li>국제배송: 과학기술정보통신부 고시 제2026-46호 「국제우편에 관한 요금」(2026-07-01 시행) 별표4 K-Packet·별표5 EMS. EMS는 우정사업본부 2026년 요금표의 <b>비서류·추가운송수수료 포함</b> 금액입니다.</li>
       <li>eBay: 미국 판매 수수료표(대부분 카테고리 13.6%, 도서·음반 15.3%, 수집품 13.25%, 주문당 $0.30~$0.40), 한국 등록 셀러 국제 수수료 1.45%. 수수료는 상품가+구매자 배송비+판매세를 합한 총액에 부과됩니다.</li>
       <li>Payoneer: 원화 인출 시 환전 수수료 1.2~4%(이 계산기 기본값 2%), 1회 $100 이하 $1, 연 $6,000 미만 연 $29.95.</li>
-      <li>환율: ECB 기준 2026-11-17 USD/KRW 1,336.21 (페이지를 열 때 실시간 조회를 시도하고, 실패하면 이 값을 씁니다).</li>
+      <li>환율: 페이지를 열 때 실시간 조회(open.er-api.com → frankfurter 순)하고, 실패하면 ECB 2026-11-17 기준 1,336.21원을 씁니다.</li>
+      <li>DB 출처: 국내 최저가는 <b>다나와 통합검색</b>의 판매처별 최저가(해외·직구 판매처, 케이스·스티커류 액세서리 제외), eBay 가격은 <b>배송지 미국 10001·즉시구매 필터</b>를 건 실제 검색 결과입니다. eBay가 한국 로케일로 KRW로 표시한 금액을 eBay 자체 환산 환율(1,335.78원/USD, 2026-11-17 화면 역산)로 나눠 USD로 되돌렸습니다.</li>
     </ul>
     <h3>이 앱이 하지 않는 것</h3>
     <ul>
@@ -673,127 +728,122 @@ function renderGoal(){
   if (nu2) nu2.textContent = fmt0(units);
 }
 
-/* ============ 샘플 ============ */
-const SAMPLES = [
-  {
-    name:'BTS 공식 응원봉 Ver.4 (미개봉)', cat:'K-POP 굿즈',
-    buy:73520, domShip:0, weight:400, price:75.80, buyerShip:8.99,
-    krNote:'다나와 최저가 73,520원(무료배송)',
-    krUrl:'https://search.danawa.com/dsearch.php?k1=BTS%20%EC%9D%91%EC%9B%90%EB%B4%89%20ver.4',
-    ebNote:'US $75.80 + 배송비 $8.99 · EMONEshop.korea(안양) · 216개 판매',
-    ebUrl:'https://www.ebay.com/itm/293545143346',
-    memo:'220명이 보고 216건이 나갔지만, 이 가격에 배송비를 안 받으면 적자입니다. 같은 상품 한국 셀러는 $99.97(무료배송)까지 올려져 있으니, 무료배송으로 $90에 올리면 마진 12% — 결국 “얼마에 올릴 수 있나”가 승부처.'
-  },
-  {
-    name:'BTS 응원봉 SE (MOTS, 개봉·검수)', cat:'K-POP 굿즈',
-    buy:10000, domShip:0, weight:400, price:59.99, buyerShip:0,
-    krNote:'당근 중고 시세 10,000원(2026-11)',
-    krUrl:'https://www.daangn.com/kr/buy-sell/bts-%EC%95%84%EB%AF%B8%EB%B0%A4-ver-3-se-ver-a3qwpr5u926u/',
-    ebNote:'$59.99 · solefromearth(서울) · 33개 판매 · 무료 국제배송',
-    ebUrl:'https://www.ebay.com/itm/125198808635',
-    memo:'공식 정가는 49,000원 수준(2026-03 연합뉴스). 국내 중고가 1만원대일 때만 남는 구조라, 재고가 곧 수익.'
-  },
-  {
-    name:'포켓몬 카드 한국판 인페르노X 박스(30팩)', cat:'캐릭터·수집품',
-    buy:64410, domShip:0, weight:400, price:61.38, buyerShip:10,
-    krNote:'다나와 최저가 64,410원',
-    krUrl:'https://plan.danawa.com/info/index.php?nPlanSeq=13186',
-    ebNote:'$61.38 + 배송비 $10 · TCG Company(서울) · 197개 판매',
-    ebUrl:'https://www.ebay.com/itm/306618155440',
-    memo:'미국 내 재고 셀러는 $62.99 무료배송(111개 판매). 한국에서 보내면 배송비를 구매자가 내도 마진이 0에 붙는다.'
-  },
-  {
-    name:'조선미녀 맑은쌀 선크림 50ml', cat:'K-뷰티',
-    buy:13400, domShip:2500, weight:200, price:9.49, buyerShip:5.97,
-    krNote:'올리브영 13,400원 + 배송비 2,500원',
-    krUrl:'https://search.danawa.com/dsearch.php?k1=%EC%A1%B0%EC%84%A0%EB%AF%B8%EB%85%80%20%EC%84%A0%ED%81%AC%EB%A6%BC',
-    ebNote:'US $9.49 + 배송비 $5.97 · 미국 셀러(메릴랜드)',
-    ebUrl:'https://www.ebay.com/itm/407080547476',
-    memo:'미국 셀러가 이미 $9~18에 국내배송. 국제배송비가 상품값보다 커서 구조적으로 불가능한 영역.'
-  },
-  {
-    name:'뉴진스 How Sweet Standard 앨범 (미개봉)', cat:'K-POP 앨범',
-    buy:14940, domShip:0, weight:300, price:13.70, buyerShip:0,
-    krNote:'쿠팡 14,940원(로켓배송, 2026-11-17)',
-    krUrl:'https://www.lowchart.com/8133674885-23101784777',
-    ebNote:'약 $13.70 · 무료 국제배송 다수',
-    ebUrl:'https://www.ebay.com/sch/i.html?_nkw=NewJeans+How+Sweet+album+sealed',
-    memo:'무게 대비 단가가 낮은 대표 사례. K-Packet 요금이 상품값을 넘어서 앨범류는 역직구 대상이 아니다.'
-  },
-  {
-    name:'올림푸스 mju II (35mm f/2.8, 중고)', cat:'카메라',
-    buy:190000, domShip:0, weight:300, price:195, buyerShip:0,
-    krNote:'중고나라 최근 등록 190,000원(평균 253,675원)',
-    krUrl:'https://web.joongna.com/search/%EC%98%AC%EB%A6%BC%ED%91%B8%EC%8A%A4%EB%AE%A42',
-    ebNote:'£145 중위가(111건 체결 기록) ≈ $195',
-    ebUrl:'https://www.cameraworth.com/o/olympus/mju-ii/',
-    memo:'한국 필름카메라 시세가 이미 세계 수준이라 차익이 얇다. 게다가 검수·반품 리스크가 가장 큰 카테고리.'
+/* ============ 실측 DB 레이더 ============ */
+const DB = { items: [], meta: null, sort: 'profit', cat: '', q: '', profitOnly: false };
+
+function dbVerdict(margin){
+  if (margin >= 0.20) return ['good', '추천'];
+  if (margin >= 0.05) return ['warn', '박리다매'];
+  if (margin >= 0) return ['warn', '위험'];
+  return ['bad', '적자'];
+}
+const fmtTime = iso => {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (isNaN(d)) return iso;
+  const p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+};
+
+async function loadDB(){
+  const tbody = document.querySelector('#dbTable tbody');
+  try{
+    const res = await fetch('data/items.json', {cache:'no-store'});
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    DB.items = data.items || [];
+    DB.meta = data;
+    document.getElementById('kpiTotal').textContent = data.counts?.total ?? DB.items.length;
+    document.getElementById('kpiProfit').textContent = data.counts?.profit ?? DB.items.filter(i=>i.profit>0).length;
+    document.getElementById('kpiRec').textContent = DB.items.filter(i=>i.margin>=0.20).length;
+    document.getElementById('kpiTime').textContent = fmtTime(data.generatedAt);
+    const cats = [...new Set(DB.items.map(i=>i.cat))].sort();
+    const sel = document.getElementById('dbCat');
+    cats.forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; sel.appendChild(o); });
+    renderDB();
+  }catch(err){
+    tbody.innerHTML = '';
+    document.getElementById('dbEmpty').style.display = 'block';
+    document.getElementById('dbEmpty').textContent = 'DB를 불러오지 못했습니다(' + err.message + '). data/items.json 경로와 배포 상태를 확인하세요.';
   }
-];
-
-function renderSamples(){
-  const tb = document.querySelector('#sampleTable tbody');
-  tb.innerHTML = SAMPLES.map((s,i)=>{
-    const inp = {buy:s.buy, domShip:s.domShip, pack:1000, weight:s.weight, dest:'US',
-                 price:s.price, buyerShip:s.buyerShip, fvf:0.136, fx:1336.21, fxFee:0.02, tax:0};
-    const r = compute(inp);
-    const v = verdictOf(r.margin);
-    const cls = r.profit>=0 ? 'var(--good)' : 'var(--bad)';
-    const short = r.profit < 0 ? '적자' : (r.margin < 0.05 ? '위험' : (r.margin >= 0.15 ? '추천' : '박리다매'));
-    return `<tr class="clickable" data-idx="${i}">
-      <td data-l="품목"><b>${s.name}</b><div style="font-size:11px;color:var(--muted);margin-top:2px">${s.cat}</div></td>
-      <td class="num" data-l="국내 매입가">${won(s.buy + s.domShip)}</td>
-      <td class="num" data-l="eBay 시세"><span>$${fmt2(s.price)}${s.buyerShip?` <span style="font-size:11px;color:var(--muted)">+$${fmt2(s.buyerShip)}</span>`:''}</span></td>
-      <td class="num" data-l="무게">${fmt0(s.weight)}g</td>
-      <td class="num" data-l="국제배송"><span>${won(r.ship.cost||0)} <span style="font-size:11px;color:var(--muted)">${r.ship.way.split(' ')[0]}</span></span></td>
-      <td class="num" data-l="순이익" style="color:${cls};font-weight:650">${won(r.profit)}</td>
-      <td class="num" data-l="마진" style="color:${cls}">${(r.margin<0?'−':'')}${Math.abs(r.margin*100).toFixed(1)}%</td>
-      <td data-l="판정"><span class="badge ${v.cls}" style="font-size:11px;padding:3px 8px">${short}</span></td>
-    </tr>`;
-  }).join('');
-  tb.querySelectorAll('tr').forEach(tr=>{
-    tr.addEventListener('click', ()=> loadSample(+tr.dataset.idx));
-  });
-
-  const src = document.getElementById('sampleSrc');
-  src.innerHTML = SAMPLES.map((s,i)=>`
-    <div class="sample" data-idx="${i}">
-      <div class="h"><span class="name">${s.name}</span><span class="tag acc">${s.cat}</span></div>
-      <div class="meta">${s.memo}</div>
-      <div class="figs">
-        <span>국내 <b>${s.krNote}</b><br><a href="${s.krUrl}" target="_blank" rel="noopener">원문 보기</a></span>
-        <span>eBay <b>${s.ebNote}</b><br><a href="${s.ebUrl}" target="_blank" rel="noopener">리스팅 보기</a></span>
-      </div>
-    </div>`).join('');
-  src.querySelectorAll('.sample').forEach(el=>el.addEventListener('click', ev=>{
-    if (ev.target.tagName === 'A') return;
-    loadSample(+el.dataset.idx);
-  }));
-
-  const wins = SAMPLES.map(s=>{
-    const inp = {buy:s.buy, domShip:s.domShip, pack:1000, weight:s.weight, dest:'US',
-                 price:s.price, buyerShip:s.buyerShip, fvf:0.136, fx:1336.21, fxFee:0.02, tax:0};
-    return {s, r:compute(inp)};
-  }).sort((a,b)=>b.r.profit-a.r.profit);
-  const best = wins[0], worst = wins[wins.length-1];
-  document.getElementById('sampleRead').innerHTML =
-    `6개 중 흑자는 <b>${wins.filter(w=>w.r.profit>0).length}개</b>입니다. 가장 좋은 것은 <b>${best.s.name}</b>(${won(best.r.profit)}), 가장 나쁜 것은 <b>${worst.s.name}</b>(${won(worst.r.profit)})입니다. 흑자 품목의 공통점은 <b>국내에서 싸게 구할 수 있고(중고·재고), 무게가 가볍고, 한국에서만 나오는 것</b>입니다. 반대로 미국에 이미 재고가 있는 물건(화장품·앨범·일반 장난감)은 배송비만 더 붙어 손해입니다.`;
 }
 
-function loadSample(i){
-  const s = SAMPLES[i];
-  document.getElementById('buy').value = s.buy;
-  document.getElementById('domShip').value = s.domShip;
+function dbRows(){
+  const q = DB.q.trim().toLowerCase();
+  let rows = DB.items.filter(i=>{
+    if (DB.cat && i.cat !== DB.cat) return false;
+    if (DB.profitOnly && i.profit <= 0) return false;
+    if (!q) return true;
+    return (i.name + ' ' + i.title + ' ' + i.seller + ' ' + i.cat).toLowerCase().includes(q);
+  });
+  const key = {profit: i=>-i.profit, margin: i=>-i.margin, sold: i=>-(i.sold||0), price: i=>-i.price}[DB.sort] || (i=>-i.profit);
+  return rows.sort((a,b)=> key(a)-key(b));
+}
+
+function renderDB(){
+  const rows = dbRows();
+  const tbody = document.querySelector('#dbTable tbody');
+  document.getElementById('dbShown').textContent = `${rows.length} / ${DB.items.length}건 표시`;
+  document.getElementById('dbEmpty').style.display = rows.length ? 'none' : 'block';
+  tbody.innerHTML = rows.map(i=>{
+    const [cls, label] = dbVerdict(i.margin);
+    const pc = i.profit >= 0 ? 'var(--good)' : 'var(--bad)';
+    return `<tr class="clickable" data-key="${i.key}">
+      <td class="nm" data-l="품목"><b>${i.name}</b><div class="memo">${i.cat} · ${i.seller||'—'}${i.sold?` · ${i.sold}건 판매`:''}${i.origin&&i.origin!=='-'?` · ${i.origin}`:''}</div></td>
+      <td class="num" data-l="국내 최저가">${won(i.buy)}<div class="memo" style="font-size:11px;color:var(--muted)">${i.buyShop||''}</div></td>
+      <td class="num" data-l="eBay 시세"><span>$${fmt2(i.price)}</span>${i.buyerShip?`<div class="memo" style="font-size:11px;color:var(--muted)">+$${fmt2(i.buyerShip)}</div>`:'<div class="memo" style="font-size:11px;color:var(--muted)">무료배송</div>'}</td>
+      <td class="num" data-l="무게">${fmt0(i.weight)}g</td>
+      <td class="num" data-l="국제배송">${won(i.shipKrw)}<div class="memo" style="font-size:11px;color:var(--muted)">${(i.shipWay||'').split(' ')[0]}</div></td>
+      <td class="num" data-l="순이익" style="color:${pc};font-weight:650">${won(i.profit)}</td>
+      <td class="num" data-l="마진" style="color:${pc}">${(i.margin<0?'−':'')}${Math.abs(i.margin*100).toFixed(1)}%</td>
+      <td data-l="판정"><span class="badge ${cls}" style="font-size:11px;padding:3px 8px">${label}</span></td>
+      <td class="srcs" data-l="출처"><span class="src"><a href="${i.krUrl}" target="_blank" rel="noopener" data-stop>국내 원문</a><a href="${i.ebayUrl}" target="_blank" rel="noopener" data-stop>eBay</a></span></td>
+    </tr>`;
+  }).join('');
+
+  tbody.querySelectorAll('tr').forEach(tr=>{
+    tr.addEventListener('click', ev=>{
+      if (ev.target.closest('[data-stop]')) return;
+      loadDbItem(tr.dataset.key);
+    });
+  });
+
+  if (rows.length){
+    const best = rows.reduce((a,b)=> (b.profit>a.profit?b:a), rows[0]);
+    const worst = rows.reduce((a,b)=> (b.profit<a.profit?b:a), rows[0]);
+    const recN = DB.items.filter(i=>i.margin>=0.20).length;
+    const cats = [...new Set(DB.items.map(i=>i.cat))];
+    document.getElementById('dbRead').innerHTML =
+      `이번 수집은 <b>${DB.items.length}건</b>(카테고리 ${cats.length}종)입니다. 흑자는 <b>${DB.items.filter(i=>i.profit>0).length}건</b>, 마진 20% 이상은 <b>${recN}건</b>입니다. ` +
+      `가장 좋은 품목은 <b>${best.name}</b>(${won(best.profit)}, ${(best.margin*100).toFixed(1)}%), 가장 나쁜 품목은 <b>${worst.name}</b>(${won(worst.profit)})입니다. ` +
+      (DB.meta?.ebayCollectedAt ? `eBay 가격은 ${fmtTime(DB.meta.ebayCollectedAt)} 조회분이고, 국내 가격은 이 페이지를 열 때 쓰인 DB 생성 시각(${fmtTime(DB.meta.generatedAt)})에 새로 받은 값입니다. ` : '') +
+      `환율은 <b>${fmt2(DB.meta?.fx || 0)}원/USD</b>, eBay 표시 통화 환산은 ${fmt2(DB.meta?.ebayKrwPerUsd || 0)}원 기준입니다.`;
+  } else {
+    document.getElementById('dbRead').textContent = '조건을 바꾸면 다시 계산됩니다.';
+  }
+}
+
+function loadDbItem(key){
+  const i = DB.items.find(x=>x.key === key);
+  if (!i) return;
+  document.getElementById('buy').value = i.buy;
+  document.getElementById('domShip').value = 0;
   document.getElementById('pack').value = 1000;
-  document.getElementById('weight').value = s.weight;
+  document.getElementById('weight').value = i.weight;
   document.getElementById('vol').value = 0;
-  document.getElementById('price').value = s.price;
-  document.getElementById('buyerShip').value = s.buyerShip;
+  document.getElementById('price').value = i.price;
+  document.getElementById('buyerShip').value = i.buyerShip;
+  document.getElementById('cat').value = '0.136';
   document.querySelectorAll('#destSeg button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.dest==='US'));
   render();
   switchView('calc');
   window.scrollTo({top:0, behavior:'smooth'});
 }
+
+document.getElementById('dbSearch').addEventListener('input', e=>{ DB.q = e.target.value; renderDB(); });
+document.getElementById('dbCat').addEventListener('change', e=>{ DB.cat = e.target.value; renderDB(); });
+document.getElementById('dbSort').addEventListener('change', e=>{ DB.sort = e.target.value; renderDB(); });
+document.getElementById('dbProfitOnly').addEventListener('change', e=>{ DB.profitOnly = e.target.checked; renderDB(); });
 
 /* ============ 리스팅 생성기 ============ */
 const DICT = [
@@ -1017,7 +1067,7 @@ document.getElementById('copyTitle').addEventListener('click', e=>copyText('titl
 document.getElementById('copyDesc').addEventListener('click', e=>copyText('descOut', e.currentTarget));
 
 restoreState();
-renderSamples();
+loadDB();
 render();
 updateListing();
 const hashView = (location.hash||'').replace('#','');
