@@ -592,7 +592,7 @@ function render(){
   p.textContent = won(r.profit);
   p.className = 'v ' + (r.profit >= 0 ? 'pos' : 'neg');
   const m = document.getElementById('rMargin');
-  m.textContent = (r.margin*100).toFixed(1) + '%';
+  m.textContent = (r.margin<0?'−':'') + Math.abs(r.margin*100).toFixed(1) + '%';
   m.className = 'v ' + (r.margin >= 0.05 ? 'pos' : 'neg');
   document.getElementById('rBep').textContent = '$' + fmt2(Math.max(0, r.bep)) + ' (' + won(Math.max(0,r.bep)*inp.fx) + ')';
   document.getElementById('rShipWay').textContent = r.ship.way + ' · ' + won(r.ship.cost || 0);
@@ -722,6 +722,7 @@ function renderSamples(){
     const r = compute(inp);
     const v = verdictOf(r.margin);
     const cls = r.profit>=0 ? 'var(--good)' : 'var(--bad)';
+    const short = r.profit < 0 ? '적자' : (r.margin < 0.05 ? '위험' : (r.margin >= 0.15 ? '추천' : '박리다매'));
     return `<tr class="clickable" data-idx="${i}">
       <td><b>${s.name}</b><div style="font-size:11px;color:var(--muted);margin-top:2px">${s.cat}</div></td>
       <td class="num">${won(s.buy + s.domShip)}</td>
@@ -729,8 +730,8 @@ function renderSamples(){
       <td class="num">${fmt0(s.weight)}g</td>
       <td class="num">${won(r.ship.cost||0)}<div style="font-size:11px;color:var(--muted)">${r.ship.way.split(' ')[0]}</div></td>
       <td class="num" style="color:${cls};font-weight:650">${won(r.profit)}</td>
-      <td class="num" style="color:${cls}">${(r.margin*100).toFixed(1)}%</td>
-      <td><span class="badge ${v.cls}" style="font-size:11px;padding:3px 8px">${v.cls==='good'?'추천':v.cls==='warn'?'박리다매':'적자'}</span></td>
+      <td class="num" style="color:${cls}">${(r.margin<0?'−':'')}${Math.abs(r.margin*100).toFixed(1)}%</td>
+      <td><span class="badge ${v.cls}" style="font-size:11px;padding:3px 8px">${short}</span></td>
     </tr>`;
   }).join('');
   tb.querySelectorAll('tr').forEach(tr=>{
@@ -798,20 +799,20 @@ const DICT = [
   ['카트리지','Cartridge'],['보드게임','Board Game'],['퍼즐','Puzzle'],['피규어','Figure'],
   ['산리오','Sanrio'],['포켓몬','Pokemon'],['마이멜로디','My Melody'],['쿠로미','Kuromi'],['시나모롤','Cinnamoroll'],
   ['헬로키티','Hello Kitty'],['포차코','Pochacco'],['짱구','Crayon Shin-chan'],['카카오프렌즈','Kakao Friends'],
-  ['미개봉 새상품','Sealed Brand New'],['테스트 완료','Tested'],['작동 확인','Working'],['흠집','Scratch'],['박스 손상','Box Damage']
+  ['미개봉 새상품','Sealed Brand New'],['테스트 완료','Tested'],['작동 확인','Working'],['흠집','Scratch'],['박스 손상','Box Damage'],
+  ['포함','Included'],['박스','Box'],['구성품','Contents'],['사은품','Free Gift'],['특전','Pre-order Benefit'],
+  ['1세트','1 Set'],['세트 구성','Full Set'],['색상','Color'],['사이즈','Size'],['사이즈 선택','Size Option']
 ];
+const DICT_SORTED = DICT.slice().sort((a,b)=>b[0].length-a[0].length);
 function translateKR(text){
-  let t = text;
-  const parts = t.split(/[,\s]+/).filter(Boolean);
-  const mapped = parts.map(p => {
-    let out = p;
-    for (const [kr, en] of DICT){
-      if (p === kr) { out = en; break; }
-      if (p.includes(kr)) out = p.replace(kr, en);
-    }
-    return out;
-  });
-  return mapped;
+  if (!text) return [];
+  let s = ' ' + text + ' ';
+  for (const [kr, en] of DICT_SORTED){
+    if (kr && s.includes(kr)) s = s.split(kr).join(' ·' + en + '· ');
+  }
+  return s.replace(/[\u00b7,\u3001]/g, ' ').split(/\s+/)
+          .filter(Boolean)
+          .filter(t => !/^[가-힣]+$/.test(t));
 }
 function buildTitle(){
   const name = document.getElementById('pName').value.trim();
@@ -821,18 +822,18 @@ function buildTitle(){
   let tokens = [];
   translateKR(name).forEach(t=>tokens.push(t));
   feats.forEach(f=>translateKR(f).forEach(t=>tokens.push(t)));
-  if (cond === 'new') tokens.push('Brand New Sealed');
-  if (cond === 'openbox') tokens.push('Open Box Tested');
-  if (cond === 'used') tokens.push('Pre-owned');
-  tokens.push('Korea');
-  if (qty) tokens.push(qty);
-  // 중복 제거(대소문자 무시)
+  // 중복 제거(대소문자·구두점 무시)
   const seen = new Set(); const out = [];
   for (let t of tokens){
     const k = t.toLowerCase().replace(/[^a-z0-9가-힣]/g,'');
     if (!k || seen.has(k)) continue;
     seen.add(k); out.push(t);
   }
+  if (cond === 'new' && !out.some(t=>/sealed/i.test(t))) out.push('Sealed');
+  if (cond === 'openbox') out.push('Open Box Tested');
+  if (cond === 'used' && !out.some(t=>/pre-owned/i.test(t))) out.push('Pre-owned');
+  if (!out.some(t=>/korea|korean/i.test(t))) out.push('Korea');
+  if (qty) out.push(qty);
   let title = out.join(' ');
   if (title.length > 80){
     let kept = [], len = 0;
@@ -922,6 +923,7 @@ async function copyText(elId, btn){
 function switchView(v){
   document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected', b.dataset.view===v));
   document.querySelectorAll('.view').forEach(s=>s.classList.toggle('active', s.id === 'view-'+v));
+  window.scrollTo({top:0, behavior:'auto'});
 }
 
 /* ============ 저장 / 초기화 ============ */
