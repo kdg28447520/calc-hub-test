@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>유튜브 레퍼런스 랩 — 잘나가는 영상 찾기 · 자막 템플릿 편집</title>
+<meta name="description" content="YouTube Data API로 뜨는 영상을 찾고, 내 영상에 자막·템플릿을 입혀 MP4로 내려받는 무료 웹앱. 모든 처리는 내 브라우저 안에서만 돌아갑니다.">
+<meta name="theme-color" content="#ffffff">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%233182F6'/%3E%3Cpath d='M13 10.5v11l9-5.5-9-5.5z' fill='white'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Do+Hyeon&family=Jua&family=Gowun+Dodum&family=Nanum+Myeongjo:wght@800&family=Nanum+Pen+Script&family=Song+Myung&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap top-in">
+    <a class="brand" href="./">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="20" height="20"><path d="M9 7.5v9l7.5-4.5L9 7.5z" fill="currentColor"/></svg>
+      </span>
+      <span class="brand-text">
+        <b>유튜브 레퍼런스 랩</b>
+        <small>잘나가는 영상 찾기 · 자막·템플릿 편집</small>
+      </span>
+    </a>
+    <nav class="tabs" id="tabs" role="tablist" aria-label="기능 선택">
+      <button class="tab on" data-tab="find" role="tab" aria-selected="true" id="tabBtnFind">잘나가는 영상 찾기</button>
+      <button class="tab" data-tab="edit" role="tab" aria-selected="false" id="tabBtnEdit">내 영상 자막·템플릿</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ================= 열쇠(API 키) 화면 ================= -->
+  <section class="key" id="keyScreen" hidden>
+    <div class="key-hero">
+      <span class="key-badge">무료 · 5분</span>
+      <h1>유튜브 열쇠(API 키)를 한 번만 넣어 주세요</h1>
+      <p class="lead">구글에서 무료로 받는 열쇠 하나면 바로 쓸 수 있어요. 카드 등록도, 결제도 없습니다.</p>
+    </div>
+
+    <ol class="key-steps">
+      <li class="card">
+        <span class="num">1</span>
+        <div>
+          <h3>구글 클라우드에서 새 프로젝트 만들기</h3>
+          <p>쓸 구글 계정을 고르고, 이름은 그대로 두고 <b>만들기</b>를 누르세요.</p>
+        </div>
+        <a class="btn ghost sm" href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener noreferrer">열기</a>
+      </li>
+      <li class="card">
+        <span class="num">2</span>
+        <div>
+          <h3>YouTube Data API v3 켜기</h3>
+          <p>파란색 <b>사용</b> 버튼을 누르면 끝이에요.</p>
+        </div>
+        <a class="btn ghost sm" href="https://console.cloud.google.com/apis/library/youtube.googleapis.com" target="_blank" rel="noopener noreferrer">열기</a>
+      </li>
+      <li class="card">
+        <span class="num">3</span>
+        <div>
+          <h3>열쇠(API 키) 만들기</h3>
+          <p><b>사용자 인증 정보 만들기 → API 키</b>를 고르세요. 나온 열쇠를 복사합니다.</p>
+        </div>
+        <a class="btn ghost sm" href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer">열기</a>
+      </li>
+      <li class="card paste">
+        <span class="num">4</span>
+        <div>
+          <h3>복사한 열쇠를 여기에 붙여 넣기</h3>
+          <p><code>AIza</code>로 시작하는 39글자예요.</p>
+          <form class="key-form" id="keyForm" novalidate>
+            <input id="keyInput" type="text" inputmode="text" autocomplete="off" spellcheck="false" placeholder="AIza..." aria-label="YouTube Data API 키">
+            <button class="btn primary" type="submit" id="keySubmit">확인하고 시작하기</button>
+          </form>
+          <p class="msg" id="keyMsg" role="status"></p>
+        </div>
+      </li>
+    </ol>
+
+    <p class="safe">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 2l8 3.5v6c0 5-3.4 9.3-8 10.5-4.6-1.2-8-5.5-8-10.5v-6L12 2z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8.5 12l2.5 2.5 4.5-5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+      열쇠는 이 브라우저(localStorage)에만 저장돼요. 유튜브에 물어볼 때만 쓰고 다른 서버로 보내지 않습니다.
+    </p>
+  </section>
+
+  <!-- ================= 탭 1 : 잘나가는 영상 찾기 ================= -->
+  <section class="tab-panel" id="tabFind" hidden>
+    <div class="layout">
+      <aside class="panel card">
+        <div class="step"><span class="num">1</span><h2>찾고 싶은 주제</h2></div>
+        <div class="search">
+          <input id="q" type="search" autocomplete="off" placeholder="예: 시니어 인생 이야기" aria-label="검색어">
+          <button class="btn primary" id="go">찾기</button>
+        </div>
+        <div class="presets" id="presets" role="group" aria-label="추천 프리셋"></div>
+
+        <div class="step mt"><span class="num">2</span><h2>세부 조건</h2></div>
+        <div class="fields">
+          <div class="field">
+            <label for="fPlace">지역</label>
+            <select id="fPlace">
+              <option value="kr">국내 (한국어)</option>
+              <option value="global">해외 (영어)</option>
+              <option value="jp">일본 (일본어)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="fFormat">길이</label>
+            <select id="fFormat">
+              <option value="any">전체</option>
+              <option value="shorts">쇼츠 · 3분 이하</option>
+              <option value="long">롱폼 · 3분 초과</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="fDays">업로드 기간</label>
+            <select id="fDays">
+              <option value="7">최근 7일</option>
+              <option value="30">최근 30일</option>
+              <option value="90" selected>최근 90일</option>
+              <option value="365">최근 1년</option>
+              <option value="0">전체</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="fCount">수집 개수</label>
+            <select id="fCount">
+              <option value="50">50개</option>
+              <option value="100">100개</option>
+              <option value="200" selected>200개</option>
+            </select>
+          </div>
+          <div class="field two">
+            <label>구독자 수</label>
+            <div class="range">
+              <input id="fSubsMin" type="number" min="0" step="1000" value="0" placeholder="0" aria-label="구독자 최소">
+              <span>~</span>
+              <input id="fSubsMax" type="number" min="0" step="1000" value="10000" placeholder="제한 없음" aria-label="구독자 최대">
+            </div>
+          </div>
+          <div class="field">
+            <label for="fViews">최소 조회수</label>
+            <input id="fViews" type="number" min="0" step="10000" value="100000">
+            <div class="quick" id="viewsQuick">
+              <button type="button" data-v="100000">10만</button>
+              <button type="button" data-v="500000">50만</button>
+              <button type="button" data-v="1000000">100만</button>
+              <button type="button" data-v="5000000">500만</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-foot">
+          <button class="link-btn" id="resetFilters">조건 초기화</button>
+          <button class="link-btn" id="changeKey">API 키 변경</button>
+        </div>
+        <p class="hint">한 번 찾을 때 검색 100단위씩 씁니다. 구글 무료 한도는 하루 1만 단위예요.</p>
+      </aside>
+
+      <section class="results">
+        <div class="results-head">
+          <div>
+            <h2 id="resultTitle">조건을 정하고 찾기를 눌러 주세요</h2>
+            <p id="resultSub">작은 채널이 터뜨린 영상부터 보여 드려요.</p>
+          </div>
+          <div class="sorts" id="sorts" role="group" aria-label="정렬"></div>
+        </div>
+        <div class="cards" id="cards"></div>
+      </section>
+    </div>
+  </section>
+
+  <!-- ================= 탭 2 : 자막·템플릿 편집기 ================= -->
+  <section class="tab-panel" id="tabEdit" hidden>
+    <div class="studio">
+      <section class="stage">
+        <div class="preview-card">
+          <div class="preview-wrap" id="previewWrap">
+            <canvas id="preview" width="540" height="960"></canvas>
+            <div class="drop" id="dropZone">
+              <strong>영상을 끌어다 놓으세요</strong>
+              <span>또는 눌러서 고르기 · 최대 10분 · 브라우저 안에서만 처리</span>
+              <em>MP4 · MOV · WebM</em>
+            </div>
+            <div class="busy" id="previewBusy" hidden><span class="spin"></span><b id="busyText">처리 중</b></div>
+          </div>
+          <div class="player">
+            <button class="icon-btn" id="playToggle" aria-label="재생">
+              <svg viewBox="0 0 24 24" width="20" height="20" id="playIcon"><path d="M8 5.5v13l11-6.5L8 5.5z" fill="currentColor"/></svg>
+            </button>
+            <input class="seek" id="seek" type="range" min="0" max="1000" value="0" step="1" aria-label="재생 위치">
+            <span class="time" id="time">0:00 / 0:00</span>
+          </div>
+          <div class="stage-foot">
+            <span class="pill" id="fileInfo">영상 없음</span>
+            <span class="pill soft" id="cutInfo">자동 컷 꺼짐</span>
+            <button class="link-btn ml" id="pickFile">다른 영상</button>
+            <input type="file" id="fileInput" accept="video/*" hidden>
+          </div>
+        </div>
+        <p class="hint center">미리보기와 내려받는 영상은 같은 화면틀로 그립니다. 라벨은 화면에서 끌어 옮길 수 있어요.</p>
+      </section>
+
+      <aside class="controls">
+
+        <!-- 받아쓰기 -->
+        <section class="card block" id="secStt">
+          <h2 class="block-h"><span class="num">1</span>받아쓰기</h2>
+          <div class="field">
+            <label for="sttMode">방법</label>
+            <select id="sttMode">
+              <option value="groq">Groq Whisper (빠름 · 무료 한도)</option>
+              <option value="local">브라우저 로컬 Whisper (실험적)</option>
+              <option value="srt">SRT 파일 불러오기</option>
+              <option value="manual">직접 입력</option>
+            </select>
+          </div>
+          <div id="groqBox">
+            <div class="field">
+              <label for="groqKey">Groq API 키</label>
+              <input id="groqKey" type="password" autocomplete="off" placeholder="gsk_..." spellcheck="false">
+            </div>
+            <div class="row">
+              <button class="btn primary" id="btnTranscribe" disabled>받아쓰기 시작</button>
+              <button class="link-btn" id="btnGroqHelp">키 발급</button>
+            </div>
+            <p class="hint">소리만 잘라 보냅니다(16kHz 모노). 영상 파일은 어디에도 올라가지 않아요.</p>
+          </div>
+          <div id="srtBox" hidden>
+            <div class="row">
+              <button class="btn ghost" id="btnPickSrt">SRT 불러오기</button>
+              <button class="btn ghost" id="btnDownloadSrt">SRT 내려받기</button>
+            </div>
+            <input type="file" id="srtInput" accept=".srt,.vtt,text/plain" hidden>
+          </div>
+          <div id="manualBox" hidden>
+            <p class="hint">아래 자막 목록에서 <b>줄 추가</b>를 눌러 직접 적으면 됩니다.</p>
+          </div>
+          <div class="prog" id="sttProg" hidden><div class="prog-bar"><i id="sttBar"></i></div><span id="sttPct">0%</span></div>
+          <p class="msg" id="sttMsg" role="status"></p>
+        </section>
+
+        <!-- 자동 컷 -->
+        <section class="card block" id="secCut">
+          <h2 class="block-h"><span class="num">2</span>자동 컷 (무음·숨)</h2>
+          <label class="switch"><input type="checkbox" id="cutOn"><span></span>자동 컷 쓰기</label>
+          <div class="sliders">
+            <label class="slider"><span>최소 무음 길이 <b id="vMinLen">0.45초</b></span><input type="range" id="cutMinLen" min="0.2" max="2" step="0.05" value="0.45"></label>
+            <label class="slider"><span>앞뒤 숨 남기기 <b id="vPad">0.08초</b></span><input type="range" id="cutPad" min="0" max="0.4" step="0.02" value="0.08"></label>
+            <label class="slider"><span>감도 <b id="vThr">-38dB</b></span><input type="range" id="cutThr" min="-60" max="-20" step="1" value="-38"></label>
+          </div>
+          <div class="row">
+            <button class="btn primary" id="btnAnalyze" disabled>무음 찾기</button>
+            <button class="btn ghost" id="btnUndoCut" disabled>되돌리기</button>
+            <button class="btn ghost" id="btnResetCut" disabled>전부 되살리기</button>
+          </div>
+          <div class="timeline">
+            <canvas id="tl" height="64"></canvas>
+            <p class="hint" id="tlHint">무음을 찾으면 빨간 구간이 잘려 나갑니다. 구간을 누르면 되살아나요.</p>
+          </div>
+        </section>
+
+        <!-- 자막 편집 -->
+        <section class="card block" id="secCues">
+          <h2 class="block-h"><span class="num">3</span>자막 줄 고치기
+            <span class="badge" id="cueCount">0줄</span>
+          </h2>
+          <div class="cue-tools">
+            <button class="btn ghost sm" id="btnAddCue">줄 추가</button>
+            <button class="btn ghost sm" id="btnSplitLong" disabled>긴 줄 나누기</button>
+            <button class="btn ghost sm" id="btnClearCues" disabled>모두 지우기</button>
+          </div>
+          <div class="cue-list" id="cueList"></div>
+          <p class="hint">낱말을 누르면 강조색이 켜지고 꺼져요. 시간은 <code>0:12.4</code> 형식입니다.</p>
+        </section>
+
+        <!-- 꾸미기 -->
+        <section class="card block" id="secLook">
+          <h2 class="block-h"><span class="num">4</span>꾸미기</h2>
+          <div class="field">
+            <label>화면 비율</label>
+            <div class="seg" id="ratioSeg">
+              <button data-ratio="" class="on">원본대로</button>
+              <button data-ratio="9:16">세로 9:16</button>
+              <button data-ratio="16:9">가로 16:9</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>화면 틀 <span class="count" id="tplCount"></span></label>
+            <div class="tpl-grid" id="tplGrid"></div>
+          </div>
+          <div class="field">
+            <label>자막 스타일</label>
+            <div class="chips" id="capGrid"></div>
+          </div>
+          <div class="field">
+            <label>강조색</label>
+            <div class="swatches" id="swatches"></div>
+          </div>
+          <div class="field">
+            <label for="fontSel">자막 글꼴</label>
+            <select id="fontSel"></select>
+          </div>
+          <div class="field">
+            <label for="titleFontSel">제목 글꼴</label>
+            <select id="titleFontSel"></select>
+          </div>
+          <div class="field">
+            <label for="tplTitle">위 제목 (한 줄에 하나 · *별표*로 감싸면 강조색)</label>
+            <textarea id="tplTitle" rows="2" placeholder="사랑하는 사람한테&#10;왜 자꾸 이기려고 할까?"></textarea>
+          </div>
+          <div class="field">
+            <label for="tplBottom">아래 문구</label>
+            <input id="tplBottom" type="text" placeholder="구독과 좋아요는 큰 힘이 됩니다">
+          </div>
+          <div class="field">
+            <label>라벨 · 효과음 · 속마음</label>
+            <div class="row wrap" id="stickerBtns">
+              <button class="btn ghost sm" data-add="label">상황 라벨</button>
+              <button class="btn ghost sm" data-add="effect">효과음</button>
+              <button class="btn ghost sm" data-add="thought">속마음</button>
+            </div>
+            <div class="sticker-list" id="stickerList"></div>
+          </div>
+        </section>
+
+        <!-- 내보내기 -->
+        <section class="card block" id="secExport">
+          <h2 class="block-h"><span class="num">5</span>내보내기</h2>
+          <div class="row">
+            <button class="btn primary" id="btnExport" disabled>MP4로 내려받기</button>
+            <button class="btn ghost" id="btnSrtOut">SRT 내려받기</button>
+          </div>
+          <p class="hint" id="exportNote">영상을 재생하며 그대로 녹화합니다. 10분 영상이면 10분쯤 걸려요.</p>
+          <div class="prog" id="expProg" hidden><div class="prog-bar"><i id="expBar"></i></div><span id="expPct">0%</span></div>
+          <p class="msg" id="expMsg" role="status"></p>
+        </section>
+
+      </aside>
+    </div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <p>YouTube 서비스 약관과 <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google 개인정보처리방침</a>을 따릅니다. 영상·자막은 내 브라우저에서만 처리됩니다.</p>
+  </div>
+</footer>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
