@@ -1,10 +1,10 @@
 // 탭 2 — 내 영상 자막·템플릿 편집기. 영상·소리는 브라우저 밖으로 나가지 않는다.
-import { PRESETS, CAP_STYLES, FONTS, withCapStyle, renderFrame, drawThumb, ensureFonts } from './templates.js?v=4';
-import { parseSrt, toSrt, splitLong, splitCue, remapCues, activeCue, clockT, parseClock } from './cues.js?v=4';
-import { decodeFile, analyzeSilence, buildKeep, keepLength, peaksOf, audioCtx } from './audio.js?v=4';
-import { transcribeGroq, transcribeLocal } from './groq.js?v=4';
-import { recordVideo, pickMime, aacSupported } from './export.js?v=4';
-import { $, esc, toast, fmtDur, download, store } from './ui.js?v=4';
+import { PRESETS, CAP_STYLES, FONTS, withCapStyle, renderFrame, drawThumb, ensureFonts } from './templates.js?v=5';
+import { parseSrt, toSrt, splitLong, splitCue, remapCues, activeCue, clockT, parseClock } from './cues.js?v=5';
+import { decodeFile, analyzeSilence, buildKeep, keepLength, peaksOf, audioCtx } from './audio.js?v=5';
+import { transcribeGroq, transcribeLocal } from './groq.js?v=5';
+import { recordVideo, pickMime, aacSupported } from './export.js?v=5';
+import { $, esc, toast, fmtDur, download, store } from './ui.js?v=5';
 
 const MAX_SEC = 600;
 
@@ -132,8 +132,8 @@ async function loadFile(file) {
     $('#fileInfo').className = 'pill';
   }
   setRatioUI();
-  syncButtons();
   busy(false);
+  syncButtons();
   redraw();
   updatePlayer();
   renderTimeline();
