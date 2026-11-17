@@ -223,11 +223,11 @@
           </div>
           <div class="f">
             <label for="price">eBay 판매가</label>
-            <div class="unit"><input id="price" type="number" inputmode="decimal" value="75.83" min="0" step="0.01"><span class="u">USD</span></div>
+            <div class="unit"><input id="price" type="number" inputmode="decimal" value="75.80" min="0" step="0.01"><span class="u">USD</span></div>
           </div>
           <div class="f">
             <label for="buyerShip">구매자 부담 배송비 <span class="hint">0 = 무료배송</span></label>
-            <div class="unit"><input id="buyerShip" type="number" inputmode="decimal" value="0" min="0" step="0.01"><span class="u">USD</span></div>
+            <div class="unit"><input id="buyerShip" type="number" inputmode="decimal" value="8.99" min="0" step="0.01"><span class="u">USD</span></div>
           </div>
           <div class="f full">
             <label for="cat">eBay 카테고리 수수료</label>
@@ -300,9 +300,9 @@
 
 <!-- ================= SAMPLES ================= -->
 <section class="view" id="view-samples">
-  <p class="lede">2026년 11월 17일 직접 조회한 실제 국내 최저가와 eBay 실제 리스팅 가격입니다. eBay 쪽은 <b>누적 판매 수가 표시된 활성 리스팅의 현재가</b>이며(로그인 없이는 실제 체결가 필터를 볼 수 없습니다), 행을 누르면 그 조건이 계산기에 그대로 들어갑니다.</p>
+  <p class="lede">2026년 11월 17일 직접 조회한 실제 국내 최저가와 eBay 실제 리스팅 가격입니다. eBay 쪽은 <b>누적 판매 수가 표시된 활성 리스팅의 현재가</b>이며(로그인 없이는 실제 체결가 필터를 볼 수 없습니다), 배송비는 각 리스팅이 실제로 받는 금액을 그대로 넣었습니다. 행을 누르면 그 조건이 계산기에 들어갑니다.</p>
   <div class="card">
-    <div class="card-h"><h2>실측 비교 — 같은 조건(미국·무료배송·환율 1,336원)으로 계산</h2><span class="sub">행 클릭 → 계산기로 이동</span></div>
+    <div class="card-h"><h2>실측 비교 — 각 리스팅의 실제 조건(미국·환율 1,336원)으로 계산</h2><span class="sub">행 클릭 → 계산기로 이동</span></div>
     <div class="tablewrap">
       <table id="sampleTable">
         <thead>
@@ -328,7 +328,7 @@
   <div class="stack" style="margin-top:16px">
     <div class="callout" id="sampleRead"></div>
     <div class="callout warn">
-      <b>읽는 법.</b> 국내 최저가와 eBay 최저가를 나란히 놓으면 대부분 적자입니다. 이 표가 보여주는 건 “무엇을 팔면 남는가”가 아니라 <b>“어떤 조건에서만 남는가”</b>입니다. 국내에서 구하기 어렵고, 한국에서만 풀리는 물건이면서, 무게 대비 단가가 높아야 합니다.
+      <b>읽는 법.</b> 국내 최저가와 eBay 최저가를 나란히 놓으면 흑자라도 마진이 한 자릿수에 붙습니다. 이 표가 보여주는 건 “무엇을 팔면 남는가”가 아니라 <b>“어떤 조건에서만 남는가”</b>입니다. 국내에서 구하기 어렵고, 한국에서만 풀리는 물건이면서, 무게 대비 단가가 높아야 합니다.
     </div>
   </div>
 </section>
@@ -677,12 +677,12 @@ function renderGoal(){
 const SAMPLES = [
   {
     name:'BTS 공식 응원봉 Ver.4 (미개봉)', cat:'K-POP 굿즈',
-    buy:73520, domShip:0, weight:400, price:75.83, buyerShip:0,
+    buy:73520, domShip:0, weight:400, price:75.80, buyerShip:8.99,
     krNote:'다나와 최저가 73,520원(무료배송)',
     krUrl:'https://search.danawa.com/dsearch.php?k1=BTS%20%EC%9D%91%EC%9B%90%EB%B4%89%20ver.4',
-    ebNote:'$75.83 · emoneshop · 216개 판매 · 무료배송',
+    ebNote:'US $75.80 + 배송비 $8.99 · EMONEshop.korea(안양) · 216개 판매',
     ebUrl:'https://www.ebay.com/itm/293545143346',
-    memo:'같은 상품 상위 리스팅은 $100(133,564원)까지 형성. 시세 하단에서 팔면 적자, 상단이면 흑자 — 가격이 아니라 “얼마에 올릴 수 있나”가 승부처.'
+    memo:'220명이 보고 216건이 나갔지만, 이 가격에 배송비를 안 받으면 적자입니다. 같은 상품 한국 셀러는 $99.97(무료배송)까지 올려져 있으니, 무료배송으로 $90에 올리면 마진 12% — 결국 “얼마에 올릴 수 있나”가 승부처.'
   },
   {
     name:'BTS 응원봉 SE (MOTS, 개봉·검수)', cat:'K-POP 굿즈',
@@ -704,10 +704,10 @@ const SAMPLES = [
   },
   {
     name:'조선미녀 맑은쌀 선크림 50ml', cat:'K-뷰티',
-    buy:13400, domShip:2500, weight:200, price:9.49, buyerShip:0,
+    buy:13400, domShip:2500, weight:200, price:9.49, buyerShip:5.97,
     krNote:'올리브영 13,400원 + 배송비 2,500원',
     krUrl:'https://search.danawa.com/dsearch.php?k1=%EC%A1%B0%EC%84%A0%EB%AF%B8%EB%85%80%20%EC%84%A0%ED%81%AC%EB%A6%BC',
-    ebNote:'$9.49 · 미국 셀러(메릴랜드) · 배송비 $5.97',
+    ebNote:'US $9.49 + 배송비 $5.97 · 미국 셀러(메릴랜드)',
     ebUrl:'https://www.ebay.com/itm/407080547476',
     memo:'미국 셀러가 이미 $9~18에 국내배송. 국제배송비가 상품값보다 커서 구조적으로 불가능한 영역.'
   },
@@ -1001,7 +1001,7 @@ document.querySelectorAll('#destSeg button').forEach(b=>b.addEventListener('clic
 FIELDS.forEach(id=>{ const el = document.getElementById(id); if (el) el.addEventListener('input', render); });
 document.getElementById('recalc').addEventListener('click', render);
 document.getElementById('reset').addEventListener('click', ()=>{
-  const def = {buy:73520, domShip:0, pack:1000, weight:400, vol:0, price:75.83, buyerShip:0, fx:1336.21, fxFee:2, tax:0, goal:1000000, mins:70, sellRate:30};
+  const def = {buy:73520, domShip:0, pack:1000, weight:400, vol:0, price:75.80, buyerShip:8.99, fx:1336.21, fxFee:2, tax:0, goal:1000000, mins:70, sellRate:30};
   Object.entries(def).forEach(([k,v])=>{ const el = document.getElementById(k); if (el) el.value = v; });
   document.getElementById('cat').value = '0.136';
   document.querySelectorAll('#destSeg button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.dest==='US'));
