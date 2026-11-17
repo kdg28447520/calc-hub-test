@@ -1,7 +1,7 @@
 // 화면 전환과 API 키 관리
-import { initFinder, setKey, runSearch, render } from './finder.js';
-import { initEditor, refreshEditor } from './editor.js';
-import { $, toast, store, esc } from './ui.js';
+import { initFinder, setKey, runSearch, render } from './finder.js?v=3';
+import { initEditor, refreshEditor } from './editor.js?v=3';
+import { $, toast, store, esc } from './ui.js?v=3';
 
 const KEY_STORE = 'yf.key';
 let tab = 'find';

@@ -1,5 +1,5 @@
 // 받아쓰기 두 가지 길: Groq Whisper(소리만 전송, 아주 빠름) / 브라우저 로컬 Whisper(내 컴퓨터에서 계산)
-import { resample16k, toWav16k } from './audio.js';
+import { resample16k, toWav16k } from './audio.js?v=3';
 
 const GROQ_URL = 'https://api.groq.com/openai/v1/audio/transcriptions';
 export const GROQ_MODEL = 'whisper-large-v3';

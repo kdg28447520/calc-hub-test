@@ -1,10 +1,10 @@
 // 탭 2 — 내 영상 자막·템플릿 편집기. 영상·소리는 브라우저 밖으로 나가지 않는다.
-import { PRESETS, CAP_STYLES, FONTS, withCapStyle, renderFrame, drawThumb, ensureFonts } from './templates.js';
-import { parseSrt, toSrt, splitLong, splitCue, remapCues, activeCue, clockT, parseClock } from './cues.js';
-import { decodeFile, analyzeSilence, buildKeep, keepLength, peaksOf, audioCtx } from './audio.js';
-import { transcribeGroq, transcribeLocal } from './groq.js';
-import { recordVideo, pickMime, aacSupported } from './export.js';
-import { $, esc, toast, fmtDur, download, store } from './ui.js';
+import { PRESETS, CAP_STYLES, FONTS, withCapStyle, renderFrame, drawThumb, ensureFonts } from './templates.js?v=3';
+import { parseSrt, toSrt, splitLong, splitCue, remapCues, activeCue, clockT, parseClock } from './cues.js?v=3';
+import { decodeFile, analyzeSilence, buildKeep, keepLength, peaksOf, audioCtx } from './audio.js?v=3';
+import { transcribeGroq, transcribeLocal } from './groq.js?v=3';
+import { recordVideo, pickMime, aacSupported } from './export.js?v=3';
+import { $, esc, toast, fmtDur, download, store } from './ui.js?v=3';
 
 const MAX_SEC = 600;
 
