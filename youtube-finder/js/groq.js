@@ -1,5 +1,5 @@
 // 받아쓰기 두 가지 길: Groq Whisper(소리만 전송, 아주 빠름) / 브라우저 로컬 Whisper(내 컴퓨터에서 계산)
-import { resample16k, toWav16k } from './audio.js?v=5';
+import { resample16k, toWav16k } from './audio.js?v=6';
 
 const GROQ_URL = 'https://api.groq.com/openai/v1/audio/transcriptions';
 export const GROQ_MODEL = 'whisper-large-v3';
@@ -58,7 +58,12 @@ export async function transcribeLocal(buffer, { model = 'base', language = 'kore
   onProgress?.(0.1, 'Whisper 모델 내려받는 중 (처음 한 번만)');
   let pipe = localPipe;
   if (!pipe || localName !== name) {
-    const mod = await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2');
+    let mod;
+    try {
+      mod = await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2');
+    } catch {
+      throw new Error('브라우저 로컬 Whisper를 불러오지 못했어요. Groq 받아쓰기나 SRT를 써 주세요.');
+    }
     mod.env.allowLocalModels = false;
     pipe = await mod.pipeline('automatic-speech-recognition', name, {
       quantized: true,
