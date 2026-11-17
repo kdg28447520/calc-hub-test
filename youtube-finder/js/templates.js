@@ -291,37 +291,35 @@ function drawRichText(ctx, text, o) {
   ctx.font = fontCss(o.family, o.weight, o.size);
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
-  const marks = marked(text);
-  const words = [];
-  const hlSet = new Set(o.hl || []);
-  for (const m of marks) {
-    for (const w of m.word.split(/\s+/).filter(Boolean)) {
-      words.push({ word: w, mark: m.mark });
-    }
-  }
-  // 표시는 낱말 단위로 유지
-  const flat = [];
-  let idx = 0;
-  for (const m of marks) {
-    const ws = m.word.split(/\s+/).filter(Boolean);
-    for (const w of ws) flat.push({ word: w, mark: m.mark, i: idx++ });
-  }
   const maxW = o.maxW || 9999;
-  const fitted = [];
-  for (const f of flat) {
-    const parts = fitWords(ctx, [f.word], maxW);
-    parts.forEach((p, k) => fitted.push({ ...f, word: p, first: k === 0 }));
+  // 보낸 줄바꿈은 그대로 한 줄로 살리고, 줄이 넘치면 그 안에서 다시 나눈다
+  const srcLines = Array.isArray(text) ? text : String(text ?? '').split('\n');
+  const rows = [];
+  let idx = 0;
+  for (const srcLine of srcLines) {
+    const marks = marked(srcLine);
+    const flat = [];
+    for (const m of marks) {
+      const ws = m.word.split(/\s+/).filter(Boolean);
+      for (const w of ws) flat.push({ word: w, mark: m.mark, i: idx++ });
+    }
+    if (!flat.length) continue;
+    const fitted = [];
+    for (const f of flat) {
+      const parts = fitWords(ctx, [f.word], maxW);
+      parts.forEach(p => fitted.push({ ...f, word: p }));
+    }
+    const { lines } = layoutWords(ctx, fitted.map(f => f.word), maxW, o.maxChars);
+    let li = 0;
+    for (const line of lines) rows.push(line.map(() => fitted[li++]).filter(Boolean));
   }
-  const { lines, space } = layoutWords(ctx, fitted.map(f => f.word), maxW, o.maxChars);
-  let li = 0;
-  const rows = lines.map(line => {
-    const row = line.map(() => fitted[li++]).filter(Boolean);
-    return row;
-  });
+  if (!rows.length) return { rows: [], lineH: 0, total: 0, top: o.y };
+  const space = ctx.measureText(' ').width;
   const capped = rows.slice(0, o.lines || 3);
   const lineH = o.lineH || o.size * 1.34;
   const total = capped.length * lineH;
   let y = o.y - total / 2 + lineH / 2;
+  const hlSet = new Set(o.hl || []);
   for (const row of capped) {
     const items = row.map(f => ({
       word: f.word,
@@ -333,7 +331,7 @@ function drawRichText(ctx, text, o) {
     y += lineH;
   }
   ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-  return { lines: capped, lineH, total, top: o.y - total / 2 };
+  return { rows: capped, lineH, total, top: o.y - total / 2, space };
 }
 
 function drawTitle(ctx, W, H, t, st) {
@@ -342,8 +340,8 @@ function drawTitle(ctx, W, H, t, st) {
   const scale = (st.opt?.title?.scale || 1);
   const family = st.opt?.title?.family || cfg.family;
   const size = W * cfg.size * scale;
-  const text = (st.title || []).filter(s => String(s).trim() !== '').slice(0, cfg.lines || 2).join('\n');
-  if (!text) return;
+  const text = Array.isArray(st.title) ? st.title.filter(s => String(s).trim() !== '').slice(0, cfg.lines || 2) : String(st.title || '');
+  if (!text.length) return;
   const cx = W / 2 + (st.opt?.title?.dx || 0);
   const cy = H * cfg.y + (st.opt?.title?.dy || 0);
   const maxW = W * 0.88;
@@ -370,7 +368,7 @@ function drawTitle(ctx, W, H, t, st) {
     ctx.restore();
   }
 
-  drawRichText(ctx, text.replace(/\n/g, ' '), {
+  drawRichText(ctx, text, {
     x: cx, y: cy, size, weight: cfg.weight || 800, family,
     color: cfg.color, markColor: cfg.accent, maxW, maxChars: 0,
     lines: cfg.lines || 2, shadow: !!cfg.shadow, align: 'center',
@@ -378,11 +376,18 @@ function drawTitle(ctx, W, H, t, st) {
 }
 
 function drawMeasure(ctx, text, size, maxW, lines, ratio) {
-  const words = text.replace(/\n/g, ' ').split(/\s+/).filter(Boolean);
-  const { lines: rows, space } = layoutWords(ctx, words, maxW * ratio, 0);
-  const use = rows.slice(0, lines);
-  const w = Math.max(...use.map(r => r.reduce((a, w, i) => a + ctx.measureText(w).width + (i ? space : 0), 0)), 1);
-  return { w, h: use.length * size * 1.34 };
+  const srcLines = Array.isArray(text) ? text : String(text || '').split('\n');
+  let w = 1, n = 0;
+  for (const line of srcLines) {
+    const words = String(line).replace(/\*/g, '').split(/\s+/).filter(Boolean);
+    const { lines: rows, space } = layoutWords(ctx, words, maxW * ratio, 0);
+    for (const r of rows) {
+      if (n >= lines) break;
+      w = Math.max(w, r.reduce((a, x, i) => a + ctx.measureText(x).width + (i ? space : 0), 0));
+      n++;
+    }
+  }
+  return { w, h: Math.max(1, n) * size * 1.34 };
 }
 
 function drawCue(ctx, W, H, t, st) {

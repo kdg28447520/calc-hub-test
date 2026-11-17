@@ -7,12 +7,21 @@ const CANDIDATES = [
   ['video/webm', 'webm'],
 ];
 
-export function pickMime() {
+export function pickMime(prefer = 'mp4') {
   if (typeof MediaRecorder === 'undefined') return { mime: '', ext: 'webm', supported: false };
-  for (const [mime, ext] of CANDIDATES) {
+  const mp4 = CANDIDATES.filter(c => c[1] === 'mp4');
+  const webm = CANDIDATES.filter(c => c[1] === 'webm');
+  const order = prefer === 'webm' ? [...webm, ...mp4] : [...mp4, ...webm];
+  for (const [mime, ext] of order) {
     try { if (MediaRecorder.isTypeSupported(mime)) return { mime, ext, supported: true }; } catch { /* 다음 후보 */ }
   }
   return { mime: '', ext: 'webm', supported: true };
+}
+
+// 이 브라우저가 MP4에 AAC 소리를 넣을 수 있는지(크롬은 Opus만 넣는다)
+export function aacSupported() {
+  try { return typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('video/mp4;codecs=avc1,mp4a.40.2'); }
+  catch { return false; }
 }
 
 /**
@@ -29,7 +38,7 @@ export function pickMime() {
  */
 export async function recordVideo(o) {
   const { canvas, video, audioStream, cuts = [], duration, outDuration, draw, onProgress, signal = {} } = o;
-  const { mime, ext, supported } = pickMime();
+  const { mime, ext, supported } = pickMime(o.prefer || 'mp4');
   if (!supported) throw new Error('이 브라우저는 영상 녹화를 지원하지 않아요. 크롬이나 사파리 최신 버전에서 해 주세요.');
   const stream = canvas.captureStream(30);
   if (audioStream) {

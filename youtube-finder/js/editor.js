@@ -3,7 +3,7 @@ import { PRESETS, CAP_STYLES, FONTS, withCapStyle, renderFrame, drawThumb, ensur
 import { parseSrt, toSrt, splitLong, splitCue, remapCues, activeCue, clockT, parseClock } from './cues.js';
 import { decodeFile, analyzeSilence, buildKeep, keepLength, peaksOf, audioCtx } from './audio.js';
 import { transcribeGroq, transcribeLocal } from './groq.js';
-import { recordVideo, pickMime } from './export.js';
+import { recordVideo, pickMime, aacSupported } from './export.js';
 import { $, esc, toast, fmtDur, download, store } from './ui.js';
 
 const MAX_SEC = 600;
@@ -376,7 +376,8 @@ async function doExport() {
   if (!S.file || S.exporting) return;
   const note = $('#expMsg');
   note.className = 'msg'; note.textContent = '';
-  const { mime, ext, supported } = pickMime();
+  const prefer = $('#fmtSel')?.value || 'mp4';
+  const { mime, ext, supported } = pickMime(prefer);
   if (!supported) { note.className = 'msg bad'; note.textContent = '이 브라우저에서는 영상 녹화를 지원하지 않아요.'; return; }
   playPause(false);
   S.exporting = true; S.busy = true; syncButtons();
@@ -396,7 +397,7 @@ async function doExport() {
     if (g.ctx.state === 'suspended') await g.ctx.resume().catch(() => {});
     video.pause();
     const { blob, ext: realExt } = await recordVideo({
-      canvas: cv, video, audioStream: g.dest.stream, cuts, duration: d, outDuration: outDur,
+      canvas: cv, video, audioStream: g.dest.stream, cuts, duration: d, outDuration: outDur, prefer,
       bitrate: H >= 1080 ? 8000000 : 5000000,
       draw: t => {
         const st = {
@@ -411,10 +412,12 @@ async function doExport() {
         busy(true, `녹화 중 ${Math.round((p * outDur))}초 / ${Math.round(outDur)}초`);
       },
     });
-    const name = `자막영상_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.${realExt || ext}`;
+    const now = new Date();
+    const stamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+    const name = `자막영상_${stamp}.${realExt || ext}`;
     download(blob, name);
     note.className = 'msg ok';
-    note.textContent = `${name} · ${(blob.size / 1048576).toFixed(1)}MB 로 저장했어요.${(realExt || ext) === 'webm' ? ' (이 브라우저는 WebM으로 저장돼요)' : ''}`;
+    note.textContent = `${name} · ${(blob.size / 1048576).toFixed(1)}MB 로 저장했어요.${(realExt || ext) === 'webm' ? ' (WebM으로 저장됨)' : ''}`;
     toast('영상을 내려받았어요');
   } catch (e) {
     note.className = 'msg bad';
@@ -484,6 +487,18 @@ function syncLook() {
 
 function setRatioUI() {
   Array.from($('#ratioSeg').children).forEach(b => b.classList.toggle('on', (b.dataset.ratio || '') === (S.ratio || '')));
+}
+
+function updateFormatHint() {
+  const v = $('#fmtSel').value;
+  const el = $('#exportNote');
+  if (v === 'mp4' && !aacSupported()) {
+    el.textContent = 'MP4(H.264)로 저장해요. 이 브라우저는 소리를 Opus로 넣어서, 유튜브 업로드가 막히면 WebM을 골라 주세요. 재생하며 녹화하니 영상 길이만큼 걸립니다.';
+  } else if (v === 'webm') {
+    el.textContent = 'WebM(VP9+Opus)은 유튜브 업로드에 그대로 쓰기 좋아요. 재생하며 녹화하니 영상 길이만큼 걸립니다.';
+  } else {
+    el.textContent = '영상을 재생하며 그대로 녹화합니다. 10분 영상이면 10분쯤 걸려요.';
+  }
 }
 
 /* ---------------- 내보내기/파일 도우미 ---------------- */
@@ -723,6 +738,8 @@ export function initEditor() {
   // 내보내기
   $('#btnExport').addEventListener('click', doExport);
   $('#btnSrtOut').addEventListener('click', downloadSrt);
+  $('#fmtSel').addEventListener('change', updateFormatHint);
+  updateFormatHint();
 
   window.addEventListener('resize', () => renderTimeline());
 }

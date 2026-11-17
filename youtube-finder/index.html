@@ -330,12 +330,18 @@
         <!-- 내보내기 -->
         <section class="card block" id="secExport">
           <h2 class="block-h"><span class="num">5</span>내보내기</h2>
+          <div class="field">
+            <label for="fmtSel">파일 형식</label>
+            <select id="fmtSel">
+              <option value="mp4">MP4 · H.264 (기본)</option>
+              <option value="webm">WebM · VP9</option>
+            </select>
+          </div>
           <div class="row">
             <button class="btn primary" id="btnExport" disabled>MP4로 내려받기</button>
             <button class="btn ghost" id="btnSrtOut">SRT 내려받기</button>
           </div>
-          <p class="hint" id="exportNote">영상을 재생하며 그대로 녹화합니다. 10분 영상이면 10분쯤 걸려요.</p>
-          <div class="prog" id="expProg" hidden><div class="prog-bar"><i id="expBar"></i></div><span id="expPct">0%</span></div>
+          <p class="hint" id="exportNote">영상을 재생하며 그대로 녹화합니다. 10분 영상이면 10분쯤 걸려요.</p>          <div class="prog" id="expProg" hidden><div class="prog-bar"><i id="expBar"></i></div><span id="expPct">0%</span></div>
           <p class="msg" id="expMsg" role="status"></p>
         </section>
 
