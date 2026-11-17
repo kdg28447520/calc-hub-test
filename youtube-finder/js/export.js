@@ -59,8 +59,18 @@ export async function recordVideo(o) {
   video.pause();
   try { video.currentTime = 0; } catch { /* noop */ }
   await new Promise(r => setTimeout(r, 120));
-  rec.start(500);
   try { await video.play(); } catch { /* 자동재생이 막혀도 녹화는 계속 */ }
+  // 첫 프레임이 실제로 흐르기 시작한 뒤에 녹화를 건다(앞에 멈춘 화면이 길게 붙지 않도록)
+  await new Promise(res => {
+    const t0 = performance.now();
+    const check = () => {
+      if (video.currentTime > 0.06 || video.ended || performance.now() - t0 > 900) return res();
+      requestAnimationFrame(check);
+    };
+    check();
+  });
+  try { draw(video.currentTime); } catch { /* noop */ }
+  rec.start(500);
 
   const cutsSorted = cuts.filter(c => c.e > c.s).sort((a, b) => a.s - b.s);
   const skipTo = t => {

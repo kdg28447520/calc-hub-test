@@ -1,6 +1,6 @@
 // 탭 1 — 잘나가는 영상 찾기
-import { findVideos, sortVideos } from './youtube.js?v=3';
-import { $, esc, toast, copyText, fmtNum, fmtFull, fmtDur, fmtAge, store } from './ui.js?v=3';
+import { findVideos, sortVideos } from './youtube.js?v=4';
+import { $, esc, toast, copyText, fmtNum, fmtFull, fmtDur, fmtAge, store } from './ui.js?v=4';
 
 export const PRESETS = [
   {
