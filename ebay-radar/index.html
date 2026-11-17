@@ -982,7 +982,7 @@ async function fetchFX(){
 }
 
 /* ============ 이벤트 ============ */
-document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click', ()=>switchView(b.dataset.view)));
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click', ()=>{ switchView(b.dataset.view); try{ history.replaceState(null,'','#'+b.dataset.view); }catch(e){} }));
 document.querySelectorAll('#destSeg button').forEach(b=>b.addEventListener('click', ()=>{
   document.querySelectorAll('#destSeg button').forEach(x=>x.setAttribute('aria-pressed','false'));
   b.setAttribute('aria-pressed','true'); render();
@@ -1009,6 +1009,8 @@ restoreState();
 renderSamples();
 render();
 updateListing();
+const hashView = (location.hash||'').replace('#','');
+if (['calc','samples','listing','reality'].includes(hashView)) switchView(hashView);
 fetchFX();
 </script>
 </body>
