@@ -457,7 +457,7 @@
       </div>
     </div>
     <div class="callout warn">
-      <b>시작 전에 스스로 답해볼 세 가지.</b> ① 주 2~3회 우체국에 갈 수 있는가. ② 한 건이 적자일 때 그 물건을 국내에서 다시 팔 수 있는가. ③ 월 100만원을 위해 40건을 팔아야 한다면, 그 40건을 살 국내 재고가 매달 있는가. 세 번째가 “아니오”면 이 사업은 셀러가 아니라 <b>재고를 구하는 사람</b>의 일이 됩니다.
+      <b>시작 전에 스스로 답해볼 세 가지.</b> ① 주 2~3회 우체국에 갈 수 있는가. ② 한 건이 적자일 때 그 물건을 국내에서 다시 팔 수 있는가. ③ 월 100만원을 위해 <span id="needUnits">수십</span>건을 팔아야 한다면, 그 <span id="needUnits2">수십</span>건을 살 국내 재고가 매달 있는가. 세 번째가 “아니오”면 이 사업은 셀러가 아니라 <b>재고를 구하는 사람</b>의 일이 됩니다.
     </div>
   </div>
 </section>
@@ -657,6 +657,9 @@ function renderGoal(){
   hEl.textContent = hours.toFixed(0) + '시간';
   dEl.textContent = (hours/30).toFixed(1) + '시간';
   note.innerHTML = `건당 순이익 <b>${won(per)}</b> 기준입니다. 판매 전환율 ${(rate*100).toFixed(0)}%라면 <b>월 ${fmt0(listing)}개</b>를 올려야 ${fmt0(units)}건이 팔립니다. 한 건에 ${mins}분씩, 하루 ${(hours/30).toFixed(1)}시간을 이 일에 쓰는 셈입니다.`;
+  const nu1 = document.getElementById('needUnits'), nu2 = document.getElementById('needUnits2');
+  if (nu1) nu1.textContent = fmt0(units);
+  if (nu2) nu2.textContent = fmt0(units);
 }
 
 /* ============ 샘플 ============ */
