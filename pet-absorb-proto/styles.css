@@ -313,12 +313,13 @@ body{
 /* ---------- Modal ---------- */
 .modal-layer{
   position:absolute;inset:0;z-index:40;display:flex;align-items:flex-end;justify-content:center;
-  background:rgba(4,6,10,.72);backdrop-filter:blur(4px);
+  background:rgba(4,6,10,.66);backdrop-filter:blur(3px);
   animation:fade .2s ease-out;
 }
 .modal-layer[hidden]{display:none}
 @keyframes fade{from{opacity:0}to{opacity:1}}
 .sheet{
+  position:relative;
   width:100%;max-height:94%;overflow-y:auto;overscroll-behavior:contain;
   background:linear-gradient(180deg,#10151f 0%,#0a0e15 100%);
   border-top:1px solid var(--line-hi);
