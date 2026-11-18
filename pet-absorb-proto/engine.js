@@ -6,6 +6,7 @@
   var W = 390, H = 520;
   var canvas = null, ctx = null, stageEl = null;
   var audio = null;
+  var dpr = 1;
 
   function rand(a, b) { return a + Math.random() * (b - a); }
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
