@@ -269,9 +269,14 @@
       var a = pet.def.active, p = pet.def.passive;
       var aLine = D.effectLine(a, grade);
       var pLine = D.passiveLines(p, grade).join(' · ');
+      var need = G.bondNeed(pet);
+      var nextG = grade < 3 ? grade + 1 : 3;
+      var bondHint = need === null
+        ? '지금 흡수하면 <b>최고 등급 III (각성)</b>으로 들어옵니다.'
+        : '지금 흡수하면 <b>등급 ' + D.GRADE_ROMAN[grade] + ' (' + D.GRADE_WORD[grade] + ')</b>으로 들어옵니다. ' +
+          '<b>' + need + '웨이브</b> 더 버티면 등급 ' + D.GRADE_ROMAN[nextG] + ' (' + D.GRADE_WORD[nextG] + ')입니다.';
       var body = head +
-        '<p class="sheet-sub">흡수하면 <b>둘 중 하나만</b> 남기고 이 펫은 <b>소멸</b>합니다. ' +
-        '지금 흡수하면 <b>등급 ' + D.GRADE_ROMAN[grade] + ' · ' + D.GRADE_WORD[grade] + '</b>로 들어옵니다.</p>' +
+        '<p class="sheet-sub">흡수하면 <b>둘 중 하나만</b> 남기고 이 펫은 <b>소멸</b>합니다. ' + bondHint + '</p>' +
         optionHTML('active', a, grade, aLine) +
         optionHTML('passive', p, grade, pLine) +
         '<div class="sheet-actions">' +

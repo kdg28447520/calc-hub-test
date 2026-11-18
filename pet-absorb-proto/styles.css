@@ -158,7 +158,7 @@ body{
 /* ---------- Overlays ---------- */
 .overlay{
   position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;
-  padding:20px 20px 24px;
+  padding:calc(20px + env(safe-area-inset-top,0px)) 20px 24px; overflow-y:auto;
   background:radial-gradient(90% 70% at 50% 40%, rgba(10,13,20,.82), rgba(5,6,10,.96));
   backdrop-filter:blur(3px);
 }
@@ -340,13 +340,13 @@ body{
 }
 .opt .opt-icon{width:30px;height:30px;flex:0 0 auto;border-radius:8px;display:grid;place-items:center;color:var(--c);background:color-mix(in srgb,var(--c) 9%,transparent);border:1px solid color-mix(in srgb,var(--c) 26%,transparent)}
 .opt .opt-icon svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-.opt .opt-body{flex:1;min-width:0}
-.opt .opt-kind{font-size:8.5px;font-weight:700;letter-spacing:.14em;color:var(--ink-3);margin-bottom:2px}
-.opt .opt-name{font-size:12.5px;font-weight:700;color:#e7ecf6;display:flex;align-items:center;gap:6px}
+.opt .opt-body{flex:1;min-width:0;display:block}
+.opt .opt-kind{display:block;font-size:8.5px;font-weight:700;letter-spacing:.14em;color:var(--ink-3);margin-bottom:3px}
+.opt .opt-name{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:#e7ecf6}
 .opt .opt-name em{font-style:normal;font-size:8.5px;font-weight:700;color:var(--c);padding:1px 4px;border-radius:3px;background:color-mix(in srgb,var(--c) 13%,transparent)}
-.opt .opt-desc{font-size:10px;color:#8590a6;margin-top:3px;line-height:1.45}
-.opt .opt-stat{font-size:10px;color:#a9b4c8;margin-top:3px;font-weight:600}
-.opt .opt-grade{font-size:9px;font-weight:800;color:var(--gold);margin-top:4px;letter-spacing:.02em}
+.opt .opt-desc{display:block;font-size:10px;color:#8590a6;margin-top:4px;line-height:1.5}
+.opt .opt-stat{display:block;font-size:10px;color:#a9b4c8;margin-top:4px;font-weight:600}
+.opt .opt-grade{display:block;font-size:9px;font-weight:800;color:var(--gold);margin-top:5px;letter-spacing:.02em}
 .opt.sel{border-color:color-mix(in srgb,var(--c) 62%,transparent);background:color-mix(in srgb,var(--c) 9%, #0f1521);box-shadow:0 0 0 1px color-mix(in srgb,var(--c) 26%,transparent) inset}
 .opt:disabled{opacity:.5}
 .sheet-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}

@@ -14,7 +14,7 @@
   (function () { var ce = console.error; console.error = function () { try { window.__errs.push('[console] ' + Array.prototype.join.call(arguments, ' ')); } catch (x) {} ce.apply(console, arguments); }; })();
 </script>
 <meta name="description" content="펫을 소환하고, 키우고, 흡수해 스킬을 빌드하는 다크 판타지 액션 RPG 프로토타입." />
-<link rel="stylesheet" href="styles.css?v=4" />
+<link rel="stylesheet" href="styles.css?v=6" />
 </head>
 <body>
 <div class="app">
@@ -51,6 +51,37 @@
       <div class="banner" id="banner" aria-live="polite"></div>
       <div class="toast" id="toast" aria-live="polite"></div>
 
+    </div>
+
+    <section class="panel loadout">
+      <div class="row-head">
+        <span>주인 스킬</span>
+        <span class="hint">탭 · 1 2 3</span>
+      </div>
+      <div class="actives" id="activeSlots"></div>
+      <div class="row-head sub">
+        <span>패시브</span>
+        <span class="hint" id="passiveCount">0 / 4</span>
+      </div>
+      <div class="passives" id="passiveSlots"></div>
+    </section>
+
+    <section class="panel pets-panel">
+      <div class="row-head">
+        <span>동행 펫</span>
+        <span class="hint" id="petCount">0 / 2</span>
+      </div>
+      <div class="pets" id="petRow"></div>
+    </section>
+
+    <footer class="controls">
+      <button class="btn btn-primary" id="summonBtn" type="button">
+        <span class="btn-label">펫 소환</span>
+        <span class="cost"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2 19 12l-7 8.8L5 12z"/></svg><b>3</b></span>
+      </button>
+      <button class="btn btn-ghost" id="autoBtn" type="button">자동 <b>ON</b></button>
+    </footer>
+
       <div class="overlay" id="introLayer">
         <div class="overlay-inner">
           <div class="mark">
@@ -84,43 +115,13 @@
           <button class="btn btn-primary btn-lg" id="restartBtn" type="button">다시 시작</button>
         </div>
       </div>
-    </div>
-
-    <section class="panel loadout">
-      <div class="row-head">
-        <span>주인 스킬</span>
-        <span class="hint">탭 · 1 2 3</span>
-      </div>
-      <div class="actives" id="activeSlots"></div>
-      <div class="row-head sub">
-        <span>패시브</span>
-        <span class="hint" id="passiveCount">0 / 4</span>
-      </div>
-      <div class="passives" id="passiveSlots"></div>
-    </section>
-
-    <section class="panel pets-panel">
-      <div class="row-head">
-        <span>동행 펫</span>
-        <span class="hint" id="petCount">0 / 2</span>
-      </div>
-      <div class="pets" id="petRow"></div>
-    </section>
-
-    <footer class="controls">
-      <button class="btn btn-primary" id="summonBtn" type="button">
-        <span class="btn-label">펫 소환</span>
-        <span class="cost"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2 19 12l-7 8.8L5 12z"/></svg><b>3</b></span>
-      </button>
-      <button class="btn btn-ghost" id="autoBtn" type="button">자동 <b>ON</b></button>
-    </footer>
 
     <div class="modal-layer" id="modalLayer" hidden></div>
   </main>
 </div>
 
-<script src="data.js?v=4"></script>
-<script src="engine.js?v=5"></script>
-<script src="ui.js?v=4"></script>
+<script src="data.js?v=6"></script>
+<script src="engine.js?v=6"></script>
+<script src="ui.js?v=6"></script>
 </body>
 </html>
