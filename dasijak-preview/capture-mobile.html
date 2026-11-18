@@ -156,12 +156,13 @@ h2{font-size:32px;font-weight:800;letter-spacing:-.03em;line-height:1.32;margin-
 /* ── 지도 ── */
 .map-card{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:44px;
   display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:48px;box-shadow:var(--shadow-s)}
+.kr-map text{stroke:none}
 .map-figure{display:flex;align-items:center;justify-content:center}
 .kr-map{width:100%;height:auto;max-width:420px;overflow:visible}
-.map-halo circle{fill:#eff6f7}
-.map-dots circle{fill:#cfe0e4}
-.map-pin .hit{fill:transparent}
-.map-pin .bub{fill:var(--navy);transition:fill .16s}
+.map-halo circle{fill:#eff6f7;stroke:none}
+.map-dots circle{fill:#cfe0e4;stroke:none}
+.map-pin .hit{fill:transparent;stroke:none}
+.map-pin .bub{fill:var(--navy);stroke:none;transition:fill .16s}
 .map-pin.zero .bub{fill:#fff;stroke:#cfdee2;stroke-width:1.6}
 .map-pin .cnt{fill:#fff;font-size:18px;font-weight:800;text-anchor:middle;letter-spacing:-.02em}
 .map-pin.zero .cnt{fill:#8fa2b0;font-weight:700}
@@ -240,7 +241,7 @@ h2{font-size:32px;font-weight:800;letter-spacing:-.03em;line-height:1.32;margin-
 .row-title{font-size:18.5px;font-weight:700;line-height:1.42;letter-spacing:-.01em}
 .row-title a:hover{color:var(--teal-d)}
 .row-sub{font-size:14.5px;color:var(--muted);margin-top:4px}
-.row-meta{display:flex;gap:4px 16px;flex-wrap:wrap;font-size:15px;color:var(--sub);margin-top:8px}
+.row-meta{display:flex;gap:4px 14px;flex-wrap:wrap;font-size:15px;color:var(--sub);margin-top:8px}
 .row-meta b{color:var(--ink);font-weight:800}
 .row-go{display:inline-flex;align-items:center;gap:6px;font-size:14.5px;font-weight:700;
   color:var(--teal-d);white-space:nowrap;padding:10px 14px;border-radius:10px;background:#f4fbf9}
@@ -533,12 +534,13 @@ h2{font-size:32px;font-weight:800;letter-spacing:-.03em;line-height:1.32;margin-
 /* ── 지도 ── */
 .map-card{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:44px;
   display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:48px;box-shadow:var(--shadow-s)}
+.kr-map text{stroke:none}
 .map-figure{display:flex;align-items:center;justify-content:center}
 .kr-map{width:100%;height:auto;max-width:420px;overflow:visible}
-.map-halo circle{fill:#eff6f7}
-.map-dots circle{fill:#cfe0e4}
-.map-pin .hit{fill:transparent}
-.map-pin .bub{fill:var(--navy);transition:fill .16s}
+.map-halo circle{fill:#eff6f7;stroke:none}
+.map-dots circle{fill:#cfe0e4;stroke:none}
+.map-pin .hit{fill:transparent;stroke:none}
+.map-pin .bub{fill:var(--navy);stroke:none;transition:fill .16s}
 .map-pin.zero .bub{fill:#fff;stroke:#cfdee2;stroke-width:1.6}
 .map-pin .cnt{fill:#fff;font-size:18px;font-weight:800;text-anchor:middle;letter-spacing:-.02em}
 .map-pin.zero .cnt{fill:#8fa2b0;font-weight:700}
@@ -617,7 +619,7 @@ h2{font-size:32px;font-weight:800;letter-spacing:-.03em;line-height:1.32;margin-
 .row-title{font-size:18.5px;font-weight:700;line-height:1.42;letter-spacing:-.01em}
 .row-title a:hover{color:var(--teal-d)}
 .row-sub{font-size:14.5px;color:var(--muted);margin-top:4px}
-.row-meta{display:flex;gap:4px 16px;flex-wrap:wrap;font-size:15px;color:var(--sub);margin-top:8px}
+.row-meta{display:flex;gap:4px 14px;flex-wrap:wrap;font-size:15px;color:var(--sub);margin-top:8px}
 .row-meta b{color:var(--ink);font-weight:800}
 .row-go{display:inline-flex;align-items:center;gap:6px;font-size:14.5px;font-weight:700;
   color:var(--teal-d);white-space:nowrap;padding:10px 14px;border-radius:10px;background:#f4fbf9}
@@ -2329,11 +2331,11 @@ html{scroll-behavior:auto}
     var cat = D.cats[j[1]] || '기타';
     var meta = [];
     if (j[6]) meta.push('<b>' + esc(j[6]) + '</b>');
-    if (j[7]) meta.push(esc(j[7]));
-    if (j[8]) meta.push(esc(j[8]));
-    if (j[9] && j[9] !== '경력무관') meta.push(esc(j[9]));
-    if (j[10] && j[10] !== '학력무관') meta.push(esc(j[10]));
-    if (j[11]) meta.push(esc(j[11]));
+    if (j[7]) meta.push('<span>' + esc(j[7]) + '</span>');
+    if (j[8]) meta.push('<span>' + esc(j[8]) + '</span>');
+    if (j[9] && j[9] !== '경력무관') meta.push('<span>' + esc(j[9]) + '</span>');
+    if (j[10] && j[10] !== '학력무관') meta.push('<span>' + esc(j[10]) + '</span>');
+    if (j[11]) meta.push('<span>' + esc(j[11]) + '</span>');
     return '<article class="row">' +
       '<div class="row-main">' +
         '<div class="row-top"><span class="tag">' + esc(j[4]) + ' · ' + esc(cat) + '</span>' +
@@ -2341,7 +2343,7 @@ html{scroll-behavior:auto}
         '<span class="row-sub" style="margin:0">' + esc(j[13]) + ' 마감</span></div>' +
         '<h3 class="row-title"><a href="' + workUrl(j[0]) + '" target="_blank" rel="noopener">' + esc(j[2]) + '</a></h3>' +
         '<p class="row-sub">' + esc(j[3]) + ' · ' + esc(j[5]) + '</p>' +
-        '<p class="row-meta">' + meta.join('<span aria-hidden="true">·</span>') + '</p>' +
+        '<p class="row-meta">' + meta.join('') + '</p>' +
       '</div>' +
       '<a class="row-go" href="' + workUrl(j[0]) + '" target="_blank" rel="noopener">원본 공고' +
         '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"/></svg></a>' +
