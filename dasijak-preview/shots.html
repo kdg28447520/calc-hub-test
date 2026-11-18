@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>shot harness</title>
+<style>
+  html,body{margin:0;padding:0;background:#dfe6ea}
+  #frame{display:block;border:0;background:#fff;margin:0 auto}
+</style>
+</head>
+<body>
+<iframe id="frame" src="./index.html" title="preview"></iframe>
+<script>
+  var w = parseInt(new URLSearchParams(location.search).get('w') || '1280', 10);
+  var f = document.getElementById('frame');
+  f.style.width = w + 'px';
+  function fit() {
+    try {
+      var doc = f.contentDocument;
+      doc.querySelectorAll('img[loading="lazy"]').forEach(function (i) { i.loading = 'eager'; });
+      var h = doc.documentElement.scrollHeight;
+      f.style.height = h + 'px';
+      document.title = 'H=' + h + ' W=' + w;
+    } catch (e) { document.title = 'ERR ' + e.message; }
+  }
+  f.addEventListener('load', function () { fit(); setTimeout(fit, 600); setTimeout(fit, 1800); });
+</script>
+</body>
+</html>
