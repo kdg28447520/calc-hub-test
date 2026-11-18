@@ -9,7 +9,7 @@
 </style>
 </head>
 <body>
-<iframe id="frame" src="./index.html" title="preview"></iframe>
+<iframe id="frame" src="./index.html" title="preview" aria-hidden="true" tabindex="-1"></iframe>
 <script>
   var w = parseInt(new URLSearchParams(location.search).get('w') || '1280', 10);
   var f = document.getElementById('frame');
