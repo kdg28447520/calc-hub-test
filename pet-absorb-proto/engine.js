@@ -741,7 +741,7 @@
       if (st.slowAura > 0) slowFactor *= 1 - st.slowAura / 100;
 
       var d = Math.sqrt(dist2(e.x, e.y, pl.x, pl.y - 18));
-      var stopDist = e.ranged ? 150 : e.r + 26;
+      var stopDist = e.ranged ? 150 : e.r + 38;
 
       if (!stopped && d > stopDist) {
         var ang2 = Math.atan2((pl.y - 18) - e.y, pl.x - e.x);
@@ -1313,9 +1313,9 @@
 
     // absorb affordance hint
     ctx.save();
-    ctx.globalAlpha = 0.35 + 0.15 * Math.sin(S.t * 2.4);
+    ctx.globalAlpha = 0.22 + 0.12 * Math.sin(S.t * 2.4);
     ctx.fillStyle = '#c9a86a';
-    ctx.font = '600 7px Pretendard, sans-serif';
+    ctx.font = '600 6px Pretendard, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('TAP', 0, -27);
     ctx.restore();

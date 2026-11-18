@@ -121,7 +121,7 @@
     var full = S.pets.length >= 2;
     var poor = S.souls < 3;
     var btn = el.summonBtn;
-    btn.disabled = full || poor || S.phase === 'dead' || S.phase === 'idle';
+    btn.disabled = poor || S.phase === 'dead' || S.phase === 'idle';
     var label = btn.querySelector('.btn-label');
     if (label) label.textContent = full ? '슬롯 가득' : poor ? '영혼석 부족' : '펫 소환';
   }
