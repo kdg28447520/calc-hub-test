@@ -103,7 +103,7 @@
   var ENEMY = {
     imp:   { hp: 22, dmg: 2.5,  speed: 56, r: 13,  color: '#b0505f' },
     grunt: { hp: 44, dmg: 3.5,  speed: 40, r: 17,  color: '#8d5a63' },
-    brute: { hp: 92, dmg: 6,  speed: 31, r: 23,  color: '#6f4a5c' },
+    brute: { hp: 92, dmg: 5,  speed: 31, r: 23,  color: '#6f4a5c' },
     wisp:  { hp: 30, dmg: 3,  speed: 34, r: 14,  color: '#7d6bb0', ranged: true },
     boss:  { hp: 340, dmg: 8, speed: 22, r: 40, color: '#c2557f', boss: true }
   };
@@ -112,7 +112,7 @@
     return {
       phase: 'idle',           // idle | wave | clear | dead
       t: 0, wave: 1, kills: 0, skillsAbsorbed: 0, summoned: 0,
-      hp: 100, maxHp: 100,
+      hp: 120, maxHp: 120,
       souls: 6,
       power: 1,
       player: { x: W / 2, y: H - 64, atkTimer: 0, castFlash: 0, shield: 0, shieldT: 0, hurt: 0 },
@@ -169,7 +169,7 @@
     });
     st.soulGain = Math.round(st.soulGain);
 
-    var newMax = Math.round((100 + st.maxHpFlat) * (1 + st.maxHpPct / 100));
+    var newMax = Math.round((120 + st.maxHpFlat) * (1 + st.maxHpPct / 100));
     if (newMax !== S.maxHp) {
       var ratio = S.hp / S.maxHp;
       S.maxHp = newMax;
@@ -488,7 +488,7 @@
 
   function spawnEnemy(type) {
     var t = ENEMY[type];
-    var scaleHp = 1 + (S.wave - 1) * 0.34;
+    var scaleHp = 1 + (S.wave - 1) * 0.26;
     var scaleDmg = 1 + (S.wave - 1) * 0.12;
     var e = {
       type: type, x: rand(34, W - 34), y: rand(-46, -18),
@@ -515,7 +515,7 @@
     S.spawnQueue = composeWave(n);
     S.spawnTimer = 0.25;
     S.spawnInterval = Math.max(0.3, 0.88 - n * 0.032);
-    S.power = 1 + (n - 1) * 0.11;
+    S.power = 1 + (n - 1) * 0.15;
     emit('banner', { text: 'WAVE ' + n, sub: n % 5 === 0 ? '보스 웨이브' : '' });
     emit('hud');
     if (n % 5 === 0) audio && audio.boss();
@@ -526,7 +526,7 @@
     S.clearTimer = 2.3;
     var gain = 3 + Math.floor(S.wave / 4) + S.stats.soulGain;
     gainSouls(gain);
-    S.hp = Math.min(S.maxHp, S.hp + Math.round(S.maxHp * 0.14));
+    S.hp = Math.min(S.maxHp, S.hp + Math.round(S.maxHp * 0.18));
     S.pets.forEach(function (p) { if (p.bondWaves < 4) p.bondWaves++; });
     audio && audio.clear();
     emit('toast', { text: '웨이브 클리어 — 영혼석 +' + gain, kind: 'gold' });
@@ -751,7 +751,7 @@
       } else if (!stopped) {
         e.atk -= dt;
         if (e.atk <= 0) {
-          e.atk = e.ranged ? 2.6 : 1.55;
+          e.atk = e.ranged ? 2.6 : 1.75;
           if (e.ranged) {
             var a2 = Math.atan2((pl.y - 18) - e.y, pl.x - e.x);
             S.eshots.push({ x: e.x, y: e.y, vx: Math.cos(a2) * 200, vy: Math.sin(a2) * 200, dmg: e.dmg, life: 3, color: '#b28cff', t: 0 });
@@ -1630,9 +1630,9 @@
     // low hp vignette
     if (S.hp > 0 && S.hp / S.maxHp < 0.3) {
       var k = 1 - S.hp / S.maxHp / 0.3;
-      var vg = ctx.createRadialGradient(W / 2, H / 2, H * 0.22, W / 2, H / 2, H * 0.72);
+      var vg = ctx.createRadialGradient(W / 2, H * 0.55, H * 0.3, W / 2, H * 0.55, H * 0.78);
       vg.addColorStop(0, 'rgba(150,20,35,0)');
-      vg.addColorStop(1, 'rgba(150,20,35,' + (0.35 * k * (0.7 + 0.3 * Math.sin(S.t * 4))) + ')');
+      vg.addColorStop(1, 'rgba(150,20,35,' + (0.26 * k * (0.7 + 0.3 * Math.sin(S.t * 4))) + ')');
       ctx.fillStyle = vg;
       ctx.fillRect(0, 0, W, H);
     }

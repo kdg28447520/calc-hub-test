@@ -14,7 +14,7 @@
   (function () { var ce = console.error; console.error = function () { try { window.__errs.push('[console] ' + Array.prototype.join.call(arguments, ' ')); } catch (x) {} ce.apply(console, arguments); }; })();
 </script>
 <meta name="description" content="펫을 소환하고, 키우고, 흡수해 스킬을 빌드하는 다크 판타지 액션 RPG 프로토타입." />
-<link rel="stylesheet" href="styles.css?v=13" />
+<link rel="stylesheet" href="styles.css?v=14" />
 </head>
 <body>
 <div class="app">
@@ -98,7 +98,7 @@
             <li><b>각성</b> 같은 속성이 겹치면 시너지가 발동합니다.</li>
           </ul>
           <button class="btn btn-primary btn-lg" id="startBtn" type="button">전투 시작</button>
-          <p class="fineprint">한 손 조작 · 사운드 켜짐</p>
+          <p class="fineprint">한 손 조작 · 탭으로 시전</p>
         </div>
       </div>
 
@@ -120,8 +120,8 @@
   </main>
 </div>
 
-<script src="data.js?v=13"></script>
-<script src="engine.js?v=13"></script>
-<script src="ui.js?v=13"></script>
+<script src="data.js?v=14"></script>
+<script src="engine.js?v=14"></script>
+<script src="ui.js?v=14"></script>
 </body>
 </html>
