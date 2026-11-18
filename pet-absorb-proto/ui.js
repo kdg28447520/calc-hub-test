@@ -113,7 +113,8 @@
       cards.push('<div class="pet-card empty-slot">' + ICON_EMPTY_PET + '<span>빈 동행 슬롯</span></div>');
     }
     el.petRow.innerHTML = cards.join('');
-    el.petCount.textContent = S.pets.length + ' / 2';
+    var guard = Math.round(7 * S.pets.length);
+    el.petCount.innerHTML = S.pets.length + ' / 2' + (S.pets.length ? ' · <b style="color:#8fbf9a">피해 -' + guard + '%</b>' : '');
   }
 
   function renderSummonState(S) {

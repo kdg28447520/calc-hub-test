@@ -101,11 +101,11 @@
 
   /* ---------------- enemies ---------------- */
   var ENEMY = {
-    imp:   { hp: 22, dmg: 3,  speed: 56, r: 13,  color: '#b0505f' },
-    grunt: { hp: 44, dmg: 5,  speed: 40, r: 17,  color: '#8d5a63' },
-    brute: { hp: 92, dmg: 8,  speed: 31, r: 23,  color: '#6f4a5c' },
-    wisp:  { hp: 30, dmg: 4,  speed: 34, r: 14,  color: '#7d6bb0', ranged: true },
-    boss:  { hp: 340, dmg: 10, speed: 22, r: 40, color: '#c2557f', boss: true }
+    imp:   { hp: 22, dmg: 2.5,  speed: 56, r: 13,  color: '#b0505f' },
+    grunt: { hp: 44, dmg: 3.5,  speed: 40, r: 17,  color: '#8d5a63' },
+    brute: { hp: 92, dmg: 6,  speed: 31, r: 23,  color: '#6f4a5c' },
+    wisp:  { hp: 30, dmg: 3,  speed: 34, r: 14,  color: '#7d6bb0', ranged: true },
+    boss:  { hp: 340, dmg: 8, speed: 22, r: 40, color: '#c2557f', boss: true }
   };
 
   function makeState() {
@@ -321,7 +321,8 @@
       S.nums[S.nums.length - 1].text = 'MISS';
       return;
     }
-    var dmg = raw * (1 - Math.min(0.7, st.dr / 100));
+    var guard = 1 - Math.min(0.18, 0.07 * S.pets.length);
+    var dmg = raw * (1 - Math.min(0.7, st.dr / 100)) * guard;
     if (S.player.shield > 0) {
       var absorbed = Math.min(S.player.shield, dmg);
       S.player.shield -= absorbed;
@@ -525,7 +526,7 @@
     S.clearTimer = 2.3;
     var gain = 3 + Math.floor(S.wave / 4) + S.stats.soulGain;
     gainSouls(gain);
-    S.hp = Math.min(S.maxHp, S.hp + Math.round(S.maxHp * 0.1));
+    S.hp = Math.min(S.maxHp, S.hp + Math.round(S.maxHp * 0.14));
     S.pets.forEach(function (p) { if (p.bondWaves < 4) p.bondWaves++; });
     audio && audio.clear();
     emit('toast', { text: '웨이브 클리어 — 영혼석 +' + gain, kind: 'gold' });
@@ -750,12 +751,14 @@
       } else if (!stopped) {
         e.atk -= dt;
         if (e.atk <= 0) {
-          e.atk = e.ranged ? 2.2 : 1.25;
+          e.atk = e.ranged ? 2.6 : 1.55;
           if (e.ranged) {
             var a2 = Math.atan2((pl.y - 18) - e.y, pl.x - e.x);
             S.eshots.push({ x: e.x, y: e.y, vx: Math.cos(a2) * 200, vy: Math.sin(a2) * 200, dmg: e.dmg, life: 3, color: '#b28cff', t: 0 });
           } else {
             damagePlayer(e.dmg);
+            var kb = Math.atan2(e.y - (pl.y - 18), e.x - pl.x);
+            e.x += Math.cos(kb) * 9; e.y += Math.sin(kb) * 9;
           }
         }
       }
