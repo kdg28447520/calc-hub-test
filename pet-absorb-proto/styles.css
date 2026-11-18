@@ -165,6 +165,18 @@ body{
   backdrop-filter:blur(2px);
 }
 .overlay[hidden]{display:none}
+.overlay::before{
+  content:"";position:absolute;left:50%;top:44%;width:min(560px,150vw);height:min(560px,150vw);
+  transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;
+  background:
+    radial-gradient(circle, rgba(140,168,220,.05) 0 38%, transparent 39%),
+    radial-gradient(circle, transparent 0 52%, rgba(140,168,220,.06) 52.4%, transparent 53%),
+    repeating-conic-gradient(from 0deg, rgba(150,180,230,.055) 0deg .7deg, transparent .7deg 12deg);
+  -webkit-mask-image:radial-gradient(circle, #000 0 56%, transparent 68%);
+  mask-image:radial-gradient(circle, #000 0 56%, transparent 68%);
+  animation:spin 90s linear infinite;
+}
+@keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
 .overlay-inner{width:100%;text-align:center;animation:ovin .5s cubic-bezier(.2,.9,.2,1)}
 @keyframes ovin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 .mark{display:flex;align-items:center;justify-content:center;gap:8px;color:var(--gold)}

@@ -101,11 +101,11 @@
 
   /* ---------------- enemies ---------------- */
   var ENEMY = {
-    imp:   { hp: 15, dmg: 3,  speed: 56, r: 13,  color: '#b0505f' },
-    grunt: { hp: 30, dmg: 5,  speed: 40, r: 17,  color: '#8d5a63' },
-    brute: { hp: 64, dmg: 8,  speed: 31, r: 23,  color: '#6f4a5c' },
-    wisp:  { hp: 20, dmg: 4,  speed: 34, r: 14,  color: '#7d6bb0', ranged: true },
-    boss:  { hp: 280, dmg: 10, speed: 22, r: 40, color: '#c2557f', boss: true }
+    imp:   { hp: 22, dmg: 3,  speed: 56, r: 13,  color: '#b0505f' },
+    grunt: { hp: 44, dmg: 5,  speed: 40, r: 17,  color: '#8d5a63' },
+    brute: { hp: 92, dmg: 8,  speed: 31, r: 23,  color: '#6f4a5c' },
+    wisp:  { hp: 30, dmg: 4,  speed: 34, r: 14,  color: '#7d6bb0', ranged: true },
+    boss:  { hp: 340, dmg: 10, speed: 22, r: 40, color: '#c2557f', boss: true }
   };
 
   function makeState() {
@@ -487,7 +487,7 @@
 
   function spawnEnemy(type) {
     var t = ENEMY[type];
-    var scaleHp = 1 + (S.wave - 1) * 0.30;
+    var scaleHp = 1 + (S.wave - 1) * 0.34;
     var scaleDmg = 1 + (S.wave - 1) * 0.12;
     var e = {
       type: type, x: rand(34, W - 34), y: rand(-46, -18),
@@ -498,7 +498,8 @@
       burn: null, dead: false, wob: Math.random() * 6
     };
     if (t.boss) {
-      e.x = W / 2; e.hp = e.maxHp = Math.round(t.hp * scaleHp * 0.9);
+      e.x = W / 2;
+      e.hp = e.maxHp = Math.round(t.hp * (1 + Math.max(0, S.wave - 5) * 0.32));
       S.bossRef = e;
       S.rings.push({ x: e.x, y: e.y + 20, r: 6, max: 140, t: 0, life: 0.8, color: '#c2557f', w: 3 });
       emit('banner', { text: 'BOSS', sub: 'WAVE ' + S.wave, color: '#c2557f' });
@@ -512,7 +513,7 @@
     S.bossRef = null;
     S.spawnQueue = composeWave(n);
     S.spawnTimer = 0.25;
-    S.spawnInterval = Math.max(0.24, 0.72 - n * 0.028);
+    S.spawnInterval = Math.max(0.3, 0.88 - n * 0.032);
     S.power = 1 + (n - 1) * 0.11;
     emit('banner', { text: 'WAVE ' + n, sub: n % 5 === 0 ? '보스 웨이브' : '' });
     emit('hud');
