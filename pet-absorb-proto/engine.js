@@ -101,11 +101,11 @@
 
   /* ---------------- enemies ---------------- */
   var ENEMY = {
-    imp:   { hp: 15, dmg: 3,  speed: 42, r: 13,  color: '#b0505f' },
-    grunt: { hp: 30, dmg: 5,  speed: 30, r: 17,  color: '#8d5a63' },
-    brute: { hp: 64, dmg: 8,  speed: 22, r: 23,  color: '#6f4a5c' },
-    wisp:  { hp: 20, dmg: 4,  speed: 26, r: 14,  color: '#7d6bb0', ranged: true },
-    boss:  { hp: 280, dmg: 10, speed: 16, r: 40, color: '#c2557f', boss: true }
+    imp:   { hp: 15, dmg: 3,  speed: 56, r: 13,  color: '#b0505f' },
+    grunt: { hp: 30, dmg: 5,  speed: 40, r: 17,  color: '#8d5a63' },
+    brute: { hp: 64, dmg: 8,  speed: 31, r: 23,  color: '#6f4a5c' },
+    wisp:  { hp: 20, dmg: 4,  speed: 34, r: 14,  color: '#7d6bb0', ranged: true },
+    boss:  { hp: 280, dmg: 10, speed: 22, r: 40, color: '#c2557f', boss: true }
   };
 
   function makeState() {
@@ -1194,7 +1194,7 @@
 
     ctx.save();
     ctx.translate(x, y);
-    var baseScale = 1.15;
+    var baseScale = 1.28;
     if (pet.spawnT > 0) baseScale *= 1 + Math.sin((0.5 - pet.spawnT) * 14) * 0.14;
     ctx.scale(baseScale, baseScale);
     if (pet.spawnT > 0) ctx.globalAlpha = Math.min(1, (0.5 - pet.spawnT) * 5 + 0.3);
@@ -1355,60 +1355,104 @@
     ctx.shadowColor = col;
 
     if (shape === 'wisp') {
-      ctx.beginPath(); ctx.arc(0, 0, r * 0.75, 0, 6.2832); ctx.fill(); ctx.stroke();
-      ctx.beginPath(); ctx.ellipse(0, 0, r * 1.25, r * 0.4, e.t * 0.7, 0, 6.2832); ctx.stroke();
-      ctx.beginPath(); ctx.ellipse(0, 0, r * 1.25, r * 0.4, e.t * 0.7 + 1.57, 0, 6.2832); ctx.stroke();
+      ctx.beginPath(); ctx.arc(0, 0, r * 0.62, 0, 6.2832); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(0, 0, r * 1.2, r * 0.38, e.t * 0.8, 0, 6.2832); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(0, 0, r * 1.2, r * 0.38, e.t * 0.8 + 1.57, 0, 6.2832); ctx.stroke();
+      ctx.beginPath(); ctx.arc(0, 0, r * 0.22, 0, 6.2832); ctx.fillStyle = col; ctx.fill();
     } else if (shape === 'boss') {
+      // crowned colossus
       ctx.beginPath();
-      ctx.moveTo(0, -r);
-      ctx.lineTo(r * 0.55, -r * 0.62);
-      ctx.lineTo(r * 0.92, -r * 0.92);
-      ctx.lineTo(r * 0.78, -r * 0.3);
-      ctx.lineTo(r * 1.05, 0);
-      ctx.lineTo(r * 0.7, r * 0.5);
-      ctx.lineTo(r * 0.42, r);
-      ctx.lineTo(-r * 0.42, r);
-      ctx.lineTo(-r * 0.7, r * 0.5);
-      ctx.lineTo(-r * 1.05, 0);
-      ctx.lineTo(-r * 0.78, -r * 0.3);
-      ctx.lineTo(-r * 0.92, -r * 0.92);
-      ctx.lineTo(-r * 0.55, -r * 0.62);
+      for (var ci = 0; ci < 12; ci++) {
+        var ang = -Math.PI / 2 + ci * (6.2832 / 12);
+        var rad = ci % 2 === 0 ? r * 1.05 : r * 0.78;
+        var px2 = Math.cos(ang) * rad, py2 = Math.sin(ang) * rad;
+        if (ci === 0) ctx.moveTo(px2, py2); else ctx.lineTo(px2, py2);
+      }
       ctx.closePath();
       ctx.fill(); ctx.stroke();
-      ctx.beginPath(); ctx.arc(0, 0, r * 0.42, 0, 6.2832); ctx.stroke();
+      // crown spikes
+      ctx.beginPath();
+      for (var k2 = -2; k2 <= 2; k2++) {
+        ctx.moveTo(k2 * r * 0.3, -r * 0.95);
+        ctx.lineTo(k2 * r * 0.34, -r * 1.35 + Math.abs(k2) * r * 0.12);
+      }
+      ctx.stroke();
+      ctx.beginPath(); ctx.arc(0, 0, r * 0.4, 0, 6.2832); ctx.stroke();
+      // tattered lower hem
+      ctx.beginPath();
+      ctx.moveTo(-r * 0.62, r * 0.55);
+      ctx.lineTo(-r * 0.5, r * 1.15);
+      ctx.lineTo(-r * 0.2, r * 0.8);
+      ctx.lineTo(0, r * 1.25);
+      ctx.lineTo(r * 0.2, r * 0.8);
+      ctx.lineTo(r * 0.5, r * 1.15);
+      ctx.lineTo(r * 0.62, r * 0.55);
+      ctx.stroke();
     } else if (shape === 'brute') {
       ctx.beginPath();
-      ctx.moveTo(-r, r * 0.9);
-      ctx.lineTo(-r * 0.9, -r * 0.2);
-      ctx.lineTo(-r * 0.5, -r * 0.9);
-      ctx.lineTo(r * 0.5, -r * 0.9);
-      ctx.lineTo(r * 0.9, -r * 0.2);
-      ctx.lineTo(r, r * 0.9);
+      ctx.moveTo(0, -r * 1.05);
+      ctx.lineTo(r * 0.45, -r * 0.72);
+      ctx.lineTo(r * 0.98, -r * 0.82);
+      ctx.lineTo(r * 0.8, -r * 0.08);
+      ctx.lineTo(r * 1.02, r * 0.88);
+      ctx.lineTo(r * 0.34, r * 1.06);
+      ctx.lineTo(0, r * 0.8);
+      ctx.lineTo(-r * 0.34, r * 1.06);
+      ctx.lineTo(-r * 1.02, r * 0.88);
+      ctx.lineTo(-r * 0.8, -r * 0.08);
+      ctx.lineTo(-r * 0.98, -r * 0.82);
+      ctx.lineTo(-r * 0.45, -r * 0.72);
       ctx.closePath();
       ctx.fill(); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(-r * 0.75, -r * 0.55); ctx.lineTo(-r * 1.15, -r * 1.1); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(r * 0.75, -r * 0.55); ctx.lineTo(r * 1.15, -r * 1.1); ctx.stroke();
-    } else if (shape === 'imp') {
+      // chest plate
+      ctx.beginPath();
+      ctx.moveTo(-r * 0.42, -r * 0.3); ctx.lineTo(r * 0.42, -r * 0.3);
+      ctx.moveTo(0, -r * 0.3); ctx.lineTo(0, r * 0.62);
+      ctx.stroke();
+    } else if (shape === 'grunt') {
       ctx.beginPath();
       ctx.moveTo(0, -r);
-      ctx.quadraticCurveTo(r, -r * 0.4, r * 0.7, r * 0.8);
-      ctx.quadraticCurveTo(0, r * 1.1, -r * 0.7, r * 0.8);
-      ctx.quadraticCurveTo(-r, -r * 0.4, 0, -r);
+      ctx.quadraticCurveTo(r * 0.8, -r * 0.6, r * 0.72, r * 0.5);
+      ctx.lineTo(r * 1.16, r * 0.08);
+      ctx.lineTo(r * 1.0, r * 0.78);
+      ctx.lineTo(r * 0.46, r * 1.12);
+      ctx.lineTo(0, r * 0.86);
+      ctx.lineTo(-r * 0.46, r * 1.12);
+      ctx.lineTo(-r * 1.0, r * 0.78);
+      ctx.lineTo(-r * 1.16, r * 0.08);
+      ctx.lineTo(-r * 0.72, r * 0.5);
+      ctx.quadraticCurveTo(-r * 0.8, -r * 0.6, 0, -r);
       ctx.closePath();
       ctx.fill(); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(-r * 0.5, -r * 0.7); ctx.lineTo(-r * 0.9, -r * 1.4); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(r * 0.5, -r * 0.7); ctx.lineTo(r * 0.9, -r * 1.4); ctx.stroke();
-    } else {
-      // grunt
+      // horns
       ctx.beginPath();
-      ctx.moveTo(-r * 0.8, r);
-      ctx.quadraticCurveTo(-r * 1.05, -r * 0.2, -r * 0.45, -r * 0.85);
-      ctx.quadraticCurveTo(0, -r * 1.15, r * 0.45, -r * 0.85);
-      ctx.quadraticCurveTo(r * 1.05, -r * 0.2, r * 0.8, r);
+      ctx.moveTo(-r * 0.34, -r * 0.82); ctx.lineTo(-r * 0.55, -r * 1.32);
+      ctx.moveTo(r * 0.34, -r * 0.82); ctx.lineTo(r * 0.55, -r * 1.32);
+      ctx.stroke();
+    } else {
+      // imp: small tattered wraith
+      ctx.beginPath();
+      ctx.moveTo(0, -r);
+      ctx.quadraticCurveTo(r * 0.78, -r * 0.55, r * 0.62, r * 0.5);
+      ctx.lineTo(r * 0.72, r * 1.05);
+      ctx.lineTo(r * 0.26, r * 0.7);
+      ctx.lineTo(0, r * 1.1);
+      ctx.lineTo(-r * 0.26, r * 0.7);
+      ctx.lineTo(-r * 0.72, r * 1.05);
+      ctx.lineTo(-r * 0.62, r * 0.5);
+      ctx.quadraticCurveTo(-r * 0.78, -r * 0.55, 0, -r);
       ctx.closePath();
       ctx.fill(); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(-r * 0.6, -r * 0.6); ctx.lineTo(-r * 1.1, -r * 0.2); ctx.moveTo(r * 0.6, -r * 0.6); ctx.lineTo(r * 1.1, -r * 0.2); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(-r * 0.3, -r * 0.7); ctx.lineTo(-r * 0.46, -r * 1.16);
+      ctx.moveTo(r * 0.3, -r * 0.7); ctx.lineTo(r * 0.46, -r * 1.16);
+      ctx.stroke();
     }
+    // inner shadow glow
+    ctx.save();
+    ctx.globalAlpha = 0.16; ctx.fillStyle = col;
+    ctx.beginPath(); ctx.arc(0, -r * 0.1, r * 0.5, 0, 6.2832); ctx.fill();
+    ctx.restore();
 
     // eyes
     ctx.fillStyle = e.stunT > 0 ? '#8fa6c8' : '#ff7a7a';

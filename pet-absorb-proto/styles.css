@@ -159,8 +159,10 @@ body{
 .overlay{
   position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;
   padding:calc(20px + env(safe-area-inset-top,0px)) 20px 24px; overflow-y:auto;
-  background:radial-gradient(90% 70% at 50% 40%, rgba(10,13,20,.82), rgba(5,6,10,.96));
-  backdrop-filter:blur(3px);
+  background:
+    radial-gradient(120% 70% at 50% 8%, rgba(36,47,70,.55), rgba(7,9,14,0) 62%),
+    linear-gradient(180deg, #090c13 0%, #05070b 100%);
+  backdrop-filter:blur(2px);
 }
 .overlay[hidden]{display:none}
 .overlay-inner{width:100%;text-align:center;animation:ovin .5s cubic-bezier(.2,.9,.2,1)}
