@@ -341,9 +341,11 @@ body{
 .sheet-head .sh-bond b{display:block;font-size:13px;font-weight:800;color:var(--gold)}
 .sheet-head .sh-bond span{font-size:8.5px;color:var(--ink-3);letter-spacing:.06em}
 .sheet-close{
-  position:absolute;right:14px;top:14px;width:26px;height:26px;border-radius:7px;border:1px solid var(--line);
-  background:#111722;color:var(--ink-3);display:grid;place-items:center;cursor:pointer;font-size:13px;
+  flex:0 0 auto;width:26px;height:26px;margin-left:2px;border-radius:7px;border:1px solid var(--line);
+  background:#111722;color:var(--ink-3);display:grid;place-items:center;cursor:pointer;font-size:12px;
+  align-self:flex-start;
 }
+.sheet-close:active{background:#1b2432;color:var(--ink)}
 .sheet-sub{font-size:10.5px;color:var(--ink-3);line-height:1.5;margin:8px 0 12px;padding:8px 10px;border-left:2px solid var(--line-2);background:rgba(255,255,255,.015);border-radius:0 6px 6px 0}
 .sheet-sub b{color:#cdd5e4;font-weight:700}
 

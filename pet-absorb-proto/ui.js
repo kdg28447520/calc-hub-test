@@ -264,6 +264,7 @@
           '<p>' + pet.def.title + ' · ' + pet.def.rarity + '</p>' +
         '</div>' +
         '<div class="sh-bond"><b>Lv.' + lv + '</b><span>유대 등급</span></div>' +
+        '<button type="button" class="sheet-close" id="closeSheet" aria-label="닫기">✕</button>' +
       '</div>';
 
     if (modal.mode === 'pick') {
@@ -285,8 +286,7 @@
           '<button type="button" class="btn btn-sub" id="doDissolve">해산 (+2 영혼석)</button>' +
         '</div>' +
         '<p class="sheet-note">해산하면 스킬 없이 펫을 보내고 영혼석 2개를 돌려받습니다.</p>';
-      el.modalLayer.innerHTML = '<div class="sheet" role="dialog" aria-modal="true">' +
-        '<button type="button" class="sheet-close" id="closeSheet" aria-label="닫기">✕</button>' + body + '</div>';
+      el.modalLayer.innerHTML = '<div class="sheet" role="dialog" aria-modal="true">' + body + '</div>';
     } else {
       // replace screen
       var list = modal.kind === 'active' ? S.skills.active : S.skills.passive;
@@ -307,8 +307,7 @@
         '고른 스킬은 사라집니다.</p>' +
         '<div class="replace-grid' + (modal.kind === 'passive' ? ' passive-grid' : '') + '">' + cells + '</div>' +
         '<div class="sheet-actions"><button type="button" class="btn btn-sub wide" id="backPick">← 돌아가기</button></div>';
-      el.modalLayer.innerHTML = '<div class="sheet" role="dialog" aria-modal="true">' +
-        '<button type="button" class="sheet-close" id="closeSheet" aria-label="닫기">✕</button>' + body2 + '</div>';
+      el.modalLayer.innerHTML = '<div class="sheet" role="dialog" aria-modal="true">' + body2 + '</div>';
     }
 
     bindModal();
