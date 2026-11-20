@@ -247,10 +247,9 @@
         </div>
 
         <div class="bg-white/95 backdrop-blur px-2.5 py-1 rounded-md border border-[#E8EAEC] text-[10px] font-semibold text-[#131416] shadow-sm flex items-center gap-2">
-          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#10B981]"></span>원활</span>
-          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#FBBF24]"></span>서행</span>
-          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#F97316]"></span>지체</span>
-          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#EF4444]"></span>정체</span>
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#ef4444]"></span>티맵</span>
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#16a34a]"></span>네이버</span>
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#f59e0b]"></span>카카오</span>
         </div>
 
         <div class="bg-white/95 backdrop-blur p-0.5 rounded-md border border-[#E8EAEC] flex items-center gap-0.5 shadow-sm">
@@ -298,10 +297,13 @@
   }
 
   const NAVIS = {
-    tmap:  { name: '티맵',      dot: '#E60000', line: '#1E7B4F', cta: '티맵으로 바로 출발하기' },
-    naver: { name: '네이버지도', dot: '#03C75A', line: '#2F70BB', cta: '네이버지도로 바로 출발하기' },
-    kakao: { name: '카카오내비', dot: '#F4D000', line: '#B45309', cta: '카카오내비로 바로 출발하기' }
+    tmap:  { name: '티맵',      dot: '#ef4444', cta: '티맵으로 바로 출발하기' },
+    naver: { name: '네이버지도', dot: '#16a34a', cta: '네이버지도로 바로 출발하기' },
+    kakao: { name: '카카오내비', dot: '#f59e0b', cta: '카카오내비로 바로 출발하기' }
   };
+
+  /* 지도 위 3사 경로 색 — 좌측 리스트 점과 같은 색 */
+  const ROUTE_COLORS = { tmap: '#ef4444', naver: '#16a34a', kakao: '#f59e0b' };
 
   const PRESETS = [
     { key: 'gangnam',  label: '강남역',      name: '서울 강남역 (2호선·신분당선)', lat: 37.4981, lng: 127.0280 },
@@ -365,27 +367,33 @@
     if (pinEnd) { map.removeLayer(pinEnd); pinEnd = null; }
   }
 
-  function renderMap(pts, singleColor, trafficSegs, destLabel) {
-    if (!pts || pts.length < 2) return;
-    clearMapLines();
-    const startPt = pts[0], endPt = pts[pts.length - 1];
+  function renderMap(activeKey, destLabel) {
+    const res = state.results || {};
+    const order = ['tmap', 'naver', 'kakao'];
+    const usable = order.filter(k => res[k] && res[k].ok && res[k].pts && res[k].pts.length > 1);
+    if (!usable.length) return;
+    const active = usable.includes(activeKey) ? activeKey : usable[0];
 
+    clearMapLines();
+
+    /* 뒤 레이어 — 선택하지 않은 2개 노선: 브랜드 색 그대로, 얇고 반투명하게 */
+    usable.filter(k => k !== active).forEach(k => {
+      polylineLayers.push(L.polyline(res[k].pts, {
+        color: ROUTE_COLORS[k], weight: 3, opacity: 0.5,
+        lineCap: 'round', lineJoin: 'round'
+      }).addTo(map));
+    });
+
+    /* 앞 레이어 — 선택한 노선: 흰 외곽선 위에 브랜드 색을 굵게, 불투명하게 */
+    const pts = res[active].pts;
+    polylineCasing = L.polyline(pts, { color: '#FFFFFF', weight: 10, opacity: 0.95, lineCap: 'round', lineJoin: 'round' }).addTo(map);
+    polylineLayers.push(L.polyline(pts, { color: ROUTE_COLORS[active], weight: 6, opacity: 1, lineCap: 'round', lineJoin: 'round' }).addTo(map));
+
+    const startPt = pts[0], endPt = pts[pts.length - 1];
     pinStart = L.marker(startPt, { icon: L.divIcon({ html: '<div class="w-3.5 h-3.5 rounded-full bg-[#1E7B4F] border-2 border-white shadow radar-pulse"></div>', iconSize: [14, 14], iconAnchor: [7, 7] }) }).addTo(map);
     const short = ((destLabel || '도착').replace(/[\(\[][^\)\]]*[\)\]]/g, '').trim().split(' ').slice(-1)[0] || '도착').slice(0, 8);
     pinEnd = L.marker(endPt, { icon: L.divIcon({ html: `<div class="px-2 py-0.5 rounded bg-[#131416] text-white text-[10px] font-medium shadow border border-white">${short}</div>`, iconSize: [60, 20], iconAnchor: [30, 20] }) }).addTo(map);
 
-    polylineCasing = L.polyline(pts, { color: '#FFFFFF', weight: 8, opacity: 0.9, lineCap: 'round', lineJoin: 'round' }).addTo(map);
-
-    if (trafficSegs && trafficSegs.length) {
-      trafficSegs.forEach(seg => {
-        if (!seg.pts || seg.pts.length < 2) return;
-        const layer = L.polyline(seg.pts, { color: seg.color || '#10B981', weight: 5, opacity: 0.95, lineCap: 'round', lineJoin: 'round' }).addTo(map);
-        if (seg.name || seg.label) layer.bindTooltip(`${seg.name || '구간'} · ${seg.label} (${Math.round(seg.speed || 0)}km/h)`, { sticky: true });
-        polylineLayers.push(layer);
-      });
-    } else {
-      polylineLayers.push(L.polyline(pts, { color: singleColor || '#1E7B4F', weight: 5, opacity: 0.95, lineCap: 'round', lineJoin: 'round' }).addTo(map));
-    }
     recenterMap();
   }
 
@@ -762,7 +770,7 @@
     document.getElementById('btnPrimaryText').innerText = NAVIS[k].cta;
     document.getElementById('mapRouteName').innerText = `${NAVIS[k].name} 경로 (${r.minutes}분)`;
 
-    renderMap(r.pts && r.pts.length > 1 ? r.pts : null, NAVIS[k].line, k === 'kakao' ? r.segs : null, d.name);
+    renderMap(k, d.name);
   }
 
   function setLive(ok, label) {

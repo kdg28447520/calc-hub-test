@@ -23,7 +23,7 @@
 
 ## 파일
 
-- `index.html` — 앱 전체(화면 + 프록시 호출 + 지도 렌더링)
+- `index.html` — 앱 전체(화면 + 프록시 호출 + 지도 렌더링). 지도에는 3사 경로가 브랜드 색(티맵 빨강 `#ef4444` · 네이버 초록 `#16a34a` · 카카오 노랑 `#f59e0b`)으로 동시에 그려지고, 선택한 노선만 흰 외곽선 + 굵은 선으로 앞에 강조됩니다.
 - `api/tmap.js` — SK TMAP 길찾기 프록시 (`TMAP_APP_KEY`)
 - `api/poi.js` — SK TMAP POI 자동완성 프록시 (`TMAP_APP_KEY`)
 - `api/kakao.js` — 카카오모빌리티 길찾기 프록시 (`KAKAO_REST_KEY`)
