@@ -32,6 +32,32 @@
 - `manifest.json`, `sw.js`, `icons/` — PWA 설치용
 - `og.png` — 카톡·문자 공유 카드 이미지(1200×630, 실제 화면 캡처 기반)
 
+### 애드센스 심사용 문서·SEO
+
+| 파일 | 내용 |
+| --- | --- |
+| `guide.html` | 이용 가이드 — 3사 소요시간이 다른 이유, API 요청 옵션 표, 차이 읽는 법, 시간대별 팁, 통행료, 사용법 |
+| `faq.html` | 자주 묻는 질문 16개 (`FAQPage` 구조화 데이터) |
+| `about.html` | 서비스 소개 — 만든 이유, 동작 구조(서버 프록시), 데이터 출처·상표 고지, 운영 원칙 |
+| `contact.html` | 문의 — `kdg2844@gmail.com`, 오류 신고 시 담을 정보 |
+| `privacy.html` | 개인정보처리방침 — 위치·즐겨찾기(localStorage)·AdSense 쿠키·제3자 이전 |
+| `terms.html` | 이용약관 — 참고 정보의 한계, 면책, 금지 행위 |
+| `assets/site.css` | 위 문서 공용 스타일(앱과 같은 화이트/슬레이트 + `#1E7B4F` 톤) |
+| `robots.txt` | 전체 허용 + Sitemap + Mediapartners-Google 허용 |
+| `sitemap.xml` | 루트 + 문서 6장 |
+| `ads.txt` | `google.com, pub-4533404826925371, DIRECT, f08c47fec0942fa0` |
+
+`index.html` 하단(`#site-info`)에도 소개·3사 차이 요약·사용법·FAQ 요약·푸터가 실제 HTML 텍스트로 들어갑니다.
+앱 화면은 `.app-viewport`(100dvh) 안에서 기존과 똑같이 동작하고, 그 아래로 문서 영역이 이어집니다.
+
+### 애드센스
+
+- 게시자 ID `ca-pub-4533404826925371` (dasijak.co.kr · gongmaemul.co.kr · petmap.kr 과 같은 계정).
+- `index.html`에 `google-adsense-account` 메타와 `adsbygoogle.js` 로더가 들어 있습니다. 문서 페이지에는 메타만 있습니다.
+- 광고 슬롯은 아직 넣지 않았습니다. 자동 광고를 켤 경우 지도·비교 카드 위에 뜨지 않도록 AdSense의 ‘페이지별 광고 제외’를 쓰세요.
+- **도메인을 연결하면** canonical·og:url·sitemap·robots의 주소를 한 번에 바꿔야 합니다:
+  `grep -rl 'nuba-kdg2844-8355s-projects.vercel.app' . | xargs sed -i 's/nuba-kdg2844-8355s-projects.vercel.app/새도메인/g'`
+
 ## 개인 즐겨찾기 (내 기기에만)
 
 - 퀵 칩 위 **`★ 즐겨찾기 추가`** → 지금 입력된 도착지(없으면 출발지)를 이름(`집`, `회사`, `단골` 등)과 함께 저장합니다.

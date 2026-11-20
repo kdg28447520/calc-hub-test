@@ -1,0 +1,10 @@
+# 누빠 (누가빠름) — https://nuba-kdg2844-8355s-projects.vercel.app/
+# 검색과 광고 크롤러 모두 허용합니다. 막아 둔 경로는 없습니다.
+
+User-agent: *
+Allow: /
+
+User-agent: Mediapartners-Google
+Allow: /
+
+Sitemap: https://nuba-kdg2844-8355s-projects.vercel.app/sitemap.xml
