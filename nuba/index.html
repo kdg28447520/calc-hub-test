@@ -222,7 +222,7 @@
         </div>
         <div id="rows"></div>
         <p class="api-note text-[10px] leading-relaxed text-[#8A8C8E] px-1 pt-1">
-          카카오모빌리티 · SK TMAP · 네이버 Directions 5 실시간 호출. 아틀란은 개인용 API가 없어 비교에서 제외했습니다.
+          카카오모빌리티 · SK TMAP · 네이버 Directions 5 실시간 호출
         </p>
       </div>
 
@@ -270,14 +270,30 @@
   <script>
   /* ============================================================
      누빠 (누가빠름) — 실시간 3사 내비 비교
-     카카오모빌리티 / SK TMAP  : 브라우저 → 공식 API 직접 호출
-     네이버 Directions 5       : 비밀 키 보호를 위해 서버 프록시(/api/naver) 경유
+     3사 모두 우리 서버리스 프록시를 거친다. API 키는 서버 환경변수에만 있고
+     이 페이지 소스에는 어떤 키 문자열도 남지 않는다.
+       /api/tmap   → SK TMAP 길찾기      (TMAP_APP_KEY)
+       /api/poi    → SK TMAP 장소 자동완성 (TMAP_APP_KEY)
+       /api/kakao  → 카카오모빌리티 길찾기   (KAKAO_REST_KEY)
+       /api/naver  → 네이버 Directions 5    (NAVER_KEY_ID / NAVER_KEY_SECRET)
      ============================================================ */
   const CFG = {
-    TMAP_KEY: '0yP3YRLodM1HvwIwfKpEs6Xwhq6vdVN96kxRPfQL',
-    KAKAO_KEY: '796eb10535ddf9c7e4aafe0a85c796fd',
+    TMAP_PROXY: '/api/tmap',
+    POI_PROXY: '/api/poi',
+    KAKAO_PROXY: '/api/kakao',
     NAVER_PROXY: '/api/naver'
   };
+
+  /* 프록시가 돌려준 오류 사유를 카드에 그대로 보여주기 위한 도우미 */
+  async function proxyErrorReason(res, fallback) {
+    let why = fallback || `HTTP ${res.status}`;
+    try {
+      const e = await res.json();
+      const msg = e && (e.error || e.message || e.result_msg);
+      if (msg) why = String(msg).slice(0, 28);
+    } catch (_) {}
+    return why;
+  }
 
   const NAVIS = {
     tmap:  { name: '티맵',      dot: '#E60000', line: '#1E7B4F', cta: '티맵으로 바로 출발하기' },
@@ -385,8 +401,8 @@
     if (!q) return [];
     async function fetchPoi(query) {
       try {
-        const url = `https://apis.openapi.sk.com/tmap/pois?version=1&searchKeyword=${encodeURIComponent(query)}&count=8`;
-        const res = await fetch(url, { headers: { appKey: CFG.TMAP_KEY } });
+        const url = `${CFG.POI_PROXY}?keyword=${encodeURIComponent(query)}&count=8`;
+        const res = await fetch(url);
         if (!res.ok) return [];
         const data = await res.json();
         const list = (data && data.searchPoiInfo && data.searchPoiInfo.pois && data.searchPoiInfo.pois.poi) || [];
@@ -496,9 +512,9 @@
   async function fetchTmap(origin, dest) {
     const t0 = performance.now();
     try {
-      const res = await fetch('https://apis.openapi.sk.com/tmap/routes?version=1', {
+      const res = await fetch(CFG.TMAP_PROXY, {
         method: 'POST',
-        headers: { appKey: CFG.TMAP_KEY, 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           startX: String(origin.lng), startY: String(origin.lat),
           endX: String(dest.lng), endY: String(dest.lat),
@@ -507,7 +523,7 @@
         })
       });
       const ms = Math.round(performance.now() - t0);
-      if (!res.ok) return { ok: false, ms, reason: `HTTP ${res.status}` };
+      if (!res.ok) return { ok: false, ms, reason: await proxyErrorReason(res) };
       const data = await res.json();
       const p = data && data.features && data.features[0] && data.features[0].properties;
       if (!p || !p.totalTime) return { ok: false, ms, reason: '응답 형식 오류' };
@@ -533,10 +549,10 @@
   async function fetchKakao(origin, dest) {
     const t0 = performance.now();
     try {
-      const url = `https://apis-navi.kakaomobility.com/v1/directions?origin=${origin.lng},${origin.lat}&destination=${dest.lng},${dest.lat}&priority=RECOMMEND&car_type=1`;
-      const res = await fetch(url, { headers: { Authorization: `KakaoAK ${CFG.KAKAO_KEY}` } });
+      const url = `${CFG.KAKAO_PROXY}?origin=${origin.lng},${origin.lat}&destination=${dest.lng},${dest.lat}&priority=RECOMMEND&car_type=1`;
+      const res = await fetch(url);
       const ms = Math.round(performance.now() - t0);
-      if (!res.ok) return { ok: false, ms, reason: `HTTP ${res.status}` };
+      if (!res.ok) return { ok: false, ms, reason: await proxyErrorReason(res) };
       const data = await res.json();
       const r = data && data.routes && data.routes[0];
       if (!r || !r.summary) {
@@ -576,7 +592,7 @@
       const res = await fetch(url);
       const ms = Math.round(performance.now() - t0);
       if (!res.ok) {
-        const why = res.status === 404 ? '프록시 없는 주소(정적 호스팅)' : `HTTP ${res.status}`;
+        const why = res.status === 404 ? '프록시 없는 주소(정적 호스팅)' : await proxyErrorReason(res);
         return { ok: false, ms, reason: why };
       }
       const data = await res.json();
