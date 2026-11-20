@@ -334,7 +334,7 @@
           <span id="btnPrimaryText">가장 빠른 내비로 출발하기</span>
           <svg class="w-3.5 h-3.5 text-[#1E7B4F]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
         </a>
-        <p class="app-info-links pt-1.5 text-center text-[10px] leading-relaxed text-[#8A8C8E]">
+        <p class="app-info-links hidden sm:block pt-1.5 text-center text-[10px] leading-relaxed text-[#8A8C8E]">
           <a href="./guide.html" class="hover:text-[#131416]">이용 가이드</a>
           <span class="px-1 text-[#CDCED1]">·</span>
           <a href="./faq.html" class="hover:text-[#131416]">자주 묻는 질문</a>
@@ -370,6 +370,17 @@
         <button onclick="recenterMap()" class="w-8 h-8 rounded-md bg-white shadow-sm border border-[#E8EAEC] flex items-center justify-center text-[#5D5F60] hover:text-[#131416] transition-all" title="경로 맞춤">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5"/></svg>
         </button>
+      </div>
+
+      <!-- 폰 폭에서만: 조작 패널 높이를 그대로 지키려고 안내 링크를 지도 아래 모서리에 둔다 -->
+      <div class="map-info-links sm:hidden absolute bottom-2 left-2 z-[700] bg-white/95 backdrop-blur px-2 py-1 rounded-md border border-[#E8EAEC] shadow-sm flex items-center gap-1.5 text-[10px] font-medium text-[#5D5F60]">
+        <a href="#site-info" class="hover:text-[#131416]">안내</a>
+        <span class="text-[#CDCED1]">·</span>
+        <a href="./guide.html" class="hover:text-[#131416]">가이드</a>
+        <span class="text-[#CDCED1]">·</span>
+        <a href="./privacy.html" class="hover:text-[#131416]">개인정보</a>
+        <span class="text-[#CDCED1]">·</span>
+        <a href="./terms.html" class="hover:text-[#131416]">약관</a>
       </div>
     </main>
 
