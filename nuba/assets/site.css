@@ -307,6 +307,19 @@ body.doc-page {
 }
 .site-info .doc { padding-top: 44px; }
 
+/* 메인 안내 영역의 제목 */
+.site-info .intro-title {
+  margin: 0 0 14px;
+  font-size: 24px;
+  line-height: 1.42;
+  letter-spacing: -0.02em;
+  font-weight: 800;
+}
+
+@media (max-width: 639px) {
+  .site-info .intro-title { font-size: 20.5px; }
+}
+
 /* 메인 안내 영역의 3단 요약 카드 */
 .site-info .card-grid {
   display: grid;
