@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>누빠 (누가빠름) · 실시간 3사 내비 비교</title>
+  <meta name="description" content="티맵·카카오내비·네이버지도 실시간 소요시간을 한 번에 비교하고 가장 빠른 길로 바로 출발하세요.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="누빠 (누가빠름) - 실시간 3사 내비 비교">
+  <meta property="og:description" content="티맵·카카오·네이버 실시간 소요시간·거리·통행료를 3초 만에 비교. 누가 빠른지 바로 확인하세요.">
+  <meta property="og:locale" content="ko_KR">
+  <meta property="og:site_name" content="누빠">
+  <meta name="twitter:card" content="summary">
+  <meta name="theme-color" content="#131416">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" href="./icons/icon-192.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            taste: {
+              ground: '#F9FBFC', surface: '#FFFFFF', raised: '#F4F6F8', active: '#EBEDEE',
+              border: '#E8EAEC', rule: '#F0F1F2', control: '#CDCED1', text: '#131416',
+              muted: '#5D5F60', accent: '#1B6C80', positive: '#1E7B4F', negative: '#C4242A', warning: '#92400E'
+            }
+          },
+          fontFamily: { sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'] }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; word-break: keep-all; overflow-wrap: break-word; }
+    body, html {
+      margin: 0; padding: 0; width: 100vw; height: 100vh; height: 100dvh; overflow: hidden;
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #F4F6F8; color: #131416;
+      -webkit-font-smoothing: antialiased; font-feature-settings: "tnum";
+    }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* WIDE SCREEN & GALAXY Z FOLD UNFOLDED (>= 640px) */
+    @media (min-width: 640px) {
+      .taste-shell { position: absolute; inset: 8px; display: flex; gap: 12px; border-radius: 16px; overflow: hidden; }
+      .control-sheet {
+        width: 380px; flex-shrink: 0; height: 100%; background: #FFFFFF; border: 1px solid #E8EAEC;
+        border-radius: 14px; display: flex; flex-direction: column; z-index: 20; overflow: hidden;
+      }
+      .map-sheet {
+        flex: 1; height: 100%; background: #FFFFFF; border: 1px solid #E8EAEC; border-radius: 14px;
+        position: relative; overflow: hidden; z-index: 10;
+      }
+    }
+
+    /* MOBILE PHONES (< 640px: iPhone 13~16, Galaxy S22~S24, Fold Outer) */
+    @media (max-width: 639px) {
+      .taste-shell {
+        position: absolute; inset: 0; gap: 0; border-radius: 0; display: flex; flex-direction: column-reverse;
+        width: 100vw; height: 100vh; height: 100dvh; overflow: hidden;
+      }
+      .map-sheet { flex: 1; min-height: 34vh; border: none; border-radius: 0; position: relative; overflow: hidden; z-index: 10; }
+      .control-sheet {
+        width: 100%; max-width: 100%; max-height: 66vh; max-height: 66dvh; background: #FFFFFF;
+        border-top: 1px solid #E8EAEC; border-radius: 20px 20px 0 0; box-shadow: 0 -4px 24px rgba(19, 20, 22, 0.12);
+        display: flex; flex-direction: column; z-index: 20; overflow-y: auto;
+        padding-bottom: max(6px, env(safe-area-inset-bottom, 4px));
+      }
+      .brand-header-row { display: none !important; }
+      .search-box-row { padding: 8px 12px 6px 12px !important; }
+      .search-pills-row { display: none !important; }
+      .kpi-metric-row { padding: 6px 12px !important; }
+      .kpi-metric-row #kpiRouteNote { display: none !important; }
+      .comparison-list-row { padding: 4px 10px !important; gap: 4px !important; }
+      .navi-row-item { padding: 6px 10px !important; }
+      .action-bar-row { padding: 6px 12px !important; }
+      .action-bar-row a { height: 42px !important; }
+      .api-note { display: none !important; }
+    }
+
+    #map { width: 100%; height: 100%; background: #F4F6F8; }
+
+    .navi-row-item { border: 1px solid #E8EAEC; background: #FFFFFF; transition: all 0.15s ease; }
+    .navi-row-item:hover { background: #F9FBFC; border-color: #CDCED1; }
+    .navi-row-item.active { border-color: #131416; background: #F9FBFC; box-shadow: inset 2px 0 0 0 #1E7B4F; }
+
+    .radar-pulse { box-shadow: 0 0 0 0 rgba(30, 123, 79, 0.6); animation: pulse-green 2s infinite; }
+    @keyframes pulse-green {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(30, 123, 79, 0.6); }
+      70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(30, 123, 79, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(30, 123, 79, 0); }
+    }
+  </style>
+</head>
+<body class="relative w-full h-full">
+
+  <div class="taste-shell">
+
+    <!-- LEFT WORK SHEET -->
+    <aside class="control-sheet">
+
+      <!-- Brand header -->
+      <div class="brand-header-row px-5 py-3.5 border-b border-[#E8EAEC] flex items-center justify-between shrink-0 bg-white">
+        <div class="flex items-center gap-2.5">
+          <div class="w-7 h-7 rounded-lg bg-[#131416] flex items-center justify-center text-white shrink-0">
+            <svg class="w-4 h-4 text-[#1E7B4F]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+          </div>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <span class="text-sm font-bold tracking-tight text-[#131416]">누빠</span>
+              <span class="text-[10px] font-medium text-[#5D5F60]">누가빠름</span>
+            </div>
+            <div class="text-[10px] text-[#8A8C8E] leading-tight">실시간 3사 내비 비교</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="btnPwaInstall" onclick="installPwa()" class="hidden px-2 py-1 text-[11px] font-bold text-white bg-[#1E7B4F] hover:bg-[#16653F] rounded-md transition-all flex items-center gap-1 shadow-sm">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            <span>앱 설치</span>
+          </button>
+          <div class="text-[11px] font-medium text-[#5D5F60] flex items-center gap-1">
+            <span id="liveDot" class="w-1.5 h-1.5 rounded-full bg-[#CDCED1]"></span>
+            <span id="liveLabel">대기</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search box -->
+      <div class="search-box-row px-4 py-2.5 border-b border-[#E8EAEC] bg-[#F9FBFC] shrink-0 space-y-2">
+        <div class="relative bg-white rounded-lg border border-[#E8EAEC] p-2.5 shadow-sm space-y-2">
+
+          <button onclick="swapOriginDest()" class="absolute right-2.5 top-[38px] -translate-y-1/2 w-7 h-7 rounded-full bg-white border border-[#E8EAEC] shadow-sm flex items-center justify-center text-[#5D5F60] hover:text-[#131416] hover:border-[#CDCED1] transition-all z-10" title="출발지/도착지 바꾸기">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
+          </button>
+
+          <div class="flex items-center gap-1.5 pr-8">
+            <span class="w-10 text-center py-0.5 text-[10px] font-bold rounded bg-[#EBF5EE] text-[#1E7B4F] shrink-0">출발</span>
+            <input type="text" id="inputOrigin" value="평촌 아크로타워"
+              placeholder="출발지 검색 (예: 안산부곡초, 시민대로)"
+              class="w-full text-xs font-medium text-[#131416] bg-transparent focus:outline-none placeholder-[#8A8C8E]"
+              onfocus="handleLivePoiSearch(this.value, 'origin')"
+              oninput="handleLivePoiSearch(this.value, 'origin')"
+              onkeydown="if(event.key === 'Enter') executeRouteSearch()">
+            <button onclick="clearInput('origin')" class="shrink-0 text-[11px] text-[#8A8C8E] hover:text-[#131416] px-1" title="지우기">✕</button>
+            <button onclick="useCurrentGps()" class="shrink-0 text-[10px] text-[#5D5F60] hover:text-[#1E7B4F] font-medium flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-[#E8EAEC] bg-[#F4F6F8]" title="내 현재 위치">
+              <svg class="w-3 h-3 text-[#1E7B4F]" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg>
+              <span>GPS</span>
+            </button>
+          </div>
+
+          <div class="border-t border-[#F0F1F2] mr-8"></div>
+
+          <div class="flex items-center gap-1.5 pr-8">
+            <span class="w-10 text-center py-0.5 text-[10px] font-bold rounded bg-[#FEE4E2] text-[#D92D20] shrink-0">도착</span>
+            <input type="text" id="inputDest" value="서울 강남역 (2호선·신분당선)"
+              placeholder="도착지 검색 (예: 강남역, 수원역, 에버랜드)"
+              class="w-full text-xs font-bold text-[#131416] bg-transparent focus:outline-none placeholder-[#8A8C8E]"
+              onfocus="handleLivePoiSearch(this.value, 'dest')"
+              oninput="handleLivePoiSearch(this.value, 'dest')"
+              onkeydown="if(event.key === 'Enter') executeRouteSearch()">
+            <button onclick="clearInput('dest')" class="shrink-0 text-[11px] text-[#8A8C8E] hover:text-[#131416] px-1" title="지우기">✕</button>
+          </div>
+
+          <button onclick="executeRouteSearch()" id="btnExecuteSearch" class="w-full py-2.5 rounded-md bg-[#131416] hover:bg-[#2C2E33] active:bg-black text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer">
+            <svg class="w-3.5 h-3.5 text-[#10B981]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            <span id="btnRouteSearchText">실시간 3사 내비 비교 길찾기</span>
+          </button>
+        </div>
+
+        <!-- POI dropdown -->
+        <div id="poiDropdown" class="hidden bg-white border border-[#E8EAEC] rounded-lg p-2.5 shadow-lg space-y-1.5 z-20">
+          <div class="flex items-center justify-between pb-1.5 border-b border-[#F0F1F2]">
+            <span class="text-[11px] font-bold text-[#131416]" id="dropdownTargetLabel">📍 장소 실시간 검색</span>
+            <button onclick="hidePoiDropdown()" class="text-[11px] text-[#8A8C8E] hover:text-[#131416]">닫기 ✕</button>
+          </div>
+          <div class="space-y-1 max-h-56 overflow-y-auto pt-1" id="dropdownList"></div>
+        </div>
+
+        <!-- Preset destination chips (each runs a live search) -->
+        <div class="search-pills-row flex items-center gap-1.5 overflow-x-auto hide-scrollbar pt-1" id="presetChips"></div>
+      </div>
+
+      <!-- KPI -->
+      <div class="kpi-metric-row px-4 py-2 border-b border-[#E8EAEC] shrink-0 bg-white space-y-1">
+        <div class="flex items-center justify-between w-full">
+          <div class="flex items-center gap-1.5 text-xs text-[#5D5F60] min-w-0">
+            <span id="activeNaviLabel" class="font-bold text-[#131416] whitespace-nowrap">실시간 비교</span>
+            <span class="text-[#8A8C8E]">·</span>
+            <span id="activeArriveTime" class="tabular font-medium text-[#131416] whitespace-nowrap">--:-- 도착</span>
+          </div>
+          <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#F4F6F8] text-[#5D5F60] whitespace-nowrap shrink-0" id="kpiDiffBadge">호출 중</span>
+        </div>
+        <div class="flex items-baseline justify-between w-full text-xs text-[#5D5F60]">
+          <div class="flex items-baseline gap-1">
+            <span class="text-xl font-bold tracking-tight text-[#131416] tabular" id="kpiDuration">–</span>
+            <span class="text-xs font-semibold text-[#131416]">분 소요</span>
+          </div>
+          <div class="text-right text-xs text-[#5D5F60] tabular whitespace-nowrap">
+            <span class="font-medium text-[#131416]" id="kpiDistance">– km</span>
+            <span class="text-[#8A8C8E]">·</span>
+            <span id="kpiToll">통행료 –</span>
+          </div>
+        </div>
+        <p class="text-[11px] text-[#5D5F60] pt-1 border-t border-[#F0F1F2] leading-relaxed truncate hidden sm:block" id="kpiRouteNote">
+          출발지·도착지를 고르면 3사에 동시에 실시간으로 물어봅니다
+        </p>
+      </div>
+
+      <!-- Comparison rows (rendered live) -->
+      <div class="comparison-list-row p-3 space-y-2 overflow-y-auto hide-scrollbar flex-1 bg-[#F9FBFC]/60" id="naviItemsList">
+        <div class="flex items-center justify-between text-[11px] font-semibold text-[#5D5F60] px-1">
+          <span id="sortLabel">실시간 빠른 순서 정렬</span>
+          <span id="statusLine">–</span>
+        </div>
+        <div id="rows"></div>
+        <p class="api-note text-[10px] leading-relaxed text-[#8A8C8E] px-1 pt-1">
+          카카오모빌리티 · SK TMAP · 네이버 Directions 5 실시간 호출. 아틀란은 개인용 API가 없어 비교에서 제외했습니다.
+        </p>
+      </div>
+
+      <!-- Action bar -->
+      <div class="action-bar-row p-3 border-t border-[#E8EAEC] bg-white shrink-0">
+        <a id="btnPrimary" href="tmap://route?goalname=강남역&goalx=127.0280&goaly=37.4981" class="w-full h-11 rounded-lg bg-[#131416] hover:bg-[#2A2B2D] active:scale-[0.99] text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all">
+          <span id="btnPrimaryText">가장 빠른 내비로 출발하기</span>
+          <svg class="w-3.5 h-3.5 text-[#1E7B4F]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        </a>
+      </div>
+
+    </aside>
+
+    <!-- MAP -->
+    <main class="map-sheet">
+      <div id="map"></div>
+
+      <div class="absolute top-3 right-3 z-20 flex items-center gap-2 pointer-events-auto">
+        <div class="bg-white/95 backdrop-blur px-2.5 py-1 rounded-md border border-[#E8EAEC] text-[11px] font-semibold text-[#131416] shadow-sm flex items-center gap-1.5 hidden sm:flex">
+          <span class="w-1.5 h-1.5 rounded-full bg-[#1E7B4F]"></span>
+          <span id="mapRouteName">실시간 경로</span>
+        </div>
+
+        <div class="bg-white/95 backdrop-blur px-2.5 py-1 rounded-md border border-[#E8EAEC] text-[10px] font-semibold text-[#131416] shadow-sm flex items-center gap-2">
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#10B981]"></span>원활</span>
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#FBBF24]"></span>서행</span>
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#F97316]"></span>지체</span>
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#EF4444]"></span>정체</span>
+        </div>
+
+        <div class="bg-white/95 backdrop-blur p-0.5 rounded-md border border-[#E8EAEC] flex items-center gap-0.5 shadow-sm">
+          <button onclick="setLayer('street')" id="btn-map-street" class="px-2 py-0.5 text-[10px] font-bold rounded bg-[#131416] text-white shadow-sm transition-all">스트리트</button>
+          <button onclick="setLayer('topo')" id="btn-map-topo" class="px-2 py-0.5 text-[10px] font-medium rounded text-[#5D5F60] hover:text-[#131416] transition-all">지형</button>
+          <button onclick="setLayer('minimal')" id="btn-map-minimal" class="px-2 py-0.5 text-[10px] font-medium rounded text-[#5D5F60] hover:text-[#131416] transition-all">미니멀</button>
+        </div>
+
+        <button onclick="recenterMap()" class="w-8 h-8 rounded-md bg-white shadow-sm border border-[#E8EAEC] flex items-center justify-center text-[#5D5F60] hover:text-[#131416] transition-all" title="경로 맞춤">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5"/></svg>
+        </button>
+      </div>
+    </main>
+
+  </div>
+
+  <script>
+  /* ============================================================
+     누빠 (누가빠름) — 실시간 3사 내비 비교
+     카카오모빌리티 / SK TMAP  : 브라우저 → 공식 API 직접 호출
+     네이버 Directions 5       : 비밀 키 보호를 위해 서버 프록시(/api/naver) 경유
+     ============================================================ */
+  const CFG = {
+    TMAP_KEY: '0yP3YRLodM1HvwIwfKpEs6Xwhq6vdVN96kxRPfQL',
+    KAKAO_KEY: '796eb10535ddf9c7e4aafe0a85c796fd',
+    NAVER_PROXY: '/api/naver'
+  };
+
+  const NAVIS = {
+    tmap:  { name: '티맵',      dot: '#E60000', line: '#1E7B4F', cta: '티맵으로 바로 출발하기' },
+    naver: { name: '네이버지도', dot: '#03C75A', line: '#2F70BB', cta: '네이버지도로 바로 출발하기' },
+    kakao: { name: '카카오내비', dot: '#F4D000', line: '#B45309', cta: '카카오내비로 바로 출발하기' }
+  };
+
+  const PRESETS = [
+    { key: 'gangnam',  label: '강남역',      name: '서울 강남역 (2호선·신분당선)', lat: 37.4981, lng: 127.0280 },
+    { key: 'pangyo',   label: '판교현백',    name: '현대백화점 판교점',            lat: 37.3927, lng: 127.1120 },
+    { key: 'incheon',  label: '인천공항 T2', name: '인천국제공항 제2여객터미널',    lat: 37.4692, lng: 126.4505 },
+    { key: 'yeouido',  label: '더현대 서울', name: '여의도 더현대 서울',           lat: 37.5259, lng: 126.9284 },
+    { key: 'haeundae', label: '해운대',      name: '부산 해운대해수욕장',          lat: 35.1587, lng: 129.1604 }
+  ];
+
+  const QUICK_POIS = [
+    { name: '평촌 아크로타워', address: '경기 안양시 동안구 시민대로 230', lat: 37.39267, lng: 126.95633, tag: '출발' },
+    { name: '안산부곡초등학교', address: '경기 안산시 상록구 부곡로 73', lat: 37.32909, lng: 126.85928, tag: '학교' },
+    { name: '서울 강남역 (2호선·신분당선)', address: '서울 강남구 강남대로 396', lat: 37.4981, lng: 127.0280, tag: '도착' },
+    { name: '현대백화점 판교점', address: '경기 성남시 분당구 판교역로 146', lat: 37.3927, lng: 127.1120, tag: '도착' },
+    { name: '인천국제공항 제2여객터미널', address: '인천 중구 제2터미널대로 446', lat: 37.4692, lng: 126.4505, tag: '공항' },
+    { name: '여의도 더현대 서울', address: '서울 영등포구 여의대로 108', lat: 37.5259, lng: 126.9284, tag: '쇼핑' },
+    { name: '수원역 1호선·수인분당선', address: '경기 수원시 팔달구 덕영대로 924', lat: 37.2657, lng: 127.0000, tag: '역' }
+  ];
+
+  const state = {
+    origin: { lat: 37.39267, lng: 126.95633, name: '평촌 아크로타워' },
+    dest:   { lat: 37.4981, lng: 127.0280, name: '서울 강남역 (2호선·신분당선)' },
+    activeNavi: 'tmap',
+    results: null,
+    busy: false
+  };
+
+  /* ---------- map ---------- */
+  const mapLayers = {
+    street: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 17, attribution: '' }),
+    topo: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 16, attribution: '' }),
+    minimal: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', { maxZoom: 16, attribution: '' })
+  };
+  let activeLayer = 'street';
+  const map = L.map('map', { zoomControl: false, attributionControl: false }).setView([37.40, 126.94], 11);
+  mapLayers.street.addTo(map);
+
+  function setLayer(layerKey) {
+    if (activeLayer === layerKey) return;
+    map.removeLayer(mapLayers[activeLayer]);
+    mapLayers[layerKey].addTo(map);
+    activeLayer = layerKey;
+    ['street', 'topo', 'minimal'].forEach(k => {
+      const btn = document.getElementById('btn-map-' + k);
+      if (!btn) return;
+      btn.className = (k === layerKey)
+        ? 'px-2 py-0.5 text-[10px] font-bold rounded bg-[#131416] text-white shadow-sm transition-all'
+        : 'px-2 py-0.5 text-[10px] font-medium rounded text-[#5D5F60] hover:text-[#131416] transition-all';
+    });
+  }
+
+  let polylineCasing = null;
+  let polylineLayers = [];
+  let pinStart = null, pinEnd = null;
+
+  function clearMapLines() {
+    if (polylineCasing) { map.removeLayer(polylineCasing); polylineCasing = null; }
+    polylineLayers.forEach(l => map.removeLayer(l));
+    polylineLayers = [];
+    if (pinStart) { map.removeLayer(pinStart); pinStart = null; }
+    if (pinEnd) { map.removeLayer(pinEnd); pinEnd = null; }
+  }
+
+  function renderMap(pts, singleColor, trafficSegs, destLabel) {
+    if (!pts || pts.length < 2) return;
+    clearMapLines();
+    const startPt = pts[0], endPt = pts[pts.length - 1];
+
+    pinStart = L.marker(startPt, { icon: L.divIcon({ html: '<div class="w-3.5 h-3.5 rounded-full bg-[#1E7B4F] border-2 border-white shadow radar-pulse"></div>', iconSize: [14, 14], iconAnchor: [7, 7] }) }).addTo(map);
+    const short = (destLabel || '도착').split(' ').slice(-1)[0] || '도착';
+    pinEnd = L.marker(endPt, { icon: L.divIcon({ html: `<div class="px-2 py-0.5 rounded bg-[#131416] text-white text-[10px] font-medium shadow border border-white">${short}</div>`, iconSize: [60, 20], iconAnchor: [30, 20] }) }).addTo(map);
+
+    polylineCasing = L.polyline(pts, { color: '#FFFFFF', weight: 8, opacity: 0.9, lineCap: 'round', lineJoin: 'round' }).addTo(map);
+
+    if (trafficSegs && trafficSegs.length) {
+      trafficSegs.forEach(seg => {
+        if (!seg.pts || seg.pts.length < 2) return;
+        const layer = L.polyline(seg.pts, { color: seg.color || '#10B981', weight: 5, opacity: 0.95, lineCap: 'round', lineJoin: 'round' }).addTo(map);
+        if (seg.name || seg.label) layer.bindTooltip(`${seg.name || '구간'} · ${seg.label} (${Math.round(seg.speed || 0)}km/h)`, { sticky: true });
+        polylineLayers.push(layer);
+      });
+    } else {
+      polylineLayers.push(L.polyline(pts, { color: singleColor || '#1E7B4F', weight: 5, opacity: 0.95, lineCap: 'round', lineJoin: 'round' }).addTo(map));
+    }
+    recenterMap();
+  }
+
+  function recenterMap() {
+    if (!polylineCasing) return;
+    map.fitBounds(polylineCasing.getBounds(), { paddingTopLeft: [40, 40], paddingBottomRight: [40, 40], maxZoom: 14 });
+  }
+
+  /* ---------- POI search (SK TMAP) ---------- */
+  let activeInputTarget = 'dest';
+  let searchDebounceTimer = null;
+
+  async function searchTmapPois(keyword) {
+    const q = (keyword || '').trim();
+    if (!q) return [];
+    async function fetchPoi(query) {
+      try {
+        const url = `https://apis.openapi.sk.com/tmap/pois?version=1&searchKeyword=${encodeURIComponent(query)}&count=8`;
+        const res = await fetch(url, { headers: { appKey: CFG.TMAP_KEY } });
+        if (!res.ok) return [];
+        const data = await res.json();
+        const list = (data && data.searchPoiInfo && data.searchPoiInfo.pois && data.searchPoiInfo.pois.poi) || [];
+        return list.map(p => {
+          const roadAddr = (p.newAddressList && p.newAddressList.newAddress && p.newAddressList.newAddress[0] && p.newAddressList.newAddress[0].fullAddressRoad) || '';
+          const jibun = `${p.upperAddrName || ''} ${p.middleAddrName || ''} ${p.lowerAddrName || ''}`.replace(/\s+/g, ' ').trim();
+          return {
+            name: p.name,
+            address: roadAddr || jibun,
+            lat: parseFloat(p.frontLat || p.noorLat),
+            lng: parseFloat(p.frontLon || p.noorLon),
+            biz: p.middleBizName || p.upperBizName || ''
+          };
+        });
+      } catch (e) { return []; }
+    }
+    let results = await fetchPoi(q);
+    if (results.length === 0 && q.length > 2) results = await fetchPoi(q.slice(0, -1));
+    return results;
+  }
+
+  function handleLivePoiSearch(keyword, target) {
+    activeInputTarget = target;
+    const q = (keyword || '').trim();
+    const el = document.getElementById('poiDropdown');
+    const label = document.getElementById('dropdownTargetLabel');
+    const listEl = document.getElementById('dropdownList');
+    label.innerText = (target === 'origin' ? '📍 출발지 검색 결과' : '🏁 도착지 검색 결과');
+    el.classList.remove('hidden');
+
+    if (!q) {
+      listEl.innerHTML = '';
+      QUICK_POIS.forEach(item => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'w-full text-left p-2 rounded-md hover:bg-[#F4F6F8] border border-transparent hover:border-[#E8EAEC] flex items-center justify-between transition-all';
+        btn.innerHTML = `<div class="truncate pr-2"><div class="text-xs font-semibold text-[#131416] truncate">${item.name}</div><div class="text-[10px] text-[#8A8C8E] truncate">${item.address}</div></div><span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#F4F6F8] text-[#5D5F60] shrink-0">${item.tag || ''}</span>`;
+        btn.onclick = () => selectPoi(item);
+        listEl.appendChild(btn);
+      });
+      return;
+    }
+
+    if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+    listEl.innerHTML = `<div class="p-3 text-center text-xs text-[#5D5F60]">'${q}' 실시간 장소 검색 중…</div>`;
+
+    searchDebounceTimer = setTimeout(async () => {
+      const results = await searchTmapPois(q);
+      listEl.innerHTML = '';
+      if (!results.length) {
+        listEl.innerHTML = `<div class="p-4 text-center"><div class="text-xs font-medium text-[#131416]">'${q}' 검색 결과가 없습니다</div><div class="text-[10px] text-[#8A8C8E] mt-1">지번, 도로명 또는 건물명으로 다시 시도해 주세요</div></div>`;
+        return;
+      }
+      results.forEach(item => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'w-full text-left p-2 rounded-md hover:bg-[#F4F6F8] border border-transparent hover:border-[#E8EAEC] flex items-center justify-between transition-all cursor-pointer';
+        btn.innerHTML = `<div class="truncate pr-2"><div class="text-xs font-semibold text-[#131416] truncate">${item.name}</div><div class="text-[10px] text-[#8A8C8E] truncate">${item.address}</div></div>${item.biz ? `<span class="text-[9px] text-[#5D5F60] bg-[#F0F1F2] px-1.5 py-0.5 rounded shrink-0">${item.biz}</span>` : ''}`;
+        btn.onclick = () => selectPoi(item);
+        listEl.appendChild(btn);
+      });
+    }, 200);
+  }
+
+  function hidePoiDropdown() { document.getElementById('poiDropdown').classList.add('hidden'); }
+
+  function selectPoi(item) {
+    if (activeInputTarget === 'origin') {
+      document.getElementById('inputOrigin').value = item.name;
+      state.origin = { lat: item.lat, lng: item.lng, name: item.name };
+    } else {
+      document.getElementById('inputDest').value = item.name;
+      state.dest = { lat: item.lat, lng: item.lng, name: item.name };
+    }
+    hidePoiDropdown();
+    executeRouteSearch();
+  }
+
+  function clearInput(target) {
+    if (target === 'origin') {
+      const inp = document.getElementById('inputOrigin'); inp.value = ''; inp.focus(); handleLivePoiSearch('', 'origin');
+    } else {
+      const inp = document.getElementById('inputDest'); inp.value = ''; inp.focus(); handleLivePoiSearch('', 'dest');
+    }
+  }
+
+  function swapOriginDest() {
+    const a = document.getElementById('inputOrigin'), b = document.getElementById('inputDest');
+    const tmp = a.value; a.value = b.value; b.value = tmp;
+    const t = state.origin; state.origin = state.dest; state.dest = t;
+    executeRouteSearch();
+  }
+
+  function useCurrentGps() {
+    if (!navigator.geolocation) { alert('이 기기는 GPS를 지원하지 않습니다.'); return; }
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        state.origin = { lat: pos.coords.latitude, lng: pos.coords.longitude, name: '내 현재 위치' };
+        document.getElementById('inputOrigin').value = '내 현재 위치';
+        executeRouteSearch();
+      },
+      () => alert('GPS 위치 권한을 확인해 주세요. 출발지는 그대로 둡니다.')
+    );
+  }
+
+  /* ---------- live route calls ---------- */
+  async function fetchTmap(origin, dest) {
+    const t0 = performance.now();
+    try {
+      const res = await fetch('https://apis.openapi.sk.com/tmap/routes?version=1', {
+        method: 'POST',
+        headers: { appKey: CFG.TMAP_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          startX: String(origin.lng), startY: String(origin.lat),
+          endX: String(dest.lng), endY: String(dest.lat),
+          reqCoordType: 'WGS84GEO', resCoordType: 'WGS84GEO',
+          searchOption: '0', trafficInfo: 'Y'
+        })
+      });
+      const ms = Math.round(performance.now() - t0);
+      if (!res.ok) return { ok: false, ms, reason: `HTTP ${res.status}` };
+      const data = await res.json();
+      const p = data && data.features && data.features[0] && data.features[0].properties;
+      if (!p || !p.totalTime) return { ok: false, ms, reason: '응답 형식 오류' };
+      const pts = [];
+      (data.features || []).forEach(f => {
+        if (f.geometry && f.geometry.type === 'LineString' && f.geometry.coordinates) {
+          f.geometry.coordinates.forEach(c => pts.push([c[1], c[0]]));
+        }
+      });
+      return {
+        ok: true, ms,
+        minutes: Math.round(p.totalTime / 60),
+        km: Math.round(p.totalDistance / 100) / 10,
+        toll: p.totalFare || 0,
+        pts,
+        note: 'SK TMAP 실시간 경로'
+      };
+    } catch (e) {
+      return { ok: false, ms: Math.round(performance.now() - t0), reason: '네트워크 오류' };
+    }
+  }
+
+  async function fetchKakao(origin, dest) {
+    const t0 = performance.now();
+    try {
+      const url = `https://apis-navi.kakaomobility.com/v1/directions?origin=${origin.lng},${origin.lat}&destination=${dest.lng},${dest.lat}&priority=RECOMMEND&car_type=1`;
+      const res = await fetch(url, { headers: { Authorization: `KakaoAK ${CFG.KAKAO_KEY}` } });
+      const ms = Math.round(performance.now() - t0);
+      if (!res.ok) return { ok: false, ms, reason: `HTTP ${res.status}` };
+      const data = await res.json();
+      const r = data && data.routes && data.routes[0];
+      if (!r || !r.summary) return { ok: false, ms, reason: '응답 형식 오류' };
+      const s = r.summary;
+      const pts = [], segs = [];
+      (r.sections || []).forEach(sec => (sec.roads || []).forEach(road => {
+        const vx = road.vertexes || [];
+        const roadPts = [];
+        for (let i = 0; i < vx.length; i += 2) { const pt = [vx[i + 1], vx[i]]; pts.push(pt); roadPts.push(pt); }
+        let color = '#10B981', label = '원활';
+        const st = road.traffic_state;
+        if (st === 3) { color = '#FBBF24'; label = '서행'; }
+        else if (st === 2) { color = '#F97316'; label = '지체'; }
+        else if (st === 1 || st === 6) { color = '#EF4444'; label = '정체'; }
+        if (roadPts.length > 1) segs.push({ name: road.name || '도로', color, label, speed: road.traffic_speed || 0, pts: roadPts });
+      }));
+      return {
+        ok: true, ms,
+        minutes: Math.round(s.duration / 60),
+        km: Math.round(s.distance / 100) / 10,
+        toll: (s.fare && s.fare.toll) || 0,
+        pts, segs,
+        note: '카카오모빌리티 실시간 경로'
+      };
+    } catch (e) {
+      return { ok: false, ms: Math.round(performance.now() - t0), reason: '네트워크 오류' };
+    }
+  }
+
+  async function fetchNaver(origin, dest) {
+    const t0 = performance.now();
+    try {
+      const url = `${CFG.NAVER_PROXY}?start=${origin.lng},${origin.lat}&goal=${dest.lng},${dest.lat}&option=trafast`;
+      const res = await fetch(url);
+      const ms = Math.round(performance.now() - t0);
+      if (!res.ok) return { ok: false, ms, reason: `HTTP ${res.status}` };
+      const data = await res.json();
+      if (!data || data.code !== 0 || !data.route || !data.route.trafast || !data.route.trafast[0]) {
+        return { ok: false, ms, reason: (data && data.message) || '응답 형식 오류' };
+      }
+      const t = data.route.trafast[0];
+      const s = t.summary;
+      const pts = (t.path || []).map(p => [p[1], p[0]]);
+      return {
+        ok: true, ms,
+        minutes: Math.round(s.duration / 60000),
+        km: Math.round(s.distance / 100) / 10,
+        toll: s.tollFare || 0,
+        pts,
+        note: '네이버 Directions 5 실시간 경로'
+      };
+    } catch (e) {
+      return { ok: false, ms: Math.round(performance.now() - t0), reason: '프록시 연결 실패' };
+    }
+  }
+
+  /* ---------- render ---------- */
+  function arriveTime(min) {
+    const now = new Date(); now.setMinutes(now.getMinutes() + min);
+    return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} 도착`;
+  }
+
+  function renderPresetChips(activeKey) {
+    const wrap = document.getElementById('presetChips');
+    wrap.innerHTML = '';
+    PRESETS.forEach(p => {
+      const b = document.createElement('button');
+      const on = p.key === activeKey;
+      b.className = 'dest-chip shrink-0 px-2.5 py-1 rounded-md text-xs transition-all ' +
+        (on ? 'font-semibold bg-[#131416] text-white' : 'font-medium bg-white text-[#5D5F60] border border-[#E8EAEC] hover:border-[#CDCED1]');
+      b.innerText = p.label;
+      b.onclick = () => {
+        state.dest = { lat: p.lat, lng: p.lng, name: p.name };
+        document.getElementById('inputDest').value = p.name;
+        executeRouteSearch(p.key);
+      };
+      wrap.appendChild(b);
+    });
+  }
+
+  function renderRows() {
+    const box = document.getElementById('rows');
+    const res = state.results;
+    if (!res) return;
+    const order = Object.keys(NAVIS).slice().sort((a, b) => {
+      const ta = res[a] && res[a].ok ? res[a].minutes : 9999;
+      const tb = res[b] && res[b].ok ? res[b].minutes : 9999;
+      return ta - tb;
+    });
+    const fastest = order.find(k => res[k] && res[k].ok);
+    const fastestMin = fastest ? res[fastest].minutes : null;
+    box.innerHTML = '';
+
+    order.forEach((k, idx) => {
+      const meta = NAVIS[k], r = res[k];
+      const ok = r && r.ok;
+      const isActive = k === state.activeNavi;
+      const el = document.createElement('div');
+      el.id = 'item-' + k;
+      el.className = 'navi-row-item p-2.5 rounded-lg cursor-pointer mb-2 ' + (isActive ? 'active' : '');
+      let badge, badgeCls;
+      if (!ok) { badge = '호출 실패'; badgeCls = 'bg-[#FEE4E2] text-[#B42318]'; }
+      else if (k === fastest) { badge = '최속 1위'; badgeCls = 'bg-[#DCFAE5] text-[#04250E]'; }
+      else { badge = `${idx + 1}위`; badgeCls = 'bg-[#F4F6F8] text-[#5D5F60]'; }
+
+      const diff = ok && fastestMin != null ? (k === fastest ? '기준 (가장 빠름)' : `+${r.minutes - fastestMin}분`) : (r ? r.reason : '대기');
+      const diffCls = ok && k === fastest ? 'text-[#1E7B4F] font-bold' : (ok ? 'text-[#5D5F60] font-medium' : 'text-[#B42318] font-medium');
+      const subLeft = ok ? `${r.km.toFixed(1)}km · ${r.toll.toLocaleString()}원` : '–';
+      const subRight = ok ? `실시간 · ${(r.ms / 1000).toFixed(1)}s` : `${(r ? r.ms / 1000 : 0).toFixed(1)}s`;
+
+      el.innerHTML = `
+        <div class="flex items-center justify-between gap-1">
+          <div class="flex items-center gap-1.5 min-w-0">
+            <span class="w-2 h-2 rounded-full shrink-0" style="background:${meta.dot}"></span>
+            <span class="text-xs font-bold text-[#131416] whitespace-nowrap">${meta.name}</span>
+            <span class="navi-rank-badge text-[10px] font-bold px-1.5 py-0.5 rounded ${badgeCls} whitespace-nowrap shrink-0">${badge}</span>
+          </div>
+          <div class="flex items-baseline justify-end shrink-0 whitespace-nowrap">
+            <span class="text-base font-semibold text-[#131416] tabular">${ok ? r.minutes : '–'}</span><span class="text-xs text-[#5D5F60] ml-0.5">분</span>
+            <span class="navi-diff-text text-[11px] ml-1.5 whitespace-nowrap tabular ${diffCls}">${diff}</span>
+          </div>
+        </div>
+        <div class="flex items-center justify-between text-[11px] text-[#5D5F60] mt-1 pt-1 border-t border-[#F0F1F2]">
+          <span class="tabular truncate">${subLeft}</span>
+          <span class="text-right truncate pl-2 ${ok ? '' : 'text-[#B42318]'}">${subRight}</span>
+        </div>`;
+      el.onclick = () => { if (ok) pickNavi(k); };
+      box.appendChild(el);
+    });
+
+    document.getElementById('sortLabel').innerText = fastest ? `실시간 빠른 순서 · ${NAVIS[fastest].name} 1위` : '실시간 결과 없음';
+  }
+
+  function pickNavi(k) {
+    const res = state.results;
+    if (!res || !res[k] || !res[k].ok) return;
+    state.activeNavi = k;
+    document.querySelectorAll('.navi-row-item').forEach(c => c.classList.remove('active'));
+    const el = document.getElementById('item-' + k);
+    if (el) el.classList.add('active');
+
+    const r = res[k];
+    const fastest = Object.keys(NAVIS).filter(x => res[x] && res[x].ok).sort((a, b) => res[a].minutes - res[b].minutes)[0];
+    const isFastest = k === fastest;
+
+    document.getElementById('activeNaviLabel').innerText = `${NAVIS[k].name} ${isFastest ? '실시간 최속' : '경로'}`;
+    document.getElementById('activeArriveTime').innerText = arriveTime(r.minutes);
+    document.getElementById('kpiDuration').innerText = r.minutes;
+    document.getElementById('kpiDistance').innerText = `${r.km.toFixed(1)} km`;
+    document.getElementById('kpiToll').innerText = `통행료 ${r.toll.toLocaleString()}원`;
+    document.getElementById('kpiRouteNote').innerText = r.note;
+
+    const badge = document.getElementById('kpiDiffBadge');
+    if (isFastest) { badge.innerText = '최속 1위'; badge.className = 'text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#DCFAE5] text-[#04250E] whitespace-nowrap shrink-0'; }
+    else {
+      const f = res[fastest];
+      badge.innerText = `+${r.minutes - f.minutes}분`; badge.className = 'text-[10px] font-medium px-1.5 py-0.5 rounded bg-[#F4F6F8] text-[#5D5F60] whitespace-nowrap shrink-0';
+    }
+
+    const d = state.dest;
+    const q = encodeURIComponent(d.name);
+    const schemes = {
+      tmap: `tmap://route?goalname=${q}&goalx=${d.lng}&goaly=${d.lat}`,
+      naver: `nmap://route/car?dlat=${d.lat}&dlng=${d.lng}&dname=${q}`,
+      kakao: `kakaonavi://navigate?name=${q}&x=${d.lng}&y=${d.lat}`
+    };
+    document.getElementById('btnPrimary').href = schemes[k];
+    document.getElementById('btnPrimaryText').innerText = NAVIS[k].cta;
+    document.getElementById('mapRouteName').innerText = `${NAVIS[k].name} 경로 (${r.minutes}분)`;
+
+    renderMap(r.pts && r.pts.length > 1 ? r.pts : null, NAVIS[k].line, k === 'kakao' ? r.segs : null, d.name);
+  }
+
+  function setLive(ok, label) {
+    const dot = document.getElementById('liveDot');
+    dot.className = 'w-1.5 h-1.5 rounded-full ' + (ok ? 'bg-[#1E7B4F]' : 'bg-[#D92D20]');
+    document.getElementById('liveLabel').innerText = label;
+  }
+
+  /* ---------- main ---------- */
+  async function executeRouteSearch(presetKey) {
+    if (state.busy) return;
+    const originText = document.getElementById('inputOrigin').value.trim();
+    const destText = document.getElementById('inputDest').value.trim();
+    if (!originText) { alert('출발지를 입력해 주세요.'); document.getElementById('inputOrigin').focus(); return; }
+    if (!destText) { alert('도착지를 입력해 주세요.'); document.getElementById('inputDest').focus(); return; }
+
+    hidePoiDropdown();
+    state.busy = true;
+    const btnText = document.getElementById('btnRouteSearchText');
+    btnText.innerText = '⚡ 3사 실시간 동시 호출 중…';
+    document.getElementById('statusLine').innerText = '호출 중…';
+    setLive(true, '호출 중');
+
+    try {
+      if (originText !== state.origin.name) {
+        const hits = await searchTmapPois(originText);
+        if (!hits.length) { alert(`출발지 '${originText}'의 위치를 찾을 수 없습니다.`); return; }
+        state.origin = { lat: hits[0].lat, lng: hits[0].lng, name: hits[0].name };
+        document.getElementById('inputOrigin').value = hits[0].name;
+      }
+      if (destText !== state.dest.name) {
+        const hits = await searchTmapPois(destText);
+        if (!hits.length) { alert(`도착지 '${destText}'의 위치를 찾을 수 없습니다.`); return; }
+        state.dest = { lat: hits[0].lat, lng: hits[0].lng, name: hits[0].name };
+        document.getElementById('inputDest').value = hits[0].name;
+      }
+
+      const t0 = performance.now();
+      const [tmap, kakao, naver] = await Promise.all([
+        fetchTmap(state.origin, state.dest),
+        fetchKakao(state.origin, state.dest),
+        fetchNaver(state.origin, state.dest)
+      ]);
+      const total = ((performance.now() - t0) / 1000).toFixed(1);
+
+      state.results = { tmap, kakao, naver };
+      const okCount = [tmap, kakao, naver].filter(r => r.ok).length;
+
+      renderPresetChips(presetKey || null);
+      const fastestKey = ['tmap', 'kakao', 'naver'].filter(k => state.results[k].ok)
+        .sort((a, b) => state.results[a].minutes - state.results[b].minutes)[0];
+      state.activeNavi = fastestKey || 'tmap';
+      renderRows();
+      if (fastestKey) pickNavi(fastestKey);
+
+      document.getElementById('statusLine').innerText = `3사 동시 호출 ${total}s`;
+      setLive(okCount === 3, okCount === 3 ? '실시간 3/3' : `실시간 ${okCount}/3`);
+    } catch (e) {
+      console.error(e);
+      document.getElementById('statusLine').innerText = '오류';
+      setLive(false, '오류');
+      alert('실시간 경로를 계산하는 도중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
+    } finally {
+      state.busy = false;
+      btnText.innerText = '실시간 3사 내비 비교 길찾기';
+    }
+  }
+
+  /* PWA */
+  let deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault(); deferredPrompt = e;
+    const b = document.getElementById('btnPwaInstall'); if (b) b.classList.remove('hidden');
+  });
+  function installPwa() {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt(); deferredPrompt = null;
+    document.getElementById('btnPwaInstall').classList.add('hidden');
+  }
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+  }
+  window.addEventListener('resize', () => { map.invalidateSize(); recenterMap(); });
+
+  /* initial: run a real search for the default route */
+  renderPresetChips('gangnam');
+  executeRouteSearch('gangnam');
+  </script>
+</body>
+</html>

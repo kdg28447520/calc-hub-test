@@ -1,0 +1,14 @@
+{
+  "name": "누빠 (누가빠름) - 실시간 3사 내비 비교",
+  "short_name": "누빠",
+  "description": "티맵·카카오내비·네이버지도 실시간 소요시간·거리·통행료를 한 번에 비교하고 가장 빠른 내비로 바로 출발",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#131416",
+  "orientation": "any",
+  "icons": [
+    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
