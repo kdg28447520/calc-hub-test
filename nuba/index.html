@@ -645,7 +645,7 @@
       else if (k === fastest) { badge = '최속 1위'; badgeCls = 'bg-[#DCFAE5] text-[#04250E]'; }
       else { badge = `${idx + 1}위`; badgeCls = 'bg-[#F4F6F8] text-[#5D5F60]'; }
 
-      const diff = ok && fastestMin != null ? (k === fastest ? '기준 (가장 빠름)' : `+${r.minutes - fastestMin}분`) : (r ? r.reason : '대기');
+      const diff = ok && fastestMin != null ? (k === fastest ? '기준 (가장 빠름)' : (r.minutes - fastestMin === 0 ? '동일 시간' : `+${r.minutes - fastestMin}분`)) : (r ? r.reason : '대기');
       const diffCls = ok && k === fastest ? 'text-[#1E7B4F] font-bold' : (ok ? 'text-[#5D5F60] font-medium' : 'text-[#B42318] font-medium');
       const subLeft = ok ? `${r.km.toFixed(1)}km · ${r.toll.toLocaleString()}원` : '–';
       const subRight = ok ? `실시간 · ${(r.ms / 1000).toFixed(1)}s` : `${(r ? r.ms / 1000 : 0).toFixed(1)}s`;
