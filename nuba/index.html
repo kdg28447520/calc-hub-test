@@ -569,7 +569,10 @@
       const url = `${CFG.NAVER_PROXY}?start=${origin.lng},${origin.lat}&goal=${dest.lng},${dest.lat}&option=trafast`;
       const res = await fetch(url);
       const ms = Math.round(performance.now() - t0);
-      if (!res.ok) return { ok: false, ms, reason: `HTTP ${res.status}` };
+      if (!res.ok) {
+        const why = res.status === 404 ? '프록시 없는 주소(정적 호스팅)' : `HTTP ${res.status}`;
+        return { ok: false, ms, reason: why };
+      }
       const data = await res.json();
       if (!data || data.code !== 0 || !data.route || !data.route.trafast || !data.route.trafast[0]) {
         return { ok: false, ms, reason: (data && data.message) || '응답 형식 오류' };
