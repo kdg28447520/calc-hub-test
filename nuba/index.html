@@ -350,7 +350,7 @@
     const startPt = pts[0], endPt = pts[pts.length - 1];
 
     pinStart = L.marker(startPt, { icon: L.divIcon({ html: '<div class="w-3.5 h-3.5 rounded-full bg-[#1E7B4F] border-2 border-white shadow radar-pulse"></div>', iconSize: [14, 14], iconAnchor: [7, 7] }) }).addTo(map);
-    const short = (destLabel || '도착').split(' ').slice(-1)[0] || '도착';
+    const short = ((destLabel || '도착').replace(/\([^)]*\)/g, '').trim().split(' ').slice(-1)[0] || '도착').slice(0, 8);
     pinEnd = L.marker(endPt, { icon: L.divIcon({ html: `<div class="px-2 py-0.5 rounded bg-[#131416] text-white text-[10px] font-medium shadow border border-white">${short}</div>`, iconSize: [60, 20], iconAnchor: [30, 20] }) }).addTo(map);
 
     polylineCasing = L.polyline(pts, { color: '#FFFFFF', weight: 8, opacity: 0.9, lineCap: 'round', lineJoin: 'round' }).addTo(map);
