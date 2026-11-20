@@ -379,7 +379,7 @@
     /* 뒤 레이어 — 선택하지 않은 2개 노선: 브랜드 색 그대로, 얇고 반투명하게 */
     usable.filter(k => k !== active).forEach(k => {
       polylineLayers.push(L.polyline(res[k].pts, {
-        color: ROUTE_COLORS[k], weight: 3, opacity: 0.5,
+        color: ROUTE_COLORS[k], weight: 4, opacity: 0.75,
         lineCap: 'round', lineJoin: 'round'
       }).addTo(map));
     });
