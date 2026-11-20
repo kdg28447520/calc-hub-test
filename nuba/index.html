@@ -52,7 +52,7 @@
     @media (min-width: 640px) {
       .taste-shell { position: absolute; inset: 8px; display: flex; gap: 12px; border-radius: 16px; overflow: hidden; }
       .control-sheet {
-        width: 380px; flex-shrink: 0; height: 100%; background: #FFFFFF; border: 1px solid #E8EAEC;
+        width: 340px; flex-shrink: 0; height: 100%; background: #FFFFFF; border: 1px solid #E8EAEC;
         border-radius: 14px; display: flex; flex-direction: column; z-index: 20; overflow: hidden;
       }
       .map-sheet {
@@ -67,9 +67,13 @@
         position: absolute; inset: 0; gap: 0; border-radius: 0; display: flex; flex-direction: column-reverse;
         width: 100vw; height: 100vh; height: 100dvh; overflow: hidden;
       }
-      .map-sheet { flex: 1; min-height: 34vh; border: none; border-radius: 0; position: relative; overflow: hidden; z-index: 10; }
+      /* 지도를 화면의 절반 가까이 키우고, 조작 패널은 남은 높이만 쓰고 스크롤 */
+      .map-sheet {
+        flex: 0 0 auto; height: 48vh; height: 48dvh; min-height: 320px;
+        border: none; border-radius: 0; position: relative; overflow: hidden; z-index: 10;
+      }
       .control-sheet {
-        width: 100%; max-width: 100%; max-height: 66vh; max-height: 66dvh; background: #FFFFFF;
+        width: 100%; max-width: 100%; flex: 1 1 auto; min-height: 0; background: #FFFFFF;
         border-top: 1px solid #E8EAEC; border-radius: 20px 20px 0 0; box-shadow: 0 -4px 24px rgba(19, 20, 22, 0.12);
         display: flex; flex-direction: column; z-index: 20; overflow-y: auto;
         padding-bottom: max(6px, env(safe-area-inset-bottom, 4px));
@@ -84,6 +88,11 @@
       .action-bar-row { padding: 6px 12px !important; }
       .action-bar-row a { height: 42px !important; }
       .api-note { display: none !important; }
+    }
+
+    /* 아주 낮은 화면(가로 모드 폰)에서는 지도 비중을 낮춰 조작 영역을 확보 */
+    @media (max-width: 639px) and (max-height: 620px) {
+      .map-sheet { height: 50vh; height: 50dvh; min-height: 190px; }
     }
 
     #map { width: 100%; height: 100%; background: #F4F6F8; }
@@ -144,7 +153,7 @@
           <div class="flex items-center gap-1.5 pr-8">
             <span class="w-10 text-center py-0.5 text-[10px] font-bold rounded bg-[#EBF5EE] text-[#1E7B4F] shrink-0">출발</span>
             <input type="text" id="inputOrigin" value="평촌 아크로타워"
-              placeholder="출발지 검색 (예: 안산부곡초, 시민대로)"
+              placeholder="출발지 검색 (예: 평촌아크로타워, 강남역)"
               class="w-full text-xs font-medium text-[#131416] bg-transparent focus:outline-none placeholder-[#8A8C8E]"
               onfocus="handleLivePoiSearch(this.value, 'origin')"
               oninput="handleLivePoiSearch(this.value, 'origin')"
@@ -315,8 +324,8 @@
 
   const QUICK_POIS = [
     { name: '평촌 아크로타워', address: '경기 안양시 동안구 시민대로 230', lat: 37.39267, lng: 126.95633, tag: '출발' },
-    { name: '안산부곡초등학교', address: '경기 안산시 상록구 부곡로 73', lat: 37.32909, lng: 126.85928, tag: '학교' },
     { name: '서울 강남역 (2호선·신분당선)', address: '서울 강남구 강남대로 396', lat: 37.4981, lng: 127.0280, tag: '도착' },
+    { name: '평촌역 4호선', address: '경기 안양시 동안구 부림로 지하 123', lat: 37.39450, lng: 126.96447, tag: '역' },
     { name: '현대백화점 판교점', address: '경기 성남시 분당구 판교역로 146', lat: 37.3927, lng: 127.1120, tag: '도착' },
     { name: '인천국제공항 제2여객터미널', address: '인천 중구 제2터미널대로 446', lat: 37.4692, lng: 126.4505, tag: '공항' },
     { name: '여의도 더현대 서울', address: '서울 영등포구 여의대로 108', lat: 37.5259, lng: 126.9284, tag: '쇼핑' },
@@ -338,7 +347,7 @@
     minimal: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', { maxZoom: 16, attribution: '' })
   };
   let activeLayer = 'street';
-  const map = L.map('map', { zoomControl: false, attributionControl: false }).setView([37.40, 126.94], 11);
+  const map = L.map('map', { zoomControl: false, attributionControl: false }).setView([37.445, 126.992], 11);
   mapLayers.street.addTo(map);
 
   function setLayer(layerKey) {
@@ -406,7 +415,15 @@
 
   function recenterMap() {
     if (!polylineCasing) return;
-    map.fitBounds(polylineCasing.getBounds(), { paddingTopLeft: [40, 40], paddingBottomRight: [40, 40], maxZoom: 14 });
+    /* 패널/화면 폭이 바뀌면 지도 캔버스 크기도 달라진다 → 맞추기 전에 크기를 다시 읽게 한다 */
+    map.invalidateSize(false);
+    const wide = window.innerWidth >= 640;
+    map.fitBounds(polylineCasing.getBounds(), {
+      paddingTopLeft: wide ? [26, 54] : [16, 46],
+      paddingBottomRight: wide ? [26, 22] : [16, 18],
+      maxZoom: 15,
+      animate: true
+    });
   }
 
   /* ---------- POI search (SK TMAP) ---------- */
