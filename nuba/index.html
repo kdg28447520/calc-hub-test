@@ -506,6 +506,42 @@
     } else {
       const inp = document.getElementById('inputDest'); inp.value = ''; inp.focus(); handleLivePoiSearch('', 'dest');
     }
+    resetResults();
+  }
+
+  /* 입력을 지우면 비교 카드·KPI·지도 경로선까지 함께 초기화 */
+  const EMPTY_GUIDE = `
+        <div class="p-3 rounded-lg bg-white border border-dashed border-[#E8EAEC] text-center">
+          <div class="text-xs font-medium text-[#131416]">목적지를 선택하면 실시간 3사 비교를 시작합니다</div>
+          <div class="text-[10px] text-[#8A8C8E] mt-1">도착지를 검색하거나 위 프리셋 칩을 눌러 주세요</div>
+        </div>`;
+
+  function resetResults() {
+    state.results = null;
+    state.activeNavi = 'tmap';
+    clearMapLines();
+
+    document.getElementById('rows').innerHTML = EMPTY_GUIDE;
+    document.getElementById('sortLabel').innerText = '실시간 빠른 순서 정렬';
+    document.getElementById('statusLine').innerText = '–';
+    document.getElementById('activeNaviLabel').innerText = '실시간 비교';
+    document.getElementById('activeArriveTime').innerText = '--:-- 도착';
+    document.getElementById('kpiDuration').innerText = '–';
+    document.getElementById('kpiDistance').innerText = '– km';
+    document.getElementById('kpiToll').innerText = '통행료 –';
+    document.getElementById('kpiRouteNote').innerText = '출발지·도착지를 고르면 3사에 동시에 실시간으로 물어봅니다';
+
+    const badge = document.getElementById('kpiDiffBadge');
+    badge.innerText = '대기';
+    badge.className = 'text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#F4F6F8] text-[#5D5F60] whitespace-nowrap shrink-0';
+
+    document.getElementById('liveDot').className = 'w-1.5 h-1.5 rounded-full bg-[#CDCED1]';
+    document.getElementById('liveLabel').innerText = '대기';
+
+    const btn = document.getElementById('btnPrimary');
+    btn.href = '#';
+    document.getElementById('btnPrimaryText').innerText = '가장 빠른 내비로 출발하기';
+    document.getElementById('mapRouteName').innerText = '실시간 경로';
   }
 
   function swapOriginDest() {
