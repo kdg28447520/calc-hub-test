@@ -285,7 +285,7 @@
   const PRESETS = [
     { key: 'gangnam',  label: '강남역',      name: '서울 강남역 (2호선·신분당선)', lat: 37.4981, lng: 127.0280 },
     { key: 'pangyo',   label: '판교현백',    name: '현대백화점 판교점',            lat: 37.3927, lng: 127.1120 },
-    { key: 'incheon',  label: '인천공항 T2', name: '인천국제공항 제2여객터미널',    lat: 37.4692, lng: 126.4505 },
+    { key: 'incheon',  label: '인천공항 T1', name: '인천국제공항 제1여객터미널',    lat: 37.4491, lng: 126.4509 },
     { key: 'yeouido',  label: '더현대 서울', name: '여의도 더현대 서울',           lat: 37.5259, lng: 126.9284 },
     { key: 'haeundae', label: '해운대',      name: '부산 해운대해수욕장',          lat: 35.1587, lng: 129.1604 }
   ];
@@ -536,7 +536,10 @@
       if (!res.ok) return { ok: false, ms, reason: `HTTP ${res.status}` };
       const data = await res.json();
       const r = data && data.routes && data.routes[0];
-      if (!r || !r.summary) return { ok: false, ms, reason: '응답 형식 오류' };
+      if (!r || !r.summary) {
+        const msg = (r && r.result_msg) ? r.result_msg.slice(0, 16) : '응답 형식 오류';
+        return { ok: false, ms, reason: msg };
+      }
       const s = r.summary;
       const pts = [], segs = [];
       (r.sections || []).forEach(sec => (sec.roads || []).forEach(road => {
