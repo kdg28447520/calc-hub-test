@@ -376,10 +376,17 @@
 
     clearMapLines();
 
-    /* 뒤 레이어 — 선택하지 않은 2개 노선: 브랜드 색 그대로, 얇고 반투명하게 */
-    usable.filter(k => k !== active).forEach(k => {
+    /* 뒤 레이어 — 선택하지 않은 2개 노선: 흰 외곽선 위에 브랜드 색, 얇고 반투명하게 */
+    const back = usable.filter(k => k !== active);
+    back.forEach(k => {
       polylineLayers.push(L.polyline(res[k].pts, {
-        color: ROUTE_COLORS[k], weight: 4, opacity: 0.75,
+        color: '#FFFFFF', weight: 6.5, opacity: 0.8,
+        lineCap: 'round', lineJoin: 'round'
+      }).addTo(map));
+    });
+    back.forEach(k => {
+      polylineLayers.push(L.polyline(res[k].pts, {
+        color: ROUTE_COLORS[k], weight: 4, opacity: 0.85,
         lineCap: 'round', lineJoin: 'round'
       }).addTo(map));
     });
