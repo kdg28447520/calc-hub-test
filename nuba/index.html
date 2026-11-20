@@ -150,7 +150,7 @@
               oninput="handleLivePoiSearch(this.value, 'origin')"
               onkeydown="if(event.key === 'Enter') executeRouteSearch()">
             <button onclick="clearInput('origin')" class="shrink-0 text-[11px] text-[#8A8C8E] hover:text-[#131416] px-1" title="지우기">✕</button>
-            <button onclick="useCurrentGps()" class="shrink-0 text-[10px] text-[#5D5F60] hover:text-[#1E7B4F] font-medium flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-[#E8EAEC] bg-[#F4F6F8]" title="내 현재 위치">
+            <button id="btnGps" onclick="useCurrentGps()" class="shrink-0 text-[10px] text-[#5D5F60] hover:text-[#1E7B4F] font-medium flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-[#E8EAEC] bg-[#F4F6F8] disabled:opacity-60" title="내 위치로 설정">
               <svg class="w-3 h-3 text-[#1E7B4F]" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg>
               <span>GPS</span>
             </button>
@@ -276,12 +276,14 @@
        /api/poi    → SK TMAP 장소 자동완성 (TMAP_APP_KEY)
        /api/kakao  → 카카오모빌리티 길찾기   (KAKAO_REST_KEY)
        /api/naver  → 네이버 Directions 5    (NAVER_KEY_ID / NAVER_KEY_SECRET)
+       /api/reverse → 현재 위치 역지오코딩 (TMAP_APP_KEY)
      ============================================================ */
   const CFG = {
     TMAP_PROXY: '/api/tmap',
     POI_PROXY: '/api/poi',
     KAKAO_PROXY: '/api/kakao',
-    NAVER_PROXY: '/api/naver'
+    NAVER_PROXY: '/api/naver',
+    REVERSE_PROXY: '/api/reverse'
   };
 
   /* 프록시가 돌려준 오류 사유를 카드에 그대로 보여주기 위한 도우미 */
@@ -426,7 +428,9 @@
 
   function handleLivePoiSearch(keyword, target) {
     activeInputTarget = target;
-    const q = (keyword || '').trim();
+    let q = (keyword || '').trim();
+    // GPS로 넣은 '내 위치 (…)’ 는 검색어가 아니다 → 빠른 장소 목록을 그대로 보여줍니다
+    if (/^내\s*위치/.test(q)) q = '';
     const el = document.getElementById('poiDropdown');
     const label = document.getElementById('dropdownTargetLabel');
     const listEl = document.getElementById('dropdownList');
@@ -496,15 +500,44 @@
     executeRouteSearch();
   }
 
+  /* GPS: 좌표를 잡고 TMAP 역지오코딩으로 '내 위치 (도로명)' 로 표시합니다.
+     입력값은 스크립트로만 바꿔서(.value 대입) 자동완성 검색이 열리지 않게 합니다. */
+  function setGpsBtn(busy) {
+    const btn = document.getElementById('btnGps');
+    if (!btn) return;
+    btn.disabled = !!busy;
+    const label = btn.querySelector('span');
+    if (label) label.innerText = busy ? '확인 중' : 'GPS';
+  }
+
+  async function reverseLabel(lat, lng) {
+    try {
+      const res = await fetch(`${CFG.REVERSE_PROXY}?lat=${lat}&lng=${lng}`);
+      if (!res.ok) return '내 위치';
+      const d = await res.json();
+      const label = d && typeof d.label === 'string' ? d.label.trim() : '';
+      return label || '내 위치';
+    } catch (e) { return '내 위치'; }
+  }
+
   function useCurrentGps() {
     if (!navigator.geolocation) { alert('이 기기는 GPS를 지원하지 않습니다.'); return; }
+    setGpsBtn(true);
     navigator.geolocation.getCurrentPosition(
-      pos => {
-        state.origin = { lat: pos.coords.latitude, lng: pos.coords.longitude, name: '내 현재 위치' };
-        document.getElementById('inputOrigin').value = '내 현재 위치';
+      async pos => {
+        const lat = pos.coords.latitude, lng = pos.coords.longitude;
+        const label = await reverseLabel(lat, lng);
+        state.origin = { lat, lng, name: label };
+        document.getElementById('inputOrigin').value = label;
+        hidePoiDropdown();
+        setGpsBtn(false);
         executeRouteSearch();
       },
-      () => alert('GPS 위치 권한을 확인해 주세요. 출발지는 그대로 둡니다.')
+      () => {
+        setGpsBtn(false);
+        alert('GPS 위치 권한을 확인해 주세요. 출발지는 그대로 둡니다.');
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   }
 

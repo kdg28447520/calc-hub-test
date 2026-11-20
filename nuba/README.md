@@ -17,6 +17,7 @@
 | 장소 자동완성 (SK POI) | `GET /api/poi?keyword=` | `apis.openapi.sk.com/tmap/pois` | `TMAP_APP_KEY` |
 | 카카오내비 (카카오모빌리티) | `GET /api/kakao?origin=&destination=` | `apis-navi.kakaomobility.com/v1/directions` | `KAKAO_REST_KEY` |
 | 네이버지도 (NCP Directions 5) | `GET /api/naver?start=&goal=` | `maps.apigw.ntruss.com/map-direction/v1/driving` | `NAVER_KEY_ID`, `NAVER_KEY_SECRET` |
+| GPS 버튼 역지오코딩 | `GET /api/reverse?lat=&lng=` | `apis.openapi.sk.com/tmap/geo/reversegeocoding` | `TMAP_APP_KEY` |
 
 프록시는 각 서비스의 해당 경로만 호출하고, 좌표·옵션 파라미터만 받습니다.
 
@@ -27,6 +28,7 @@
 - `api/poi.js` — SK TMAP POI 자동완성 프록시 (`TMAP_APP_KEY`)
 - `api/kakao.js` — 카카오모빌리티 길찾기 프록시 (`KAKAO_REST_KEY`)
 - `api/naver.js` — 네이버 Directions 5 프록시 (`NAVER_KEY_ID`, `NAVER_KEY_SECRET`)
+- `api/reverse.js` — 현재 위치 역지오코딩 프록시 (`TMAP_APP_KEY`) — GPS 버튼을 누르면 출발지가 `내 위치 (안양시 동안구 시민대로 230)` 처럼 표시되고, 주소를 못 찾으면 `내 위치`로 둡니다.
 - `manifest.json`, `sw.js`, `icons/` — PWA 설치용
 - `og.png` — 카톡·문자 공유 카드 이미지(1200×630, 실제 화면 캡처 기반)
 
