@@ -117,26 +117,27 @@
         position: absolute; inset: 0; gap: 0; border-radius: 0; display: flex; flex-direction: column-reverse;
         width: 100vw; height: 100vh; height: 100dvh; overflow: hidden;
       }
-      /* 지도를 화면의 절반 가까이 키우고, 조작 패널은 남은 높이만 쓰고 스크롤 */
+      /* 지도를 화면의 위 33%로 유지해 아래 비교 카드 3개가 한눈에 다 보이게 확보 */
       .map-sheet {
-        flex: 0 0 auto; height: 46vh; height: 46dvh; min-height: 320px;
+        flex: 0 0 auto; height: 33vh; height: 33dvh; min-height: 200px;
         border: none; border-radius: 0; position: relative; overflow: hidden; z-index: 10;
       }
       .control-sheet {
         width: 100%; max-width: 100%; flex: 1 1 auto; min-height: 0; background: #FFFFFF;
-        border-top: 1px solid #E8EAEC; border-radius: 20px 20px 0 0; box-shadow: 0 -4px 24px rgba(19, 20, 22, 0.12);
+        border-top: 1px solid #E8EAEC; border-radius: 18px 18px 0 0; box-shadow: 0 -4px 24px rgba(19, 20, 22, 0.12);
         display: flex; flex-direction: column; z-index: 20; overflow-y: auto;
-        padding-bottom: max(6px, env(safe-area-inset-bottom, 4px));
+        padding-bottom: max(4px, env(safe-area-inset-bottom, 4px));
       }
       .brand-header-row { display: none !important; }
-      .search-box-row { padding: 8px 12px 6px 12px !important; }
+      .search-box-row { padding: 6px 12px 4px 12px !important; }
       .search-pills-row { display: none !important; }
-      .kpi-metric-row { padding: 6px 12px !important; }
+      .kpi-metric-row { padding: 4px 12px !important; }
+      .kpi-metric-row #kpiDuration { font-size: 20px !important; line-height: 1.1 !important; }
       .kpi-metric-row #kpiRouteNote { display: none !important; }
-      .comparison-list-row { padding: 4px 10px !important; gap: 4px !important; }
-      .navi-row-item { padding: 6px 10px !important; }
-      .action-bar-row { padding: 6px 12px !important; }
-      .action-bar-row a { height: 42px !important; }
+      .comparison-list-row { padding: 4px 10px !important; gap: 3px !important; }
+      .navi-row-item { padding: 5px 10px !important; margin-bottom: 3px !important; }
+      .action-bar-row { padding: 4px 12px !important; }
+      .action-bar-row a { height: 38px !important; }
       .api-note { display: none !important; }
     }
 
@@ -504,13 +505,26 @@
        /api/naver  → 네이버 Directions 5    (NAVER_KEY_ID / NAVER_KEY_SECRET)
        /api/reverse → 현재 위치 역지오코딩 (TMAP_APP_KEY)
      ============================================================ */
+  const API_BASE = (location.hostname.endsWith('vercel.app')) ? '' : 'https://nuba-kdg2844-8355s-projects.vercel.app';
   const CFG = {
-    TMAP_PROXY: '/api/tmap',
-    POI_PROXY: '/api/poi',
-    KAKAO_PROXY: '/api/kakao',
-    NAVER_PROXY: '/api/naver',
-    REVERSE_PROXY: '/api/reverse'
+    TMAP_PROXY: `${API_BASE}/api/tmap`,
+    POI_PROXY: `${API_BASE}/api/poi`,
+    KAKAO_PROXY: `${API_BASE}/api/kakao`,
+    NAVER_PROXY: `${API_BASE}/api/naver`,
+    REVERSE_PROXY: `${API_BASE}/api/reverse`
   };
+
+  async function fetchWithRetry(url, opts, retries = 1) {
+    try {
+      return await fetch(url, opts);
+    } catch (err) {
+      if (retries > 0) {
+        await new Promise(r => setTimeout(r, 350));
+        return fetchWithRetry(url, opts, retries - 1);
+      }
+      throw err;
+    }
+  }
 
   /* 프록시가 돌려준 오류 사유를 카드에 그대로 보여주기 위한 도우미 */
   async function proxyErrorReason(res, fallback) {
@@ -1057,7 +1071,7 @@
   async function fetchTmap(origin, dest) {
     const t0 = performance.now();
     try {
-      const res = await fetch(CFG.TMAP_PROXY, {
+      const res = await fetchWithRetry(CFG.TMAP_PROXY, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1087,7 +1101,7 @@
         note: 'SK TMAP 실시간 경로'
       };
     } catch (e) {
-      return { ok: false, ms: Math.round(performance.now() - t0), reason: '네트워크 오류' };
+      return { ok: false, ms: Math.round(performance.now() - t0), reason: '연결 실패(네트워크·VPN 확인)' };
     }
   }
 
@@ -1095,7 +1109,7 @@
     const t0 = performance.now();
     try {
       const url = `${CFG.KAKAO_PROXY}?origin=${origin.lng},${origin.lat}&destination=${dest.lng},${dest.lat}&priority=RECOMMEND&car_type=1`;
-      const res = await fetch(url);
+      const res = await fetchWithRetry(url);
       const ms = Math.round(performance.now() - t0);
       if (!res.ok) return { ok: false, ms, reason: await proxyErrorReason(res) };
       const data = await res.json();
@@ -1126,7 +1140,7 @@
         note: '카카오모빌리티 실시간 경로'
       };
     } catch (e) {
-      return { ok: false, ms: Math.round(performance.now() - t0), reason: '네트워크 오류' };
+      return { ok: false, ms: Math.round(performance.now() - t0), reason: '연결 실패(네트워크·VPN 확인)' };
     }
   }
 
@@ -1134,7 +1148,7 @@
     const t0 = performance.now();
     try {
       const url = `${CFG.NAVER_PROXY}?start=${origin.lng},${origin.lat}&goal=${dest.lng},${dest.lat}&option=trafast`;
-      const res = await fetch(url);
+      const res = await fetchWithRetry(url);
       const ms = Math.round(performance.now() - t0);
       if (!res.ok) {
         const why = res.status === 404 ? '프록시 없는 주소(정적 호스팅)' : await proxyErrorReason(res);
@@ -1156,7 +1170,7 @@
         note: '네이버 Directions 5 실시간 경로'
       };
     } catch (e) {
-      return { ok: false, ms: Math.round(performance.now() - t0), reason: '프록시 연결 실패' };
+      return { ok: false, ms: Math.round(performance.now() - t0), reason: '연결 실패(네트워크·VPN 확인)' };
     }
   }
 
