@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>중국 사입 도착가 계산기 — 물류비·쿠팡 마진까지</title>
+<meta name="description" content="중국 사입 상품의 위안 단가, 대행 수수료, 해운·항공 운송비, 검품·팔레트 작업, 관세·부가세를 한 번에 계산하고 한국 도착 원가와 쿠팡 판매 마진까지 역산하는 계산기.">
+<meta name="theme-color" content="#ffffff">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{
+  --bg:#f7f8fa; --card:#fff; --line:#e4e8ed; --line-strong:#d3dae2;
+  --ink:#141a21; --sub:#5f6b79; --mute:#8b96a3;
+  --brand:#123f53; --brand-soft:#eef4f7; --brand-line:#cfe0e8;
+  --pos:#0d7357; --pos-soft:#eff7f3; --neg:#b42318; --warn:#a15c12;
+  --r:14px;
+  --shadow:0 1px 2px rgba(16,24,40,.04), 0 8px 24px rgba(16,24,40,.03);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth; -webkit-text-size-adjust:100%}
+body{
+  font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+  background:var(--bg); color:var(--ink); line-height:1.5; font-size:15px;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+input,select{font-family:inherit;font-size:15px;color:var(--ink)}
+input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+input[type=number]{-moz-appearance:textfield}
+.wrap{max-width:1120px;margin:0 auto;padding:0 18px}
+
+/* header */
+header{position:sticky;top:0;z-index:60;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.hd{display:flex;align-items:center;gap:16px;height:60px}
+.brand{font-weight:800;font-size:17px;letter-spacing:-.02em;display:flex;align-items:baseline;gap:8px;white-space:nowrap}
+.brand i{font-style:normal;font-size:10px;font-weight:700;letter-spacing:.14em;color:var(--mute)}
+.hd nav{display:flex;gap:2px;margin-left:auto}
+.hd nav a{padding:8px 12px;border-radius:999px;font-size:13.5px;font-weight:700;color:var(--sub);white-space:nowrap}
+.hd nav a:hover{background:#f1f4f7;color:var(--ink)}
+.hd nav a.on{background:var(--brand);color:#fff}
+.rst{border:1px solid var(--line-strong);background:#fff;color:var(--sub);border-radius:999px;padding:7px 12px;font-size:12.5px;font-weight:700}
+.rst:hover{color:var(--ink);border-color:var(--mute)}
+
+/* hero */
+.hero{padding:34px 0 8px}
+.hero h1{font-size:30px;line-height:1.3;letter-spacing:-.03em;font-weight:800}
+.hero h1 em{font-style:normal;color:var(--brand)}
+.hero p{color:var(--sub);margin-top:10px;font-size:14.5px;max-width:620px}
+.hero .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+.hero .tags span{font-size:12px;font-weight:600;color:var(--sub);background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px 10px}
+
+/* cards */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:20px 22px}
+.card + .card{margin-top:14px}
+.card-h{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
+.card-h .num{font-size:11px;font-weight:800;letter-spacing:.1em;color:var(--mute)}
+.card-h h3{font-size:15.5px;font-weight:800;letter-spacing:-.01em}
+.card-h .side{margin-left:auto;font-size:12px;color:var(--mute);font-weight:600}
+.card .desc{font-size:12.5px;color:var(--sub);margin:2px 0 14px;line-height:1.55}
+
+section.sec{padding:26px 0 0;scroll-margin-top:70px}
+.sec-h{display:flex;align-items:baseline;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.sec-h h2{font-size:20px;font-weight:800;letter-spacing:-.02em}
+.sec-h small{font-size:12.5px;color:var(--sub);font-weight:600}
+
+/* grid */
+.calc{display:grid;grid-template-columns:minmax(0,1.42fr) minmax(300px,.86fr);gap:16px;align-items:start}
+.stack{min-width:0}
+
+/* fields */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.f{min-width:0}
+.f > label,.f-label{display:block;font-size:11.5px;font-weight:700;color:var(--sub);letter-spacing:.01em;margin-bottom:5px}
+.ipt{display:flex;align-items:center;border:1px solid var(--line-strong);border-radius:10px;background:#fff;transition:border-color .15s,box-shadow .15s}
+.ipt:focus-within{border-color:var(--brand);box-shadow:0 0 0 3px rgba(18,63,83,.1)}
+.ipt input{flex:1;min-width:0;border:0;background:transparent;padding:10px 12px;outline:none;font-variant-numeric:tabular-nums;font-weight:600}
+.ipt input::placeholder{font-weight:500;color:#a7b1bc}
+.ipt .u{padding:0 12px 0 2px;font-size:12px;font-weight:700;color:var(--mute);white-space:nowrap}
+select{width:100%;border:1px solid var(--line-strong);border-radius:10px;background:#fff;padding:10px 34px 10px 12px;font-weight:600;outline:none;appearance:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%23808b98' stroke-width='1.6' stroke-linecap='round'/></svg>");
+  background-repeat:no-repeat;background-position:right 12px center}
+select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(18,63,83,.1)}
+.hint{font-size:11.5px;color:var(--mute);margin-top:5px;line-height:1.5}
+
+/* radio cards */
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.opt{display:flex;gap:9px;align-items:flex-start;border:1px solid var(--line-strong);border-radius:11px;padding:11px 12px;cursor:pointer;background:#fff;transition:border-color .15s,background .15s}
+.opt:hover{border-color:var(--mute)}
+.opt input{appearance:none;width:16px;height:16px;border:1.5px solid #b6c0ca;border-radius:50%;margin-top:2px;flex:0 0 auto;position:relative}
+.opt input:checked{border-color:var(--brand);background:var(--brand);box-shadow:inset 0 0 0 3px #fff}
+.opt:has(input:checked){border-color:var(--brand);background:var(--brand-soft)}
+.opt b{display:block;font-size:13.5px;font-weight:700}
+.opt span{display:block;font-size:11.5px;color:var(--sub);margin-top:2px;line-height:1.45}
+
+/* checks */
+.ck{display:flex;gap:10px;align-items:flex-start;padding:11px 0;border-bottom:1px dashed var(--line)}
+.ck:last-child{border-bottom:0;padding-bottom:0}
+.ck:first-child{padding-top:0}
+.ck input{appearance:none;width:18px;height:18px;border:1.5px solid #b6c0ca;border-radius:5px;flex:0 0 auto;margin-top:1px;position:relative;cursor:pointer}
+.ck input:checked{border-color:var(--brand);background:var(--brand)}
+.ck input:checked::after{content:"";position:absolute;left:5px;top:1.5px;width:4px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(42deg)}
+.ck .t{flex:1;min-width:0}
+.ck .t b{font-size:13.5px;font-weight:700;display:block}
+.ck .t span{font-size:11.5px;color:var(--sub);display:block;margin-top:2px}
+.ck .q{width:104px;flex:0 0 104px;display:none}
+.ck.on .q{display:flex}
+.ck .amt{width:104px;flex:0 0 104px;text-align:right;font-size:12.5px;font-weight:700;color:var(--sub);font-variant-numeric:tabular-nums;padding-top:3px}
+
+/* products */
+.phead{display:grid;grid-template-columns:1.5fr .62fr .8fr .8fr 30px;gap:8px;margin-bottom:6px}
+.phead div{font-size:11px;font-weight:700;color:var(--mute);letter-spacing:.02em}
+.prow{display:grid;grid-template-columns:1.5fr .62fr .8fr .8fr 30px;gap:8px;align-items:center;padding:9px 0;border-top:1px solid #f1f4f7}
+.prow:first-of-type{border-top:0}
+.del{border:0;background:transparent;color:#a7b1bc;font-size:18px;line-height:1;border-radius:8px;height:30px;width:30px}
+.del:hover{background:#fdf1f0;color:var(--neg)}
+.addrow{margin-top:10px;border:1px dashed var(--line-strong);background:#fff;color:var(--brand);border-radius:10px;padding:9px 14px;font-size:13px;font-weight:700;width:100%}
+.addrow:hover{background:var(--brand-soft);border-color:var(--brand-line)}
+
+/* summary */
+.summary{position:sticky;top:76px}
+.sum-top{background:var(--brand);color:#fff;border-radius:var(--r);padding:20px 22px}
+.sum-top .k{font-size:11px;font-weight:800;letter-spacing:.12em;color:#a9c6d2}
+.sum-top .big{font-size:31px;font-weight:800;letter-spacing:-.03em;margin-top:6px;font-variant-numeric:tabular-nums;line-height:1.15}
+.sum-top .big small{font-size:15px;font-weight:700;margin-left:3px}
+.sum-top .unit{margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.18);display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.sum-top .unit span{font-size:12px;color:#bdd3dc;font-weight:600}
+.sum-top .unit b{font-size:17.5px;font-weight:800;font-variant-numeric:tabular-nums}
+.bd{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:6px 18px;margin-top:10px;box-shadow:var(--shadow)}
+.bd .r{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #f1f4f7;font-size:13px}
+.bd .r:last-child{border-bottom:0}
+.bd .r .l{color:var(--sub);min-width:0}
+.bd .r .l em{display:block;font-style:normal;font-size:10.5px;color:var(--mute);margin-top:1px}
+.bd .r .v{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.bd .r.sum{border-top:1.5px solid var(--ink);border-bottom:0;margin-top:2px}
+.bd .r.sum .l,.bd .r.sum .v{font-weight:800;font-size:13.5px;color:var(--ink)}
+.bd .r.tax .v{color:var(--warn)}
+.bd .sec-t{font-size:10.5px;font-weight:800;letter-spacing:.1em;color:var(--mute);padding:10px 0 2px}
+.flag{background:var(--brand-soft);border:1px solid var(--brand-line);color:var(--brand);border-radius:10px;padding:9px 12px;font-size:12px;font-weight:600;display:flex;gap:8px;align-items:flex-start;margin-top:10px}
+.flag button{border:0;background:none;color:var(--brand);text-decoration:underline;font-size:12px;font-weight:700;padding:0;margin-left:auto;white-space:nowrap}
+.two-btns{display:flex;gap:8px;margin-top:10px}
+.btn{border:0;border-radius:10px;padding:11px 14px;font-weight:700;font-size:13.5px;flex:1;text-align:center}
+.btn.pri{background:var(--ink);color:#fff}
+.btn.pri:hover{background:#000}
+.btn.sec{background:#fff;border:1px solid var(--line-strong);color:var(--ink)}
+.btn.sec:hover{background:#f6f8fa}
+.btn:disabled{opacity:.5;cursor:default}
+
+/* margin results */
+.res{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.res .b{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:#fff}
+.res .b .k{font-size:11.5px;font-weight:700;color:var(--sub)}
+.res .b .v{font-size:22px;font-weight:800;letter-spacing:-.02em;margin-top:4px;font-variant-numeric:tabular-nums}
+.res .b .v.pos{color:var(--pos)}
+.res .b .v.neg{color:var(--neg)}
+.res .b small{display:block;font-size:11px;color:var(--mute);margin-top:3px}
+.bar{display:flex;height:10px;border-radius:6px;overflow:hidden;margin-top:12px;background:#eef1f4}
+.bar i{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:10px 14px;margin-top:9px;font-size:11.5px;color:var(--sub)}
+.legend span{display:flex;align-items:center;gap:5px}
+.legend i{width:8px;height:8px;border-radius:2px;display:inline-block}
+
+/* notes */
+.notes{margin:26px 0 0;border-top:1px solid var(--line);padding:20px 0 8px;font-size:12px;color:var(--mute);line-height:1.75}
+.notes b{color:var(--sub)}
+.foot{padding:22px 0 40px;font-size:11.5px;color:var(--mute);display:flex;gap:12px;flex-wrap:wrap;justify-content:space-between;border-top:1px solid var(--line);margin-top:8px}
+
+/* toast + mobile bar */
+.toast{position:fixed;left:50%;bottom:96px;transform:translate(-50%,12px);background:var(--ink);color:#fff;font-size:13px;font-weight:600;padding:10px 16px;border-radius:10px;opacity:0;pointer-events:none;transition:.2s;z-index:90;max-width:88vw;text-align:center}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.mbar{display:none}
+
+@media (max-width:960px){
+  .calc{grid-template-columns:1fr}
+  .summary{position:static}
+  .hero h1{font-size:24px}
+  .hero{padding:24px 0 4px}
+  .hd{height:56px;gap:10px}
+  .brand{font-size:15px}
+  .brand i{display:none}
+  .hd nav{overflow-x:auto;margin-left:0;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .hd nav::-webkit-scrollbar{display:none}
+  .hd nav a{padding:7px 10px;font-size:12.5px}
+  .rst{display:none}
+  .mbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:70;background:rgba(255,255,255,.97);backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:9px 14px calc(9px + env(safe-area-inset-bottom));gap:14px;align-items:center;box-shadow:0 -4px 16px rgba(16,24,40,.05)}
+  .mbar .m{min-width:0}
+  .mbar .m .k{font-size:10px;font-weight:700;color:var(--mute)}
+  .mbar .m .v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;letter-spacing:-.02em}
+  .mbar a{margin-left:auto;background:var(--brand);color:#fff;border-radius:9px;padding:9px 12px;font-size:12.5px;font-weight:700;white-space:nowrap}
+  body{padding-bottom:72px}
+  .toast{bottom:84px}
+  .phead{display:none}
+  .prow{grid-template-columns:1fr 1fr;gap:8px;padding:12px 0;align-items:end}
+  .prow .f:first-child{grid-column:1/-1}
+  .prow .del{grid-column:2;justify-self:end;margin-top:-4px}
+  .grid3{grid-template-columns:1fr}
+  .res{grid-template-columns:1fr}
+  .card{padding:17px 16px}
+  .sum-top{padding:18px}
+  .sum-top .big{font-size:27px}
+  .ck{flex-wrap:wrap}
+  .ck .q,.ck .amt{width:96px;flex:0 0 96px;margin-left:28px}
+  .ck .amt{margin-left:0}
+}
+@media (max-width:420px){
+  .opts{grid-template-columns:1fr}
+  .grid2{grid-template-columns:1fr}
+  .hero h1{font-size:22px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap hd">
+    <div class="brand">중국 사입 계산기 <i>LANDED COST</i></div>
+    <nav id="tabs">
+      <a href="#costing" class="on" data-tab="costing">도착가</a>
+      <a href="#logistics" data-tab="logistics">물류비</a>
+      <a href="#margin" data-tab="margin">쿠팡 마진</a>
+    </nav>
+    <button class="rst" id="resetBtn" type="button">초기화</button>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="hero">
+    <h1>중국에서 산 물건,<br><em>한국 도착가</em>부터 쿠팡 마진까지.</h1>
+    <p>위안 단가와 수수료, 해운·용달, 검품·팔레트 작업, 관세·부가세를 한 화면에서 계산합니다. 값을 바꾸면 결과가 바로 바뀝니다.</p>
+    <div class="tags">
+      <span>해운 LCL 93,000원/CBM</span>
+      <span>용달 54개 지역 운임표</span>
+      <span>박스 규격으로 CBM 자동 계산</span>
+      <span>모든 금액 부가세 별도 기준</span>
+    </div>
+  </section>
+
+  <!-- 환율 -->
+  <section class="sec" style="padding-top:20px">
+    <div class="card">
+      <div class="card-h">
+        <h3>적용 환율</h3>
+        <div class="side" id="fxState">직접 입력</div>
+      </div>
+      <p class="desc">실제 송금할 때 안내받은 환율을 넣으세요. 계산은 이 값으로만 합니다.</p>
+      <div class="grid3">
+        <div class="f">
+          <label for="fxCny">위안 → 원화 송금환율</label>
+          <div class="ipt"><input type="number" id="fxCny" data-path="fx.cny" step="0.1" min="1" inputmode="decimal"><span class="u">원 / 위안</span></div>
+        </div>
+        <div class="f">
+          <label for="fxUsdCny">달러 → 위안</label>
+          <div class="ipt"><input type="number" id="fxUsdCny" data-path="fx.usdCny" step="0.01" min="0.01" inputmode="decimal"><span class="u">위안 / 달러</span></div>
+        </div>
+        <div class="f">
+          <label for="fxUsdKrw">달러 → 원화 송금환율</label>
+          <div class="ipt"><input type="number" id="fxUsdKrw" data-path="fx.usdKrw" step="0.1" min="1" inputmode="decimal"><span class="u">원 / 달러</span></div>
+        </div>
+      </div>
+      <div class="two-btns">
+        <button class="btn sec" id="fxBtn" type="button" style="flex:0 0 auto">실시간 환율 불러오기</button>
+        <div class="hint" id="fxNote" style="align-self:center">시장 환율에 송금 스프레드 1.5원을 더해 채웁니다. 실제 은행 고시와 다를 수 있습니다.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 도착가 -->
+  <section class="sec" id="costing">
+    <div class="sec-h">
+      <h2>한국 도착가 계산기</h2>
+      <small>상품 대금 · 수수료 · 운송 · 작업비 · 관세를 합쳐 개당 원가를 냅니다</small>
+    </div>
+
+    <div class="calc">
+      <div class="stack">
+
+        <div class="card">
+          <div class="card-h"><span class="num">01</span><h3>대행 방식</h3></div>
+          <p class="desc">수수료율은 안내받은 조건으로 직접 고칠 수 있습니다.</p>
+          <div class="grid2">
+            <div class="f">
+              <label for="mode">대행 방식</label>
+              <select id="mode" data-path="agency.mode">
+                <option value="buying">중국 구매대행</option>
+                <option value="market">시장 사입 (현장 발주)</option>
+                <option value="oem">OEM · ODM 제작</option>
+                <option value="factory">공장 직거래 (수수료 없음)</option>
+              </select>
+            </div>
+            <div class="f">
+              <label for="fee">대행 수수료율 (상품대금 기준)</label>
+              <div class="ipt"><input type="number" id="fee" data-path="agency.fee" step="0.1" min="0" max="100" inputmode="decimal"><span class="u">%</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h"><span class="num">02</span><h3>상품</h3><div class="side" id="goodsState">—</div></div>
+          <p class="desc">위안 단가와 수량을 넣으세요. 상품은 여러 개를 함께 계산합니다.</p>
+          <div class="phead">
+            <div>상품명</div><div>수량</div><div>위안 단가</div><div>중국 내 배송비</div><div></div>
+          </div>
+          <div id="products"></div>
+          <button class="addrow" id="addProduct" type="button">+ 상품 추가</button>
+        </div>
+
+        <div class="card">
+          <div class="card-h"><span class="num">03</span><h3>운송</h3><div class="side" id="freightState"></div></div>
+          <p class="desc">해운 LCL은 연운항 출고 기준 1CBM당 93,000원입니다. 항공은 실제 청구 무게로 계산하세요.</p>
+          <div class="opts" style="margin-bottom:14px">
+            <label class="opt"><input type="radio" name="shipMethod" value="lcl" data-path="ship.method"><span><b>해운 LCL</b><span>한국 지정 창고까지 · CBM 기준</span></span></label>
+            <label class="opt"><input type="radio" name="shipMethod" value="air" data-path="ship.method"><span><b>항공 샘플</b><span>무게 기준 · 한국 택배 포함</span></span></label>
+            <label class="opt"><input type="radio" name="shipMethod" value="container" data-path="ship.method"><span><b>컨테이너</b><span>FCL · 직접 금액 입력</span></span></label>
+            <label class="opt"><input type="radio" name="shipMethod" value="none" data-path="ship.method"><span><b>중국에서 직접 받기</b><span>운송비 없음</span></span></label>
+          </div>
+
+          <div id="shipFields">
+            <div class="grid2" data-for="lcl">
+              <div class="f">
+                <label for="cbm">전체 CBM</label>
+                <div class="ipt"><input type="number" id="cbm" data-path="ship.cbm" step="0.01" min="0" inputmode="decimal"><span class="u">CBM</span></div>
+                <div class="hint">물류비 계산기에서 박스 규격으로 계산하면 그 값이 여기로 옵니다.</div>
+              </div>
+              <div class="f">
+                <label for="cbmRate">CBM당 운임</label>
+                <div class="ipt"><input type="number" id="cbmRate" data-path="ship.cbmRate" step="1000" min="0" inputmode="numeric"><span class="u">원 / CBM</span></div>
+                <div class="hint">연운항 기준 93,000원. 실제 견적이 다르면 고치세요.</div>
+              </div>
+            </div>
+            <div class="grid2" data-for="air" style="display:none">
+              <div class="f">
+                <label for="airKg">청구 무게</label>
+                <div class="ipt"><input type="number" id="airKg" data-path="ship.airKg" step="0.1" min="0" inputmode="decimal"><span class="u">kg</span></div>
+              </div>
+              <div class="f">
+                <label for="airRate">kg당 운임</label>
+                <div class="ipt"><input type="number" id="airRate" data-path="ship.airRate" step="500" min="0" inputmode="numeric"><span class="u">원 / kg</span></div>
+                <div class="hint">샘플·소량 기준 참고값입니다. 관세사·포워딩 견적을 확인하세요.</div>
+              </div>
+            </div>
+            <div class="f" data-for="container" style="display:none">
+              <label for="boxCost">컨테이너 운송비</label>
+              <div class="ipt"><input type="number" id="boxCost" data-path="ship.boxCost" step="10000" min="0" inputmode="numeric"><span class="u">원</span></div>
+              <div class="hint">수출입 운송비·내륙 운송을 합친 금액을 넣으세요.</div>
+            </div>
+            <div class="hint" data-for="none" style="display:none">중국에서 직접 받으면 운송비를 0으로 계산합니다. 통관은 별도입니다.</div>
+          </div>
+
+          <div class="flag" id="logiFlag" style="display:none">
+            <span id="logiFlagText">물류비 계산기 합계가 반영되었습니다.</span>
+            <button type="button" id="logiClear">해제</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h"><span class="num">04</span><h3>추가 작업</h3><div class="side">체크한 항목만 더합니다</div></div>
+          <p class="desc">중국 창고에서 진행하는 작업입니다. 단가는 안내받은 값으로 고칠 수 있습니다.</p>
+
+          <div class="ck" data-ck="inspect">
+            <input type="checkbox" data-path="extra.inspect" aria-label="전수 검품">
+            <div class="t"><b>전수 검품 · 원산지 작업</b><span>시간당 20위안 · 작업자 속도 기준으로 예상 시간을 청구합니다</span></div>
+            <div class="q ipt"><input type="number" data-path="extra.hours" step="0.5" min="0" inputmode="decimal" aria-label="검품 시간"><span class="u">시간</span></div>
+            <div class="amt" data-amt="inspect"></div>
+          </div>
+
+          <div class="ck" data-ck="pallet">
+            <input type="checkbox" data-path="extra.pallet" aria-label="쿠팡 팔레트 바코드">
+            <div class="t"><b>쿠팡 팔레트 바코드 작업</b><span>팔레트당 30,000원 · 로켓그로스 입고용</span></div>
+            <div class="q ipt"><input type="number" data-path="extra.pallets" step="1" min="0" inputmode="numeric" aria-label="팔레트 수"><span class="u">판</span></div>
+            <div class="amt" data-amt="pallet"></div>
+          </div>
+
+          <div class="ck" data-ck="boxswap">
+            <input type="checkbox" data-path="extra.boxswap" aria-label="출고 박스 교체">
+            <div class="t"><b>출고 박스 교체</b><span>박스당 15위안 · 한국 우체국 박스급 품질</span></div>
+            <div class="q ipt"><input type="number" data-path="extra.boxes" step="10" min="0" inputmode="numeric" aria-label="박스 수"><span class="u">박스</span></div>
+            <div class="amt" data-amt="boxswap"></div>
+          </div>
+
+          <div class="ck" data-ck="storage">
+            <input type="checkbox" data-path="extra.storage" aria-label="창고 보관">
+            <div class="t"><b>창고 보관</b><span>3일 무료 · 이후 1CBM당 하루 4위안</span></div>
+            <div class="q ipt"><input type="number" data-path="extra.days" step="1" min="0" inputmode="numeric" aria-label="유료 보관일"><span class="u">일</span></div>
+            <div class="amt" data-amt="storage"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h"><span class="num">05</span><h3>관세 · 부가세</h3><div class="side">통관 후 실제 원가</div></div>
+          <p class="desc">과세가격은 상품대금 + 중국 내 배송비 + 국제 운송비로 계산합니다. 수수료·작업비는 과세가격에서 뺍니다.</p>
+          <div class="grid2">
+            <div class="f">
+              <label for="dutyRate">관세율</label>
+              <div class="ipt"><input type="number" id="dutyRate" data-path="duty.rate" step="0.1" min="0" max="100" inputmode="decimal"><span class="u">%</span></div>
+              <div class="hint">HS코드로 확인하세요. 0%(FTA)·8%·13% 등 상품마다 다릅니다.</div>
+            </div>
+            <div class="f">
+              <label for="vatRate">수입 부가세율</label>
+              <div class="ipt"><input type="number" id="vatRate" data-path="duty.vat" step="0.1" min="0" max="100" inputmode="decimal"><span class="u">%</span></div>
+              <div class="hint">일반 10%. 면세 상품은 0으로 두세요.</div>
+            </div>
+          </div>
+          <div class="ck" style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);border-bottom:0">
+            <input type="checkbox" data-path="duty.refund" aria-label="부가세 매입세액 공제 반영">
+            <div class="t"><b>부가세 매입세액 공제 반영</b><span>일반과세자는 수입 부가세를 환급받습니다. 개당 원가에서 빼고 계산합니다.</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- summary -->
+      <aside class="summary">
+        <div class="sum-top">
+          <div class="k">TOTAL LANDED COST</div>
+          <div class="big" id="sTotal">—<small>원</small></div>
+          <div class="unit"><span id="sUnitLabel">개당 도착 원가</span><b id="sUnit">—</b></div>
+        </div>
+        <div class="bd">
+          <div class="r"><div class="l">상품대금<em id="sGoodsTag"></em></div><div class="v" id="sGoods">—</div></div>
+          <div class="r"><div class="l">중국 내 배송비</div><div class="v" id="sCnShip">—</div></div>
+          <div class="r"><div class="l">대행 수수료<em id="sFeeTag"></em></div><div class="v" id="sFee">—</div></div>
+          <div class="r"><div class="l">운송비<em id="sFreightTag"></em></div><div class="v" id="sFreight">—</div></div>
+          <div class="r"><div class="l">추가 작업비</div><div class="v" id="sExtra">—</div></div>
+          <div class="r sum"><div class="l">통관 전 도착가</div><div class="v" id="sSub">—</div></div>
+          <div class="sec-t">통관</div>
+          <div class="r tax"><div class="l">관세<em id="sDutyTag"></em></div><div class="v" id="sDuty">—</div></div>
+          <div class="r tax"><div class="l">수입 부가세<em id="sVatTag"></em></div><div class="v" id="sVat">—</div></div>
+          <div class="r"><div class="l" id="sFinalLabel">세금 포함 총액</div><div class="v" id="sFinal">—</div></div>
+        </div>
+        <div class="two-btns">
+          <button class="btn sec" type="button" id="copyBtn">결과 복사</button>
+          <button class="btn pri" type="button" id="toMargin">쿠팡 마진 계산</button>
+        </div>
+        <div class="hint" style="margin-top:8px">예상 금액입니다. 실제 청구·통관 금액과 다를 수 있습니다.</div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- 물류비 -->
+  <section class="sec" id="logistics">
+    <div class="sec-h">
+      <h2>물류비 계산기</h2>
+      <small>CBM과 한국 도착지로 해운 + 용달을 한 번에</small>
+    </div>
+
+    <div class="calc">
+      <div class="stack">
+        <div class="card">
+          <div class="card-h"><span class="num">01</span><h3>짐의 부피</h3><div class="side" id="cbmState"></div></div>
+          <p class="desc">가로 1m × 세로 1m × 높이 1m가 1CBM입니다. 박스 규격을 넣으면 자동으로 계산합니다.</p>
+          <div class="opts" style="margin-bottom:14px">
+            <label class="opt"><input type="radio" name="logiMode" value="cbm" data-path="logi.mode"><span><b>전체 CBM 직접 입력</b><span>공장에서 받은 총 CBM</span></span></label>
+            <label class="opt"><input type="radio" name="logiMode" value="boxes" data-path="logi.mode"><span><b>박스 규격으로 계산</b><span>가로·세로·높이 × 수량</span></span></label>
+          </div>
+
+          <div class="f" data-for="cbm">
+            <label for="cbmDirect">전체 부피</label>
+            <div class="ipt"><input type="number" id="cbmDirect" data-path="logi.cbmDirect" step="0.01" min="0" inputmode="decimal"><span class="u">CBM</span></div>
+          </div>
+
+          <div data-for="boxes" style="display:none">
+            <div class="phead" style="grid-template-columns:1fr 1fr 1fr 1fr 30px">
+              <div>가로 (cm)</div><div>세로 (cm)</div><div>높이 (cm)</div><div>박스 수</div><div></div>
+            </div>
+            <div id="boxes"></div>
+            <button class="addrow" id="addBox" type="button">+ 박스 규격 추가</button>
+            <div class="hint" style="margin-top:9px">계산된 전체 부피 <b id="boxCbm" style="color:var(--ink)">—</b></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h"><span class="num">02</span><h3>한국 도착지</h3><div class="side" id="inlandState"></div></div>
+          <p class="desc">인천 출발 기준 지역별 용달 참고 운임표를 적용합니다. 출발 창고와 상하차 조건에 따라 달라집니다.</p>
+          <div class="grid2">
+            <div class="f">
+              <label for="region">도착 지역</label>
+              <select id="region" data-path="logi.region"></select>
+            </div>
+            <div class="f">
+              <label for="vehicle">차량</label>
+              <select id="vehicle" data-path="logi.vehicle">
+                <option value="auto">부피에 맞게 자동 선택</option>
+                <option value="다마스">다마스 · 최대 0.99CBM</option>
+                <option value="라보">라보 · 최대 1.99CBM</option>
+                <option value="1T">1톤 · 최대 5.99CBM</option>
+                <option value="1.4T">1.4톤 · 최대 7CBM</option>
+                <option value="2.5T">2.5톤 · 최대 11.99CBM</option>
+                <option value="3.5T">3.5톤 · 최대 13CBM</option>
+                <option value="5T">5톤 · 최대 20CBM</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid2" style="margin-top:12px">
+            <div class="f">
+              <label for="seaRate">해운 LCL 운임</label>
+              <div class="ipt"><input type="number" id="seaRate" data-path="logi.seaRate" step="1000" min="0" inputmode="numeric"><span class="u">원 / CBM</span></div>
+            </div>
+            <div class="f">
+              <label for="logiQty">개당으로 볼 수량 (선택)</label>
+              <div class="ipt"><input type="number" id="logiQty" data-path="logi.qty" step="1" min="0" inputmode="numeric" placeholder="예: 500"><span class="u">개</span></div>
+              <div class="hint">넣으면 개당 물류비를 함께 보여드립니다.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h"><span class="num">03</span><h3>추가 비용</h3><div class="side">체크한 항목만 더합니다</div></div>
+          <div class="ck" data-ck="addClearance">
+            <input type="checkbox" data-path="logi.addClearance" aria-label="통관수수료">
+            <div class="t"><b>통관수수료</b><span>관세사 사무소 기준 · 상품별 확인 범위는 상담 후 안내</span></div>
+            <div class="q ipt"><input type="number" data-path="logi.clearance" step="1000" min="0" inputmode="numeric" aria-label="통관수수료"><span class="u">원</span></div>
+          </div>
+          <div class="ck" data-ck="addOrigin">
+            <input type="checkbox" data-path="logi.addOrigin" aria-label="원산지증명서">
+            <div class="t"><b>원산지증명서 발급</b><span>FTA 관세 혜택을 받을 때 필요합니다</span></div>
+            <div class="q ipt"><input type="number" data-path="logi.origin" step="1000" min="0" inputmode="numeric" aria-label="원산지증명서 발급비"><span class="u">원</span></div>
+          </div>
+          <div class="ck" data-ck="addDocs">
+            <input type="checkbox" data-path="logi.addDocs" aria-label="서류·화물처리비">
+            <div class="t"><b>서류 · 화물 처리비</b><span>해운 합배송의 서류 작성·화물 처리</span></div>
+            <div class="q ipt"><input type="number" data-path="logi.docs" step="1000" min="0" inputmode="numeric" aria-label="서류 처리비"><span class="u">원</span></div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="summary">
+        <div class="sum-top">
+          <div class="k">TOTAL LOGISTICS</div>
+          <div class="big" id="lTotal">—<small>원</small></div>
+          <div class="unit"><span>개당 물류비</span><b id="lUnit">—</b></div>
+        </div>
+        <div class="bd">
+          <div class="r"><div class="l">해운 LCL<em id="lSeaTag"></em></div><div class="v" id="lSea">—</div></div>
+          <div class="r"><div class="l">한국 용달<em id="lInlandTag"></em></div><div class="v" id="lInland">—</div></div>
+          <div class="r"><div class="l">추가 비용</div><div class="v" id="lAdd">—</div></div>
+          <div class="r sum"><div class="l">총 물류비</div><div class="v" id="lSum">—</div></div>
+          <div class="r"><div class="l">CBM당 단가<em>해운 + 용달 + 추가 비용</em></div><div class="v" id="lPerCbm">—</div></div>
+        </div>
+        <div class="two-btns">
+          <button class="btn pri" type="button" id="toCosting">도착가 계산기에 반영</button>
+        </div>
+        <div class="hint" style="margin-top:8px">반영하면 해운·용달·추가 비용 합계가 도착가 계산기의 운송비로 들어갑니다. 부가세는 별도입니다.</div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- 마진 -->
+  <section class="sec" id="margin">
+    <div class="sec-h">
+      <h2>쿠팡 판매가 · 마진 역산</h2>
+      <small>도착 원가에 수수료·배송·광고를 얹어 남는 돈을 봅니다</small>
+    </div>
+
+    <div class="calc">
+      <div class="stack">
+        <div class="card">
+          <div class="card-h"><span class="num">01</span><h3>개당 원가</h3><div class="side" id="costState"></div></div>
+          <p class="desc">도착가 계산기의 개당 원가가 자동으로 들어옵니다. 다른 원가로 보고 싶으면 직접 고치세요.</p>
+          <div class="f">
+            <label for="unitCost">개당 도착 원가</label>
+            <div class="ipt"><input type="number" id="unitCost" data-path="margin.unitCost" step="10" min="0" inputmode="numeric"><span class="u">원</span></div>
+            <div class="hint"><button type="button" id="costReset" style="border:0;background:none;padding:0;color:var(--brand);font-size:11.5px;font-weight:700;text-decoration:underline">도착가 계산기 값으로 되돌리기</button></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h"><span class="num">02</span><h3>판매 조건</h3><div class="side">판매가는 부가세 포함가</div></div>
+          <p class="desc">수수료와 광고비는 공급가액(판매가 ÷ 1.1) 기준으로 계산합니다.</p>
+          <div class="grid2">
+            <div class="f">
+              <label for="price">판매가</label>
+              <div class="ipt"><input type="number" id="price" data-path="margin.price" step="100" min="0" inputmode="numeric"><span class="u">원</span></div>
+            </div>
+            <div class="f">
+              <label for="catFee">카테고리 수수료</label>
+              <div class="ipt"><input type="number" id="catFee" data-path="margin.fee" step="0.1" min="0" max="100" inputmode="decimal"><span class="u">%</span></div>
+              <div class="hint">기본 10.8%. 상품 카테고리별로 다릅니다.</div>
+            </div>
+          </div>
+          <div class="grid2" style="margin-top:12px">
+            <div class="f">
+              <label for="kind">판매 방식</label>
+              <select id="kind" data-path="margin.kind">
+                <option value="rg">로켓그로스</option>
+                <option value="normal">일반 판매 (판매자 배송)</option>
+                <option value="direct">직접 배송</option>
+              </select>
+            </div>
+            <div class="f">
+              <label for="acos">광고비 (ACOS)</label>
+              <div class="ipt"><input type="number" id="acos" data-path="margin.acos" step="0.5" min="0" max="100" inputmode="decimal"><span class="u">%</span></div>
+              <div class="hint">매출 대비 광고비 비중. ROAS 5배면 20%입니다.</div>
+            </div>
+          </div>
+          <div class="grid2" style="margin-top:12px">
+            <div class="f">
+              <label for="inout">입출고비 (개당)</label>
+              <div class="ipt"><input type="number" id="inout" data-path="margin.inout" step="10" min="0" inputmode="numeric"><span class="u">원</span></div>
+            </div>
+            <div class="f">
+              <label for="shipFee">배송비 (개당, 판매자 부담)</label>
+              <div class="ipt"><input type="number" id="shipFee" data-path="margin.shipFee" step="100" min="0" inputmode="numeric"><span class="u">원</span></div>
+            </div>
+          </div>
+          <div class="grid2" style="margin-top:12px">
+            <div class="f">
+              <label for="otherPct">반품 · 파손 충당</label>
+              <div class="ipt"><input type="number" id="otherPct" data-path="margin.other" step="0.5" min="0" max="100" inputmode="decimal"><span class="u">%</span></div>
+            </div>
+            <div class="f">
+              <label for="target">목표 마진율</label>
+              <div class="ipt"><input type="number" id="target" data-path="margin.target" step="1" min="0" max="90" inputmode="decimal"><span class="u">%</span></div>
+              <div class="hint">이 마진이 남는 판매가를 아래에서 계산합니다.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="summary">
+        <div class="sum-top">
+          <div class="k">PROFIT PER UNIT</div>
+          <div class="big" id="mProfit">—<small>원</small></div>
+          <div class="unit"><span>마진율 (공급가액 기준)</span><b id="mRate">—</b></div>
+        </div>
+        <div class="res" style="margin-top:10px">
+          <div class="b"><div class="k">손익분기 판매가</div><div class="v" id="mBep">—</div><small>이 가격이면 이익 0원</small></div>
+          <div class="b"><div class="k">목표 마진 판매가</div><div class="v" id="mTarget">—</div><small id="mTargetNote">목표 마진 기준</small></div>
+        </div>
+        <div class="bd">
+          <div class="r"><div class="l">판매가 (부가세 포함)</div><div class="v" id="mPrice">—</div></div>
+          <div class="r"><div class="l">공급가액<em>판매가 ÷ 1.1</em></div><div class="v" id="mSupply">—</div></div>
+          <div class="r"><div class="l">카테고리 수수료<em id="mFeeTag"></em></div><div class="v" id="mFee">—</div></div>
+          <div class="r"><div class="l">입출고 · 배송비</div><div class="v" id="mFulfil">—</div></div>
+          <div class="r"><div class="l">광고비<em id="mAdTag"></em></div><div class="v" id="mAd">—</div></div>
+          <div class="r"><div class="l">반품 · 파손 충당</div><div class="v" id="mOther">—</div></div>
+          <div class="r"><div class="l">도착 원가</div><div class="v" id="mCost">—</div></div>
+          <div class="r sum"><div class="l">개당 순이익</div><div class="v" id="mNet">—</div></div>
+        </div>
+        <div class="bd">
+          <div class="sec-t" style="padding-top:4px">판매가 구성</div>
+          <div class="bar" id="mBar"></div>
+          <div class="legend" id="mLegend"></div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="notes">
+    <p><b>계산 기준</b> · 해운 LCL 93,000원/CBM(연운항 출고, 한국 내 용달 별도) · 용달 운임은 인성콜화물 인천 출발 공개표(2026-10-14 확인)와 제공 운임표를 시 단위로 정리한 참고값 · 전수 검품 20위안/시간 · 쿠팡 팔레트 바코드 30,000원/팔레트 · 출고 박스 교체 15위안/박스 · 창고 보관 1CBM당 하루 4위안(3일 무료).</p>
+    <p><b>주의</b> · 모든 금액은 부가세 별도 기준의 참고 예상치입니다. 관세율은 HS코드와 원산지 조건에 따라 달라지므로 통관 전 관세사 확인이 필요합니다. 실제 청구 금액은 출발 창고·도착 주소·차량·중량·상하차 조건에 따라 달라집니다.</p>
+  </section>
+
+  <div class="foot">
+    <span>중국 사입 도착가 계산기 · 계산은 이 브라우저 안에서만 이루어지고 입력값은 서버로 보내지 않습니다.</span>
+    <span>입력값은 이 기기에만 저장됩니다.</span>
+  </div>
+</main>
+
+<div class="mbar">
+  <div class="m"><div class="k">개당 도착 원가</div><div class="v" id="mbUnit">—</div></div>
+  <div class="m"><div class="k">개당 순이익</div><div class="v" id="mbProfit">—</div></div>
+  <a href="#margin">마진 보기</a>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- data ---------- */
+var VEHICLES = [
+  ["다마스",0.99],["라보",1.99],["1T",5.99],["1.4T",7],["2.5T",11.99],["3.5T",13],["5T",20]
+];
+/* rates: 단위 천 원, 순서는 VEHICLES와 동일. null은 별도 견적 */
+var RATES = {
+  "광역시|서울":[80,90,100,110,160,170,210],
+  "광역시|인천":[60,70,80,90,120,130,170],
+  "광역시|대전":[null,null,100,110,150,null,180],
+  "광역시|대구":[null,null,150,160,220,null,260],
+  "광역시|부산":[null,null,200,210,310,null,350],
+  "광역시|광주":[null,null,180,190,230,null,300],
+  "광역시|울산":[null,null,200,210,310,null,350],
+  "경기|가평":[120,140,160,170,210,220,260],
+  "경기|광명":[50,60,70,80,120,130,160],
+  "경기|광주":[100,110,120,130,180,190,230],
+  "경기|구리":[80,100,120,130,160,170,210],
+  "경기|군포":[60,70,80,90,130,140,170],
+  "경기|김포":[70,80,90,100,130,140,190],
+  "경기|남양주":[100,120,140,150,190,200,210],
+  "경기|동두천":[90,100,120,130,180,200,220],
+  "경기|부천":[60,70,80,90,120,130,170],
+  "경기|성남":[80,90,100,110,140,150,210],
+  "경기|수원":[80,90,100,110,150,160,200],
+  "경기|시흥":[60,70,80,90,130,140,190],
+  "경기|안산":[60,70,80,90,130,140,170],
+  "경기|안성":[100,120,140,150,190,200,250],
+  "경기|안양":[60,70,80,90,130,140,170],
+  "경기|양주":[90,110,130,140,170,180,210],
+  "경기|양평":[110,130,150,160,190,200,250],
+  "경기|여주":[100,120,140,150,190,200,250],
+  "경기|연천":[110,120,140,150,170,190,260],
+  "경기|오산":[80,100,110,120,160,170,210],
+  "경기|용인":[90,110,130,140,180,190,230],
+  "경기|의왕":[70,80,90,100,150,160,170],
+  "경기|의정부":[80,100,120,130,160,170,210],
+  "경기|이천":[110,130,150,160,200,210,260],
+  "경기|파주":[80,90,100,110,150,160,190],
+  "경기|평택":[90,110,130,140,170,180,230],
+  "경기|포천":[100,120,140,150,190,200,240],
+  "경기|하남":[90,100,120,130,170,180,220],
+  "경기|화성":[90,100,110,120,150,160,180],
+  "경기|고양":[70,80,90,100,140,150,190],
+  "경기|과천":[70,80,90,100,140,150,190],
+  "강원|춘천":[150,170,190,200,230,240,290],
+  "충북|청주":[120,140,160,170,210,220,260],
+  "강원|원주":[null,null,130,135,155,null,180],
+  "강원|강릉":[null,null,170,180,200,null,230],
+  "충남|천안":[130,150,170,180,210,220,260],
+  "충남|아산":[130,150,170,180,210,220,260],
+  "충북|충주":[160,170,190,200,230,240,290],
+  "세종|세종":[160,170,190,200,230,240,290],
+  "전북|전주":[null,null,140,150,180,null,190],
+  "전남|목포":[null,null,200,210,240,null,260],
+  "전남|순천":[null,null,200,215,250,null,300],
+  "경북|포항":[null,null,200,210,260,null,300],
+  "경북|구미":[null,null,150,160,null,null,260],
+  "경남|창원":[null,null,210,220,290,null,340],
+  "경남|진주":[null,null,195,200,270,null,310],
+  "제주|제주":[null,null,null,null,null,null,null]
+};
+var GROUP_ORDER = ["광역시","경기","인천","강원","충북","충남","세종","전북","전남","경북","경남","제주"];
+
+var FEE_BY_MODE = {buying:10, market:5, oem:8, factory:0};
+
+var DEFAULTS = {
+  fx:{cny:205, usdCny:6.65, usdKrw:1355},
+  products:[{name:"예시 상품", qty:300, priceCny:12.5, shipCny:0}],
+  agency:{mode:"buying", fee:10},
+  ship:{method:"lcl", cbm:1.5, cbmRate:93000, airKg:20, airRate:12000, boxCost:0, override:null},
+  extra:{inspect:false, hours:2, pallet:false, pallets:1, boxswap:false, boxes:300, storage:false, days:7},
+  duty:{rate:8, vat:10, refund:true},
+  logi:{mode:"boxes", cbmDirect:1.5, boxes:[{w:50,d:40,h:35,n:20}], region:"경기|안산", vehicle:"auto", seaRate:93000, qty:null, addClearance:false, clearance:30000, addOrigin:false, origin:40000, addDocs:false, docs:20000},
+  margin:{unitCost:null, price:19900, fee:10.8, kind:"rg", inout:700, shipFee:2900, acos:12, other:3, target:20}
+};
+
+var state = clone(DEFAULTS);
+var fxMeta = null;
+
+/* ---------- helpers ---------- */
+function clone(o){return JSON.parse(JSON.stringify(o));}
+function n(v){var x=Number(v); return isFinite(x)?x:0;}
+function won(v){return Math.round(n(v)).toLocaleString("ko-KR")+"원";}
+function num(v){return Math.round(n(v)).toLocaleString("ko-KR");}
+function cny(v){return (Math.round(n(v)*100)/100).toLocaleString("ko-KR")+"위안";}
+function pct(v){return (Math.round(n(v)*10)/10)+"%";}
+function el(id){return document.getElementById(id);}
+function setText(id,txt){var e=el(id); if(e) e.textContent=txt;}
+function getPath(path){
+  var p=path.split("."), o=state;
+  for(var i=0;i<p.length-1;i++){ o=o[p[i]]; if(!o) return undefined; }
+  return o[p[p.length-1]];
+}
+function setPath(path,val){
+  var p=path.split("."), o=state;
+  for(var i=0;i<p.length-1;i++){ o=o[p[i]]; if(!o) return; }
+  o[p[p.length-1]]=val;
+}
+
+/* ---------- storage ---------- */
+var KEY="china-import-calc-v1";
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+}
+function load(){
+  try{
+    var raw=localStorage.getItem(KEY);
+    if(!raw) return;
+    var s=JSON.parse(raw);
+    state = deepMerge(clone(DEFAULTS), s);
+    if(!state.products || !state.products.length) state.products=[{name:"",qty:1,priceCny:0,shipCny:0}];
+    if(!state.logi.boxes || !state.logi.boxes.length) state.logi.boxes=[{w:50,d:40,h:35,n:1}];
+  }catch(e){}
+}
+function deepMerge(base, extra){
+  if(!extra || typeof extra!=="object") return base;
+  Object.keys(extra).forEach(function(k){
+    var v=extra[k];
+    if(v && typeof v==="object" && !Array.isArray(v) && base[k] && typeof base[k]==="object"){
+      deepMerge(base[k], v);
+    } else if(v!==undefined){
+      base[k]=v;
+    }
+  });
+  return base;
+}
+
+/* ---------- formatting inputs ---------- */
+function setInput(id,val){
+  var e=el(id); if(!e) return;
+  if(document.activeElement===e) return;
+  e.value = (val===null||val===undefined||val==="") ? "" : val;
+}
+
+/* ---------- region select ---------- */
+function buildRegionSelect(){
+  var sel=el("region"); if(!sel) return;
+  var groups={};
+  Object.keys(RATES).forEach(function(k){
+    var g=k.split("|")[0], nm=k.split("|")[1];
+    (groups[g]=groups[g]||[]).push([k,nm]);
+  });
+  var order=GROUP_ORDER.filter(function(g){return groups[g];});
+  Object.keys(groups).forEach(function(g){ if(order.indexOf(g)<0) order.push(g); });
+  var html="";
+  order.forEach(function(g){
+    html+='<optgroup label="'+g+'">';
+    groups[g].sort(function(a,b){return a[1].localeCompare(b[1],"ko");}).forEach(function(it){
+      html+='<option value="'+it[0]+'">'+it[1]+(g==="광역시"?"":" · "+g)+'</option>';
+    });
+    html+='</optgroup>';
+  });
+  sel.innerHTML=html;
+  sel.value=state.logi.region;
+  if(!sel.value){ state.logi.region=Object.keys(RATES)[0]; sel.value=state.logi.region; }
+}
+
+/* ---------- products ---------- */
+function productRow(p,idx){
+  return '<div class="prow" data-idx="'+idx+'">'+
+    '<div class="f"><div class="f-label" style="display:none">상품명</div>'+
+      '<div class="ipt"><input type="text" data-pfield="name" value="'+esc(p.name||"")+'" placeholder="예: 실리콘 접이식 물통" aria-label="상품명"></div></div>'+
+    '<div class="f"><div class="ipt"><input type="number" data-pfield="qty" value="'+v0(p.qty)+'"' min="0" step="1" inputmode="numeric" aria-label="수량"></div></div>'+
+    '<div class="f"><div class="ipt"><input type="number" data-pfield="priceCny" value="'+v0(p.priceCny)+'"' min="0" step="0.1" inputmode="decimal" aria-label="위안 단가"><span class="u">위안</span></div></div>'+
+    '<div class="f"><div class="ipt"><input type="number" data-pfield="shipCny" value="'+v0(p.shipCny)+'"' min="0" step="0.1" inputmode="decimal" aria-label="중국 내 배송비"><span class="u">위안</span></div></div>'+
+    '<button class="del" type="button" data-del="'+idx+'" aria-label="상품 삭제">×</button>'+
+  '</div>';
+}
+function esc(s){return String(s||"").replace(/[&<>"]/g,function(c){return ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c];});}
+function v0(x){return (x===null||x===undefined)?"":x;}
+function rebuildProducts(){
+  var host=el("products"); if(!host) return;
+  host.innerHTML=state.products.map(productRow).join("");
+}
+
+/* ---------- boxes ---------- */
+function boxRow(b,idx){
+  return '<div class="prow" data-bidx="'+idx+'" style="grid-template-columns:1fr 1fr 1fr 1fr 30px">'+
+    '<div class="f"><div class="ipt"><input type="number" data-bfield="w" value="'+v0(b.w)+'"' min="0" step="0.1" inputmode="decimal" aria-label="가로 cm"></div></div>'+
+    '<div class="f"><div class="ipt"><input type="number" data-bfield="d" value="'+v0(b.d)+'"' min="0" step="0.1" inputmode="decimal" aria-label="세로 cm"></div></div>'+
+    '<div class="f"><div class="ipt"><input type="number" data-bfield="h" value="'+v0(b.h)+'"' min="0" step="0.1" inputmode="decimal" aria-label="높이 cm"></div></div>'+
+    '<div class="f"><div class="ipt"><input type="number" data-bfield="n" value="'+v0(b.n)+'"' min="0" step="1" inputmode="numeric" aria-label="박스 수"><span class="u">박스</span></div></div>'+
+    '<button class="del" type="button" data-bdel="'+idx+'" aria-label="박스 규격 삭제">×</button>'+
+  '</div>';
+}
+function rebuildBoxes(){
+  var host=el("boxes"); if(!host) return;
+  host.innerHTML=state.logi.boxes.map(boxRow).join("");
+}
+
+/* ---------- calculations ---------- */
+function freightInfo(){
+  var s=state.ship;
+  if(s.override!==null && s.override!==undefined && s.override!==""){
+    return {amt:n(s.override), tag:"물류비 계산기 합계 반영"};
+  }
+  if(s.method==="lcl"){
+    return {amt:n(s.cbm)*n(s.cbmRate), tag:n(s.cbm)+"CBM × "+won(n(s.cbmRate))};
+  }
+  if(s.method==="air"){
+    return {amt:n(s.airKg)*n(s.airRate), tag:n(s.airKg)+"kg × "+won(n(s.airRate))};
+  }
+  if(s.method==="container"){
+    return {amt:n(s.boxCost), tag:"컨테이너 직접 입력"};
+  }
+  return {amt:0, tag:"운송비 없음"};
+}
+
+function extraInfo(){
+  var x=state.extra, fx=n(state.fx.cny), cbmForStorage = (state.ship.method==="lcl") ? n(state.ship.cbm) : logiCbm();
+  var items=[];
+  var inspect = x.inspect ? n(x.hours)*20*fx : 0;
+  var pallet = x.pallet ? n(x.pallets)*30000 : 0;
+  var boxswap = x.boxswap ? n(x.boxes)*15*fx : 0;
+  var storage = x.storage ? n(x.days)*cbmForStorage*4*fx : 0;
+  if(x.inspect) items.push({k:"검품 "+n(x.hours)+"시간", v:inspect});
+  if(x.pallet) items.push({k:"팔레트 "+n(x.pallets)+"판", v:pallet});
+  if(x.boxswap) items.push({k:"박스 교체 "+n(x.boxes)+"개", v:boxswap});
+  if(x.storage) items.push({k:"보관 "+n(x.days)+"일", v:storage});
+  return {total:inspect+pallet+boxswap+storage, items:items, inspect:inspect, pallet:pallet, boxswap:boxswap, storage:storage};
+}
+
+function logiCbm(){
+  var l=state.logi;
+  if(l.mode==="cbm") return n(l.cbmDirect);
+  var sum=0;
+  (l.boxes||[]).forEach(function(b){
+    sum += (n(b.w)*n(b.d)*n(b.h))/1000000 * n(b.n);
+  });
+  return sum;
+}
+
+function inlandInfo(cbm){
+  var key=state.logi.region, e=RATES[key];
+  if(!e) return {rate:null, vehicle:null, note:"지역을 선택하면 용달 운임이 계산됩니다."};
+  var sel=state.logi.vehicle;
+  var idx = VEHICLES.findIndex(function(v){return v[1]>=cbm;});
+  if(idx<0) idx=VEHICLES.length-1;
+  if(sel!=="auto"){
+    idx = VEHICLES.findIndex(function(v){return v[0]===sel;});
+    if(idx<0) idx=VEHICLES.length-1;
+  }
+  var order = sel==="auto" ? [] : [idx];
+  if(sel==="auto"){
+    order = [];
+    for(var i=idx;i<VEHICLES.length;i++) order.push(i);
+    for(var j=idx-1;j>=0;j--) order.push(j);
+  }
+  for(var o=0;o<order.length;o++){
+    var r=e[order[o]];
+    if(r!==null && r!==undefined){
+      return {rate:r*1000, vehicle:VEHICLES[order[o]][0], auto:(sel==="auto"),
+        note:(sel==="auto"?"부피에 맞춰 "+VEHICLES[order[o]][0]+" 기준":"")};
+    }
+  }
+  return {rate:null, vehicle:VEHICLES[idx][0], note:"이 지역·차량은 별도 견적입니다. 직접 확인하세요."};
+}
+
+function costingCalc(){
+  var G=state, fx=n(G.fx.cny);
+  var qty=0, cnyGoods=0, cnyShip=0;
+  G.products.forEach(function(p){
+    qty += n(p.qty);
+    cnyGoods += n(p.qty)*n(p.priceCny);
+    cnyShip += n(p.shipCny);
+  });
+  var goodsKrw = cnyGoods*fx;
+  var cnShipKrw = cnyShip*fx;
+  var fee = goodsKrw*n(G.agency.fee)/100;
+  var ex = extraInfo();
+  var fr = freightInfo();
+  var sub = goodsKrw + cnShipKrw + fee + fr.amt + ex.total;
+
+  var dutiable = goodsKrw + cnShipKrw + fr.amt;
+  var duty = dutiable*n(G.duty.rate)/100;
+  var vat = (dutiable+duty)*n(G.duty.vat)/100;
+  var withTax = sub + duty + vat;
+  var netCost = G.duty.refund ? withTax - vat : withTax;
+
+  return {
+    qty:qty, cnyGoods:cnyGoods, goodsKrw:goodsKrw, cnShipKrw:cnShipKrw, fee:fee,
+    extra:ex, freight:fr, sub:sub, dutiable:dutiable, duty:duty, vat:vat,
+    withTax:withTax, netCost:netCost,
+    unit:qty>0? netCost/qty : 0,
+    unitWithTax:qty>0? withTax/qty : 0
+  };
+}
+
+function marginCalc(){
+  var m=state.margin;
+  var cost = (m.unitCost===null||m.unitCost===undefined||m.unitCost==="") ? costingCalc().unit : n(m.unitCost);
+  var price = n(m.price);
+  var supply = price/1.1;
+  var fee = supply*n(m.fee)/100;
+  var fulfil = n(m.inout)+n(m.shipFee);
+  var ad = supply*n(m.acos)/100;
+  var other = supply*n(m.other)/100;
+  var net = supply - fee - ad - other - fulfil - cost;
+  var rate = supply>0 ? net/supply*100 : 0;
+  var denom = 1 - n(m.fee)/100 - n(m.acos)/100 - n(m.other)/100;
+  var bep = denom>0 ? ((cost+fulfil)/denom)*1.1 : null;
+  var tdenom = denom - n(m.target)/100;
+  var target = tdenom>0 ? ((cost+fulfil)/tdenom)*1.1 : null;
+  return {cost:cost, price:price, supply:supply, fee:fee, fulfil:fulfil, ad:ad, other:other, net:net, rate:rate, bep:bep, target:target,
+    parts:[{k:"도착 원가",v:cost,c:"#123f53"},{k:"수수료",v:fee,c:"#3f7d92"},{k:"배송·입출고",v:fulfil,c:"#89b3c2"},{k:"광고·기타",v:ad+other,c:"#c3d5dd"},{k:"순이익",v:Math.max(net,0),c:"#0d7357"}]};
+}
+
+/* ---------- render ---------- */
+function render(){
+  /* fx */
+  setInput("fxCny", state.fx.cny);
+  setInput("fxUsdCny", state.fx.usdCny);
+  setInput("fxUsdKrw", state.fx.usdKrw);
+  if(el("fee") && document.activeElement!==el("fee")) setInput("fee", state.agency.fee);
+  if(el("mode")) el("mode").value=state.agency.mode;
+
+  var C=costingCalc();
+
+  /* products meta */
+  setText("goodsState", C.qty>0 ? (num(C.qty)+"개 · "+cny(C.cnyGoods)) : "상품을 입력하세요");
+
+  /* ship method radios + fields */
+  document.querySelectorAll('input[name="shipMethod"]').forEach(function(r){
+    r.checked = (r.value===state.ship.method);
+  });
+  ["lcl","air","container","none"].forEach(function(k){
+    document.querySelectorAll('[data-for="'+k+'"]').forEach(function(e){
+      e.style.display = (state.ship.method===k) ? "" : "none";
+    });
+  });
+  setInput("cbm", state.ship.cbm);
+  setInput("cbmRate", state.ship.cbmRate);
+  setInput("airKg", state.ship.airKg);
+  setInput("airRate", state.ship.airRate);
+  setInput("boxCost", state.ship.boxCost);
+  setText("freightState", won(C.freight.amt));
+  var lf=el("logiFlag"), lft=el("logiFlagText");
+  if(lf){
+    if(state.ship.override!==null && state.ship.override!==undefined && state.ship.override!==""){ lf.style.display="flex"; lft.textContent="물류비 계산기 합계 "+won(state.ship.override)+"이 운송비로 반영되었습니다."; }
+    else lf.style.display="none";
+  }
+
+  /* extras */
+  ["inspect","pallet","boxswap","storage"].forEach(function(k){
+    var box=document.querySelector('[data-ck="'+k+'"]'); if(!box) return;
+    var cb=box.querySelector('input[type=checkbox]');
+    if(cb) cb.checked=!!state.extra[k];
+    box.classList.toggle("on", !!state.extra[k]);
+    var amt=box.querySelector('[data-amt]');
+    if(amt){
+      var v = k==="inspect"?C.extra.inspect : k==="pallet"?C.extra.pallet : k==="boxswap"?C.extra.boxswap : C.extra.storage;
+      amt.textContent = state.extra[k] ? won(v) : "";
+    }
+  });
+  setInputHourBoxes();
+  if(el("dutyRate")) setInput("dutyRate", state.duty.rate);
+  if(el("vatRate")) setInput("vatRate", state.duty.vat);
+  var rcb=document.querySelector('[data-path="duty.refund"]'); if(rcb) rcb.checked=!!state.duty.refund;
+
+  /* summary */
+  setText("sTotal", num(C.netCost)+"원");
+  setText("sUnit", won(C.unit));
+  setText("sUnitLabel", state.duty.refund ? "개당 도착 원가 (부가세 공제 후)" : "개당 도착 원가 (부가세 포함)");
+  setText("sGoodsTag", C.qty>0 ? num(C.qty)+"개 · "+cny(C.cnyGoods)+" × "+n(state.fx.cny)+"원" : "");
+  setText("sGoods", won(C.goodsKrw));
+  setText("sCnShip", won(C.cnShipKrw));
+  setText("sFeeTag", pct(state.agency.fee)+" · 상품대금 기준");
+  setText("sFee", won(C.fee));
+  setText("sFreightTag", C.freight.tag);
+  setText("sFreight", won(C.freight.amt));
+  setText("sExtra", won(C.extra.total));
+  setText("sSub", won(C.sub));
+  setText("sDutyTag", pct(state.duty.rate)+" · 과세가격 "+won(C.dutiable));
+  setText("sDuty", won(C.duty));
+  setText("sVatTag", pct(state.duty.vat)+(state.duty.refund?" · 공제 반영":""));
+  setText("sVat", won(C.vat));
+  setText("sFinalLabel", state.duty.refund ? "세금 포함 총액 (부가세 공제 전)" : "세금 포함 총액");
+  setText("sFinal", won(C.withTax));
+
+  /* logistics */
+  document.querySelectorAll('input[name="logiMode"]').forEach(function(r){ r.checked=(r.value===state.logi.mode); });
+  document.querySelectorAll('[data-for="cbm"],[data-for="boxes"]').forEach(function(e){
+    var k=e.getAttribute("data-for");
+    if(k!=="cbm"&&k!=="boxes") return;
+    e.style.display=(state.logi.mode===k)?"":"none";
+  });
+  setInput("cbmDirect", state.logi.cbmDirect);
+  setInput("seaRate", state.logi.seaRate);
+  setInput("logiQty", state.logi.qty);
+  var cbm=logiCbm();
+  setText("boxCbm", (Math.round(cbm*1000)/1000).toLocaleString("ko-KR")+" CBM");
+  setText("cbmState", (Math.round(cbm*1000)/1000).toLocaleString("ko-KR")+" CBM");
+  if(el("region")) el("region").value=state.logi.region;
+  if(el("vehicle")) el("vehicle").value=state.logi.vehicle;
+
+  var sea=cbm*n(state.logi.seaRate);
+  var inl=inlandInfo(cbm);
+  var add = (state.logi.addClearance?n(state.logi.clearance):0)+(state.logi.addOrigin?n(state.logi.origin):0)+(state.logi.addDocs?n(state.logi.docs):0);
+  var total = sea + (inl.rate||0) + add;
+  setText("lTotal", num(total)+"원");
+  setText("lSea", won(sea));
+  setText("lSeaTag", (Math.round(cbm*1000)/1000)+"CBM × "+won(n(state.logi.seaRate)));
+  setText("lInland", inl.rate===null? "별도 견적" : won(inl.rate));
+  setText("lInlandTag", inl.rate===null ? (inl.note||"") : (state.logi.region.split("|")[1]+" · "+(inl.vehicle||"")+(inl.auto?" (자동)":"")));
+  setText("lAdd", won(add));
+  setText("lSum", won(total));
+  setText("lPerCbm", cbm>0 ? won(total/cbm) : "—");
+  setText("lUnit", n(state.logi.qty)>0 ? won(total/n(state.logi.qty)) : "수량 입력");
+  setText("inlandState", inl.rate===null? "별도 견적" : won(inl.rate));
+
+  ["addClearance","addOrigin","addDocs"].forEach(function(k){
+    var box=document.querySelector('[data-ck="'+k+'"]'); if(!box) return;
+    box.classList.toggle("on", !!state.logi[k]);
+  });
+  setInput("clearance", state.logi.clearance);
+  setInput("origin", state.logi.origin);
+  setInput("docs", state.logi.docs);
+
+  /* margin */
+  var M=marginCalc();
+  setInput("unitCost", state.margin.unitCost===null?"":state.margin.unitCost);
+  var uc=el("unitCost");
+  if(uc) uc.placeholder = num(C.unit);
+  setInput("price", state.margin.price);
+  setInput("catFee", state.margin.fee);
+  setInput("acos", state.margin.acos);
+  setInput("inout", state.margin.inout);
+  setInput("shipFee", state.margin.shipFee);
+  setInput("otherPct", state.margin.other);
+  setInput("target", state.margin.target);
+  if(el("kind")) el("kind").value=state.margin.kind;
+  setText("costState", (state.margin.unitCost===null||state.margin.unitCost==="")?"도착가 계산기 값 사용 중":"직접 입력");
+
+  setText("mProfit", num(M.net)+"원");
+  var mp=el("mProfit"); if(mp){ mp.classList.toggle("pos", M.net>0); }
+  setText("mRate", (Math.round(M.rate*10)/10)+"%");
+  setText("mPrice", won(M.price));
+  setText("mSupply", won(M.supply));
+  setText("mFeeTag", pct(state.margin.fee)+" · 공급가액 기준");
+  setText("mFee", won(M.fee));
+  setText("mFulfil", won(M.fulfil));
+  setText("mAd", won(M.ad));
+  setText("mAdTag", "ACOS "+pct(state.margin.acos));
+  setText("mOther", won(M.other));
+  setText("mCost", won(M.cost));
+  setText("mNet", won(M.net));
+  setText("mBep", M.bep===null?"계산 불가":won(M.bep));
+  setText("mTarget", M.target===null?"계산 불가":won(M.target));
+  setText("mTargetNote", M.target===null?"수수료·광고 합계가 100%를 넘습니다":"목표 "+pct(state.margin.target)+" 기준");
+  renderBar(M);
+
+  /* mobile bar */
+  setText("mbUnit", won(C.unit));
+  var mbp=el("mbProfit");
+  if(mbp){ mbp.textContent=won(M.net); mbp.style.color = M.net>=0?"var(--pos)":"var(--neg)"; }
+
+  save();
+}
+
+function setInputHourBoxes(){
+  var pairs=[["extra.hours",state.extra.hours],["extra.pallets",state.extra.pallets],["extra.boxes",state.extra.boxes],["extra.days",state.extra.days]];
+  pairs.forEach(function(p){
+    var e=document.querySelector('[data-path="'+p[0]+'"]');
+    if(e && document.activeElement!==e) e.value = (p[1]===null?"":p[1]);
+  });
+}
+
+function renderBar(M){
+  var bar=el("mBar"); if(!bar) return;
+  var base=Math.max(M.supply, M.parts.reduce(function(a,b){return a+n(b.v);},0));
+  if(base<=0){ bar.innerHTML='<i style="width:100%;background:#eef1f4"></i>'; }
+  else{
+    bar.innerHTML=M.parts.map(function(p){
+      var w=Math.max(0,n(p.v))/base*100;
+      if(w<=0) return "";
+      return '<i style="width:'+w.toFixed(2)+'%;background:'+p.c+'"></i>';
+    }).join("");
+  }
+  var lg=el("mLegend");
+  if(lg) lg.innerHTML=M.parts.map(function(p){
+    return '<span><i style="background:'+p.c+'"></i>'+p.k+' '+num(p.v)+'원</span>';
+  }).join("");
+}
+
+/* ---------- events: generic binding ---------- */
+document.addEventListener("input", function(e){
+  var t=e.target;
+  if(t.dataset && t.dataset.path){
+    var path=t.dataset.path;
+    var val;
+    if(t.type==="checkbox") val=t.checked;
+    else if(t.type==="number") val = (t.value===""?null:Number(t.value));
+    else val=t.value;
+    if(path.indexOf("ship.")===0 && path!=="ship.override") state.ship.override=null;
+    setPath(path,val);
+    render();
+    return;
+  }
+  /* product row field */
+  if(t.dataset && t.dataset.pfield){
+    var row=t.closest("[data-idx]");
+    if(!row) return;
+    var i=Number(row.getAttribute("data-idx"));
+    var p=state.products[i]; if(!p) return;
+    var v = (t.type==="number") ? (t.value===""?null:Number(t.value)) : t.value;
+    p[t.dataset.pfield]=v;
+    render();
+    return;
+  }
+  /* box row field */
+  if(t.dataset && t.dataset.bfield){
+    var brow=t.closest("[data-bidx]");
+    if(!brow) return;
+    var bi=Number(brow.getAttribute("data-bidx"));
+    var b=state.logi.boxes[bi]; if(!b) return;
+    var bv = (t.type==="number") ? (t.value===""?null:Number(t.value)) : t.value;
+    b[t.dataset.bfield]=bv;
+    render();
+    return;
+  }
+});
+
+document.addEventListener("change", function(e){
+  var t=e.target;
+  if(t.tagName==="SELECT" && t.dataset && t.dataset.path){
+    setPath(t.dataset.path, t.value);
+    if(t.dataset.path==="agency.mode"){
+      var f=FEE_BY_MODE[t.value];
+      if(f!==undefined) state.agency.fee=f;
+    }
+    render();
+  }
+  if(t.type==="checkbox" && t.dataset && t.dataset.path){
+    render();
+  }
+});
+
+/* click delegation */
+document.addEventListener("click", function(e){
+  var t=e.target;
+  var addP=t.closest("#addProduct");
+  if(addP){
+    state.products.push({name:"",qty:1,priceCny:null,shipCny:0});
+    rebuildProducts(); render();
+    var rows=document.querySelectorAll("#products .prow");
+    var last=rows[rows.length-1];
+    if(last){ var inp=last.querySelector('input[type=text]'); if(inp) inp.focus(); }
+    return;
+  }
+  var delP=t.closest("[data-del]");
+  if(delP){
+    var i=Number(delP.getAttribute("data-del"));
+    if(state.products.length>1){ state.products.splice(i,1); rebuildProducts(); render(); }
+    else { state.products=[{name:"",qty:1,priceCny:null,shipCny:0}]; rebuildProducts(); render(); }
+    return;
+  }
+  var addB=t.closest("#addBox");
+  if(addB){
+    state.logi.boxes.push({w:null,d:null,h:null,n:1});
+    rebuildBoxes(); render();
+    return;
+  }
+  var delB=t.closest("[data-bdel]");
+  if(delB){
+    var j=Number(delB.getAttribute("data-bdel"));
+    if(state.logi.boxes.length>1){ state.logi.boxes.splice(j,1); }
+    else { state.logi.boxes=[{w:null,d:null,h:null,n:1}]; }
+    rebuildBoxes(); render();
+    return;
+  }
+  if(t.closest("#logiClear")){
+    state.ship.override=null;
+    render(); toast("물류비 반영을 해제했습니다.");
+    return;
+  }
+  if(t.closest("#costReset")){
+    state.margin.unitCost=null;
+    render(); toast("도착가 계산기의 개당 원가를 다시 씁니다.");
+    return;
+  }
+});
+
+/* tabs */
+function activateTab(id){
+  document.querySelectorAll("#tabs a").forEach(function(a){
+    a.classList.toggle("on", a.getAttribute("data-tab")===id);
+  });
+}
+document.querySelectorAll("#tabs a").forEach(function(a){
+  a.addEventListener("click", function(){ activateTab(a.getAttribute("data-tab")); });
+});
+window.addEventListener("scroll", function(){
+  var ids=["margin","logistics","costing"];
+  for(var i=0;i<ids.length;i++){
+    var s=document.getElementById(ids[i]);
+    if(s && s.getBoundingClientRect().top<=140){ activateTab(ids[i]); return; }
+  }
+  activateTab("costing");
+}, {passive:true});
+
+/* buttons */
+var toCost=el("toCosting");
+if(toCost){
+  toCost.addEventListener("click", function(){
+    var cbm=logiCbm(), inl=inlandInfo(cbm);
+    var add=(state.logi.addClearance?n(state.logi.clearance):0)+(state.logi.addOrigin?n(state.logi.origin):0)+(state.logi.addDocs?n(state.logi.docs):0);
+    var total=cbm*n(state.logi.seaRate)+(inl.rate||0)+add;
+    state.ship.override=total;
+    state.ship.method="lcl";
+    state.ship.cbm=Math.round(cbm*1000)/1000;
+    render();
+    toast(won(total)+"을 도착가 계산기 운송비로 반영했습니다.");
+    document.getElementById("costing").scrollIntoView({behavior:"smooth",block:"start"});
+    activateTab("costing");
+  });
+}
+el("toMargin").addEventListener("click", function(){
+  state.margin.unitCost=null;
+  render();
+  var u=costingCalc().unit;
+  if(state.margin.price===null || n(state.margin.price)<=0) state.margin.price=Math.ceil(u*4/100)*100;
+  render();
+  document.getElementById("margin").scrollIntoView({behavior:"smooth",block:"start"});
+  activateTab("margin");
+});
+
+el("resetBtn").addEventListener("click", function(){
+  state=clone(DEFAULTS);
+  try{ localStorage.removeItem(KEY); }catch(e){}
+  buildRegionSelect(); rebuildProducts(); rebuildBoxes();
+  if(el("fxState")) el("fxState").textContent="직접 입력";
+  render(); toast("처음 값으로 되돌렸습니다.");
+});
+
+/* FX fetch */
+el("fxBtn").addEventListener("click", function(){
+  var btn=el("fxBtn");
+  btn.disabled=true; btn.textContent="불러오는 중…";
+  setText("fxNote","실시간 환율을 불러오고 있습니다.");
+  fetch("https://open.er-api.com/v6/latest/USD", {cache:"no-store"})
+    .then(function(r){ if(!r.ok) throw new Error("bad status"); return r.json(); })
+    .then(function(d){
+      if(d.result!=="success" || !d.rates || !d.rates.KRW || !d.rates.CNY) throw new Error("no rates");
+      var cnyKrw=d.rates.KRW/d.rates.CNY;
+      state.fx.cny = Math.round((cnyKrw+1.5)*10)/10;
+      state.fx.usdCny = Math.round(d.rates.CNY*10000)/10000;
+      state.fx.usdKrw = Math.round((d.rates.KRW+1.5)*10)/10;
+      fxMeta={base:cnyKrw, at:d.time_last_update_utc};
+      render();
+      setText("fxNote","시장 "+ (Math.round(cnyKrw*10)/10) +"원 + 송금 1.5원 = "+state.fx.cny+"원 적용 · 기준 "+fmtUtc(d.time_last_update_utc));
+      if(el("fxState")) el("fxState").textContent="실시간 반영";
+      toast("실시간 환율을 적용했습니다. 송금 조건은 은행 고시를 확인하세요.");
+    })
+    .catch(function(){
+      setText("fxNote","환율을 불러오지 못했습니다. 위 입력칸에 안내받은 환율을 넣어 주세요.");
+    })
+    .then(function(){
+      btn.disabled=false; btn.textContent="실시간 환율 불러오기";
+    });
+});
+function fmtUtc(s){
+  try{
+    var d=new Date(s);
+    if(isNaN(d.getTime())) return s;
+    return d.toLocaleString("ko-KR",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",timeZone:"Asia/Seoul"})+" KST";
+  }catch(e){ return s; }
+}
+
+/* copy */
+el("copyBtn").addEventListener("click", function(){
+  var C=costingCalc(), M=marginCalc();
+  var lines=[];
+  lines.push("[중국 사입 도착가 계산]");
+  lines.push("환율 1위안 = "+n(state.fx.cny)+"원");
+  lines.push("");
+  lines.push("■ 상품");
+  state.products.forEach(function(p,i){
+    lines.push((i+1)+". "+(p.name||"상품")+" · "+num(n(p.qty))+"개 × "+n(p.priceCny)+"위안"+(n(p.shipCny)>0?" (중국 내 배송 "+n(p.shipCny)+"위안)":""));
+  });
+  lines.push("상품대금 "+won(C.goodsKrw)+" / 중국 내 배송 "+won(C.cnShipKrw));
+  lines.push("");
+  lines.push("■ 비용");
+  lines.push("대행 수수료 "+pct(state.agency.fee)+" → "+won(C.fee));
+  lines.push("운송비 ("+C.freight.tag+") → "+won(C.freight.amt));
+  if(C.extra.items.length) lines.push("추가 작업 → "+won(C.extra.total)+" ("+C.extra.items.map(function(x){return x.k+" "+num(x.v)+"원";}).join(", ")+")");
+  lines.push("통관 전 도착가 → "+won(C.sub));
+  lines.push("관세 "+pct(state.duty.rate)+" → "+won(C.duty)+" / 부가세 "+pct(state.duty.vat)+" → "+won(C.vat));
+  lines.push("");
+  lines.push("총액(부가세 포함) → "+won(C.withTax));
+  lines.push("도착 원가(부가세 "+(state.duty.refund?"공제 후":"포함")+") → "+won(C.netCost)+" · 개당 "+won(C.unit));
+  lines.push("");
+  lines.push("■ 쿠팡 (판매가 "+won(M.price)+")");
+  lines.push("수수료 "+pct(state.margin.fee)+" "+won(M.fee)+" / 배송·입출고 "+won(M.fulfil)+" / 광고 "+won(M.ad));
+  lines.push("개당 순이익 "+won(M.net)+" · 마진율 "+(Math.round(M.rate*10)/10)+"%");
+  copyText(lines.join("\n"));
+});
+function copyText(txt){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(function(){ toast("계산 내역을 복사했습니다."); }, function(){ fallbackCopy(txt); });
+  } else fallbackCopy(txt);
+}
+function fallbackCopy(txt){
+  var ta=document.createElement("textarea");
+  ta.value=txt; ta.style.position="fixed"; ta.style.left="-9999px";
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand("copy"); toast("계산 내역을 복사했습니다."); }
+  catch(e){ toast("복사에 실패했습니다."); }
+  document.body.removeChild(ta);
+}
+
+var toastTimer=null;
+function toast(msg){
+  var t=el("toast");
+  if(!t) return;
+  t.textContent=msg; t.classList.add("on");
+  if(toastTimer) clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){ t.classList.remove("on"); }, 2600);
+}
+
+/* ---------- init ---------- */
+load();
+buildRegionSelect();
+rebuildProducts();
+rebuildBoxes();
+render();
+})();
+</script>
+</body>
+</html>
