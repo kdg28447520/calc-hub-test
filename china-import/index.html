@@ -113,6 +113,7 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(18,63,83,.1)}
 .phead div{font-size:11px;font-weight:700;color:var(--mute);letter-spacing:.02em}
 .prow{display:grid;grid-template-columns:1.5fr .62fr .8fr .8fr 30px;gap:8px;align-items:center;padding:9px 0;border-top:1px solid #f1f4f7}
 .prow:first-of-type{border-top:0}
+.prow .f-label{display:none}
 .del{border:0;background:transparent;color:#a7b1bc;font-size:18px;line-height:1;border-radius:8px;height:30px;width:30px}
 .del:hover{background:#fdf1f0;color:var(--neg)}
 .addrow{margin-top:10px;border:1px dashed var(--line-strong);background:#fff;color:var(--brand);border-radius:10px;padding:9px 14px;font-size:13px;font-weight:700;width:100%}
@@ -193,6 +194,7 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(18,63,83,.1)}
   body{padding-bottom:72px}
   .toast{bottom:84px}
   .phead{display:none}
+  .prow .f-label{display:block;font-size:10.5px;font-weight:700;color:var(--mute);margin-bottom:3px}
   .prow{grid-template-columns:1fr 1fr;gap:8px;padding:12px 0;align-items:end}
   .prow .f:first-child{grid-column:1/-1}
   .prow .del{grid-column:2;justify-self:end;margin-top:-4px}
@@ -831,11 +833,11 @@ function buildRegionSelect(){
 /* ---------- products ---------- */
 function productRow(p,idx){
   return '<div class="prow" data-idx="'+idx+'">'+
-    '<div class="f"><div class="f-label" style="display:none">상품명</div>'+
+    '<div class="f"><div class="f-label">상품명</div>'+
       '<div class="ipt"><input type="text" data-pfield="name" value="'+esc(p.name||"")+'" placeholder="예: 실리콘 접이식 물통" aria-label="상품명"></div></div>'+
-    '<div class="f"><div class="ipt"><input type="number" data-pfield="qty" value="'+v0(p.qty)+'" min="0" step="1" inputmode="numeric" aria-label="수량"></div></div>'+
-    '<div class="f"><div class="ipt"><input type="number" data-pfield="priceCny" value="'+v0(p.priceCny)+'" min="0" step="0.1" inputmode="decimal" aria-label="위안 단가"><span class="u">위안</span></div></div>'+
-    '<div class="f"><div class="ipt"><input type="number" data-pfield="shipCny" value="'+v0(p.shipCny)+'" min="0" step="0.1" inputmode="decimal" aria-label="중국 내 배송비"><span class="u">위안</span></div></div>'+
+    '<div class="f"><div class="f-label">수량</div><div class="ipt"><input type="number" data-pfield="qty" value="'+v0(p.qty)+'" min="0" step="1" inputmode="numeric" aria-label="수량"></div></div>'+
+    '<div class="f"><div class="f-label">위안 단가</div><div class="ipt"><input type="number" data-pfield="priceCny" value="'+v0(p.priceCny)+'" min="0" step="0.1" inputmode="decimal" aria-label="위안 단가"><span class="u">위안</span></div></div>'+
+    '<div class="f"><div class="f-label">중국 내 배송비</div><div class="ipt"><input type="number" data-pfield="shipCny" value="'+v0(p.shipCny)+'" min="0" step="0.1" inputmode="decimal" aria-label="중국 내 배송비"><span class="u">위안</span></div></div>'+
     '<button class="del" type="button" data-del="'+idx+'" aria-label="상품 삭제">×</button>'+
   '</div>';
 }
@@ -849,10 +851,10 @@ function rebuildProducts(){
 /* ---------- boxes ---------- */
 function boxRow(b,idx){
   return '<div class="prow" data-bidx="'+idx+'" style="grid-template-columns:1fr 1fr 1fr 1fr 30px">'+
-    '<div class="f"><div class="ipt"><input type="number" data-bfield="w" value="'+v0(b.w)+'" min="0" step="0.1" inputmode="decimal" aria-label="가로 cm"></div></div>'+
-    '<div class="f"><div class="ipt"><input type="number" data-bfield="d" value="'+v0(b.d)+'" min="0" step="0.1" inputmode="decimal" aria-label="세로 cm"></div></div>'+
-    '<div class="f"><div class="ipt"><input type="number" data-bfield="h" value="'+v0(b.h)+'" min="0" step="0.1" inputmode="decimal" aria-label="높이 cm"></div></div>'+
-    '<div class="f"><div class="ipt"><input type="number" data-bfield="n" value="'+v0(b.n)+'" min="0" step="1" inputmode="numeric" aria-label="박스 수"><span class="u">박스</span></div></div>'+
+    '<div class="f"><div class="f-label">가로 (cm)</div><div class="ipt"><input type="number" data-bfield="w" value="'+v0(b.w)+'" min="0" step="0.1" inputmode="decimal" aria-label="가로 cm"></div></div>'+
+    '<div class="f"><div class="f-label">세로 (cm)</div><div class="ipt"><input type="number" data-bfield="d" value="'+v0(b.d)+'" min="0" step="0.1" inputmode="decimal" aria-label="세로 cm"></div></div>'+
+    '<div class="f"><div class="f-label">높이 (cm)</div><div class="ipt"><input type="number" data-bfield="h" value="'+v0(b.h)+'" min="0" step="0.1" inputmode="decimal" aria-label="높이 cm"></div></div>'+
+    '<div class="f"><div class="f-label">박스 수</div><div class="ipt"><input type="number" data-bfield="n" value="'+v0(b.n)+'" min="0" step="1" inputmode="numeric" aria-label="박스 수"><span class="u">박스</span></div></div>'+
     '<button class="del" type="button" data-bdel="'+idx+'" aria-label="박스 규격 삭제">×</button>'+
   '</div>';
 }
