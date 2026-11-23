@@ -173,7 +173,9 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(18,63,83,.1)}
 
 @media (max-width:960px){
   .calc{grid-template-columns:1fr}
-  .summary{position:static}
+  .fx-actions{flex-wrap:wrap;gap:6px}
+  .fx-actions .btn{flex:1 0 100%}
+  .fx-actions .hint{align-self:flex-start;margin-top:2px}  .summary{position:static}
   .hero h1{font-size:24px}
   .hero{padding:24px 0 4px}
   .hd{height:56px;gap:10px}
@@ -259,7 +261,7 @@ select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(18,63,83,.1)}
           <div class="ipt"><input type="number" id="fxUsdKrw" data-path="fx.usdKrw" step="0.1" min="1" inputmode="decimal"><span class="u">원 / 달러</span></div>
         </div>
       </div>
-      <div class="two-btns">
+      <div class="two-btns fx-actions">
         <button class="btn sec" id="fxBtn" type="button" style="flex:0 0 auto">실시간 환율 불러오기</button>
         <div class="hint" id="fxNote" style="align-self:center">시장 환율에 송금 스프레드 1.5원을 더해 채웁니다. 실제 은행 고시와 다를 수 있습니다.</div>
       </div>
