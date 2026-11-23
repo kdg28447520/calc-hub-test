@@ -817,7 +817,7 @@ function buildRegionSelect(){
   order.forEach(function(g){
     html+='<optgroup label="'+g+'">';
     groups[g].sort(function(a,b){return a[1].localeCompare(b[1],"ko");}).forEach(function(it){
-      html+='<option value="'+it[0]+'">'+it[1]+(g==="광역시"?"":" · "+g)+'</option>';
+      html+='<option value="'+it[0]+'">'+g+' · '+it[1]+'</option>';
     });
     html+='</optgroup>';
   });
@@ -1300,6 +1300,7 @@ el("resetBtn").addEventListener("click", function(){
   try{ localStorage.removeItem(KEY); }catch(e){}
   buildRegionSelect(); rebuildProducts(); rebuildBoxes();
   if(el("fxState")) el("fxState").textContent="직접 입력";
+  setText("fxNote","시장 환율에 송금 스프레드 1.5원을 더해 채웁니다. 실제 은행 고시와 다를 수 있습니다.");
   render(); toast("처음 값으로 되돌렸습니다.");
 });
 
