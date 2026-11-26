@@ -4,6 +4,13 @@
  * 카카오 REST 키(KakaoAK)는 브라우저로 내려보내지 않는다.
  * origin/destination 좌표만 받아 카카오모빌리티 길찾기로 넘긴다.
  *
+ * 5분 인메모리 캐시:
+ *   같은 출발/도착(소수점 4자리 정규화) + 같은 옵션이 5분(300초) 안에 다시 오면
+ *   카카오모빌리티를 다시 부르지 않고 캐시된 200 응답을 그대로 돌려준다.
+ *   - HTTP 200 + 정상 형식(routes 배열)만 캐싱. 429·4xx·5xx·타임아웃은 절대 캐싱하지 않는다.
+ *   - 웜 서버리스 인스턴스에서만 유효하다. 최대 300건 LRU.
+ *   - 응답 헤더 X-Nuba-Cache: HIT | MISS
+ *
  * 필요한 환경변수:
  *   KAKAO_REST_KEY : 카카오 developers REST API 키 (카카오모빌리티 사용 설정)
  *
@@ -15,6 +22,60 @@ const KEY = process.env.KAKAO_REST_KEY || process.env.KAKAO_KEY || process.env.K
 
 const COORD = /^-?\d{1,3}(\.\d+)?,-?\d{1,3}(\.\d+)?$/;
 
+/* ---------- 5분 인메모리 캐시 (웜 인스턴스 공용) ---------- */
+const CACHE_TTL_MS = 300 * 1000;
+const CACHE_MAX_ENTRIES = 300;
+
+function cacheStore() {
+  if (!globalThis.__NUBA_KAKAO_CACHE__ || !(globalThis.__NUBA_KAKAO_CACHE__ instanceof Map)) {
+    globalThis.__NUBA_KAKAO_CACHE__ = new Map();
+  }
+  return globalThis.__NUBA_KAKAO_CACHE__;
+}
+
+function normCoord(s) {
+  const parts = String(s).split(',');
+  const f = (v) => Number(Number(v).toFixed(4));
+  return `${f(parts[0])},${f(parts[1])}`;
+}
+
+function cacheKey(origin, destination, priority, carType) {
+  return [normCoord(origin), normCoord(destination), priority, carType].join('|');
+}
+
+function cacheGet(key) {
+  const store = cacheStore();
+  const entry = store.get(key);
+  if (!entry) return null;
+  if (!(entry.expires > Date.now())) {
+    store.delete(key);
+    return null;
+  }
+  store.delete(key);
+  store.set(key, entry);
+  return entry;
+}
+
+function cachePut(key, status, body) {
+  if (status !== 200 || typeof body !== 'string' || body.length === 0) return;
+  let ok = false;
+  try {
+    const parsed = JSON.parse(body);
+    ok = !!parsed && Array.isArray(parsed.routes) && parsed.routes.length > 0;
+  } catch (e) {
+    ok = false;
+  }
+  if (!ok) return;
+  const store = cacheStore();
+  store.delete(key);
+  store.set(key, { status: 200, body, storedAt: Date.now(), expires: Date.now() + CACHE_TTL_MS });
+  while (store.size > CACHE_MAX_ENTRIES) {
+    const oldest = store.keys().next();
+    if (oldest.done) break;
+    store.delete(oldest.value);
+  }
+}
+
 module.exports = (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -22,6 +83,7 @@ module.exports = (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Expose-Headers', 'X-Nuba-Cache, X-Nuba-Cache-Age');
   if (req.method === 'OPTIONS') {
     res.status(204).end();
     return;
@@ -44,6 +106,18 @@ module.exports = (req, res) => {
   const priority = ['RECOMMEND', 'TIME', 'DISTANCE'].includes(String(q.priority)) ? String(q.priority) : 'RECOMMEND';
   const carType = Math.min(Math.max(parseInt(q.car_type || '1', 10) || 1, 1), 7);
 
+  const key = cacheKey(origin, destination, priority, carType);
+
+  /* 캐시 적중 — 업스트림 호출 없이 즉시 반환 */
+  const hit = cacheGet(key);
+  if (hit) {
+    res.setHeader('X-Nuba-Cache', 'HIT');
+    res.setHeader('X-Nuba-Cache-Age', String(Math.max(0, Math.round((Date.now() - hit.storedAt) / 1000))));
+    res.status(hit.status).send(hit.body);
+    return;
+  }
+  res.setHeader('X-Nuba-Cache', 'MISS');
+
   const path = `/v1/directions?origin=${origin}&destination=${destination}` +
     `&priority=${priority}&car_type=${carType}`;
 
@@ -56,7 +130,11 @@ module.exports = (req, res) => {
     let data = '';
     r.setEncoding('utf8');
     r.on('data', (c) => { data += c; });
-    r.on('end', () => { res.status(r.statusCode || 502).send(data); });
+    r.on('end', () => {
+      const status = r.statusCode || 502;
+      cachePut(key, status, data);      // 200 정상 응답만 저장
+      res.status(status).send(data);
+    });
   });
 
   upstream.on('error', () => {
