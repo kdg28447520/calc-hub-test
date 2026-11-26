@@ -65,6 +65,12 @@ function sendStats(req, res, via) {
 
   const body = stats.snapshot();
   body.dispatch = { endpoint: 'stats', via: via };
+  /* 라우팅 진단용 — 호출자 자신의 요청 정보만 담는다(값이 아니라 파라미터 이름만) */
+  body.request = {
+    method: req.method,
+    url: String(req.url || ''),
+    query_keys: Object.keys((req && req.query) || {})
+  };
   res.status(200).send(JSON.stringify(body, null, 2));
 }
 
