@@ -12,10 +12,15 @@
  *   - 최대 300건, 넘치면 가장 오래 안 쓴 것부터 버린다(LRU).
  *   - 응답 헤더 X-Nuba-Cache: HIT | MISS 로 적중 여부를 확인할 수 있다.
  *
+ * 카운터(_stats.js):
+ *   요청이 올 때마다(캐시 HIT·MISS 모두) 기본 경로(평촌 아크로타워→강남역)인지 아닌지를
+ *   default_route / custom_route 로 센다. 응답 헤더 X-Nuba-Route 로도 알려 준다.
+ *
  * 필요한 환경변수:
  *   TMAP_APP_KEY : SK Open API 앱키 (openapi.sk.com)
  */
 const https = require('https');
+const stats = require('./_stats');
 
 const APP_KEY = process.env.TMAP_APP_KEY || process.env.TMAP_KEY || process.env.SK_APP_KEY;
 
@@ -82,7 +87,7 @@ module.exports = (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  res.setHeader('Access-Control-Expose-Headers', 'X-Nuba-Cache, X-Nuba-Cache-Age');
+  res.setHeader('Access-Control-Expose-Headers', 'X-Nuba-Cache, X-Nuba-Cache-Age, X-Nuba-Route');
   if (req.method === 'OPTIONS') {
     res.status(204).end();
     return;
@@ -112,8 +117,16 @@ module.exports = (req, res) => {
 
   const key = cacheKey(startX, startY, endX, endY);
 
-  /* 캐시 적중 — 업스트림 호출 없이 즉시 반환 */
+  /* 카운터 — 캐시 HIT·MISS 어느 쪽이든 요청 1건으로 센다 */
   const hit = cacheGet(key);
+  const isDefault = stats.recordRoute({
+    api: 'tmap',
+    startX: startX, startY: startY, endX: endX, endY: endY,
+    cache: hit ? 'hit' : 'miss'
+  });
+  res.setHeader('X-Nuba-Route', isDefault ? 'default_route' : 'custom_route');
+
+  /* 캐시 적중 — 업스트림 호출 없이 즉시 반환 */
   if (hit) {
     res.setHeader('X-Nuba-Cache', 'HIT');
     res.setHeader('X-Nuba-Cache-Age', String(Math.max(0, Math.round((Date.now() - hit.storedAt) / 1000))));
@@ -146,11 +159,13 @@ module.exports = (req, res) => {
     r.on('end', () => {
       const status = r.statusCode || 502;
       cachePut(key, status, data);      // 200 정상 응답만 저장
+      if (status >= 400) stats.recordError('tmap', status);
       res.status(status).send(data);
     });
   });
 
   upstream.on('error', () => {
+    stats.recordError('tmap', 502);
     res.status(502).json({ error: 'TMAP 연결 실패' });
   });
 

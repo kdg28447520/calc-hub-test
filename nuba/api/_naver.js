@@ -15,8 +15,11 @@
  * 필요한 환경변수:
  *   NAVER_KEY_ID      : 네이버 클라우드 Application Client ID
  *   NAVER_KEY_SECRET  : 네이버 클라우드 Application Client Secret
+ *
+ * 카운터(_stats.js): 요청마다(캐시 HIT·MISS 모두) 기본 경로/커스텀 경로 구분을 센다. 헤더 X-Nuba-Route.
  */
 const https = require('https');
+const stats = require('./_stats');
 
 const KEY_ID = process.env.NAVER_KEY_ID;
 const KEY_SECRET = process.env.NAVER_KEY_SECRET;
@@ -82,7 +85,7 @@ module.exports = (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  res.setHeader('Access-Control-Expose-Headers', 'X-Nuba-Cache, X-Nuba-Cache-Age');
+  res.setHeader('Access-Control-Expose-Headers', 'X-Nuba-Cache, X-Nuba-Cache-Age, X-Nuba-Route');
   if (req.method === 'OPTIONS') {
     res.status(204).end();
     return;
@@ -104,8 +107,18 @@ module.exports = (req, res) => {
 
   const key = cacheKey(start, goal, String(option));
 
-  /* 캐시 적중 — 업스트림 호출 없이 즉시 반환 */
+  /* 카운터 — 캐시 HIT·MISS 어느 쪽이든 요청 1건으로 센다 */
   const hit = cacheGet(key);
+  const st = String(start).split(',');
+  const gl = String(goal).split(',');
+  const isDefault = stats.recordRoute({
+    api: 'naver',
+    startX: st[0], startY: st[1], endX: gl[0], endY: gl[1],
+    cache: hit ? 'hit' : 'miss'
+  });
+  res.setHeader('X-Nuba-Route', isDefault ? 'default_route' : 'custom_route');
+
+  /* 캐시 적중 — 업스트림 호출 없이 즉시 반환 */
   if (hit) {
     res.setHeader('X-Nuba-Cache', 'HIT');
     res.setHeader('X-Nuba-Cache-Age', String(Math.max(0, Math.round((Date.now() - hit.storedAt) / 1000))));
@@ -130,11 +143,13 @@ module.exports = (req, res) => {
     r.on('end', () => {
       const status = r.statusCode || 502;
       cachePut(key, status, body);      // 200 정상 응답만 저장
+      if (status >= 400) stats.recordError('naver', status);
       res.status(status).send(body);
     });
   });
 
   upstream.on('error', () => {
+    stats.recordError('naver', 502);
     res.status(502).json({ code: -1, message: '네이버 API 연결 실패' });
   });
   upstream.end();

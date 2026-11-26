@@ -21,13 +21,39 @@
 
 프록시는 각 서비스의 해당 경로만 호출하고, 좌표·옵션 파라미터만 받습니다.
 
+### 세 프록시는 `api/gateway.js` 한 함수로 들어갑니다
+
+Vercel 은 `api/*.js` 파일마다 람다를 따로 띄워 메모리를 공유하지 않습니다. 그래서 요청 카운터를 한 곳에서 보려면
+세 프록시와 카운터 조회가 **같은 인스턴스**에서 돌아야 합니다. `vercel.json` 의 rewrites 가 아래처럼 묶습니다.
+
+| 브라우저가 부르는 주소 | 실제 실행 |
+| --- | --- |
+| `POST /api/tmap` | `/api/gateway?ep=tmap` |
+| `GET /api/kakao` | `/api/gateway?ep=kakao` |
+| `GET /api/naver` | `/api/gateway?ep=naver` |
+| `GET /api/stats` | `/api/gateway?ep=stats` |
+
+`api/poi.js`·`api/reverse.js` 는 그대로 각자 함수입니다(카운터 대상 아님).
+
+## 요청 카운터 — 기본 경로 vs 실제 검색
+
+앱을 **열어만 본 사람**과 **실제로 길찾기를 검색한 사람**을 구분하기 위한 카운터입니다.
+
+- `default_route` — 앱 첫 화면의 기본 경로 요청: 출발 평촌 아크로타워(`126.9563, 37.3927`) → 도착 강남역(`127.0280, 37.4981`), 허용치 0.0005도(약 55m).
+- `custom_route` — 출발/도착을 바꿔 검색한 요청. 최근 12건은 소수점 2자리(약 1km) 좌표 예시만 남깁니다(IP·키워드 저장 없음).
+- 캐시 HIT·MISS 모두 요청 1건으로 세고, 응답 헤더 `X-Nuba-Route: default_route|custom_route` 로도 알려 줍니다.
+- 조회: **`GET /api/stats`** — 웜 인스턴스 기준 `route`, `by_api`, `cache`, `recent_custom_routes` JSON. 키·비밀값은 담지 않습니다.
+- 카운터는 인스턴스 메모리라 콜드 스타트 시 0부터 다시 셉니다. 영구 집계는 Vercel Runtime Logs 의 `{"tag":"nuba_route",...}` 한 줄 로그로 합니다.
+
 ## 파일
 
 - `index.html` — 앱 전체(화면 + 프록시 호출 + 지도 렌더링). 지도에는 3사 경로가 브랜드 색(티맵 빨강 `#ef4444` · 네이버 초록 `#16a34a` · 카카오 노랑 `#f59e0b`)으로 동시에 그려지고, 선택한 노선만 흰 외곽선 + 굵은 선으로 앞에 강조됩니다.
-- `api/tmap.js` — SK TMAP 길찾기 프록시 (`TMAP_APP_KEY`)
-- `api/poi.js` — SK TMAP POI 자동완성 프록시 (`TMAP_APP_KEY`)
-- `api/kakao.js` — 카카오모빌리티 길찾기 프록시 (`KAKAO_REST_KEY`)
-- `api/naver.js` — 네이버 Directions 5 프록시 (`NAVER_KEY_ID`, `NAVER_KEY_SECRET`)
+- `api/gateway.js` — 세 길찾기 프록시 + `/api/stats` 의 단일 진입점(카운터 공유용)
+- `api/_stats.js` — 기본 경로/커스텀 경로·캐시 카운터 공통 모듈 (라우트로 노출되는 파일 아님)
+- `api/_tmap.js` — SK TMAP 길찾기 프록시 (`TMAP_APP_KEY`) — gateway 가 호출
+- `api/_kakao.js` — 카카오모빌리티 길찾기 프록시 (`KAKAO_REST_KEY`) — gateway 가 호출
+- `api/_naver.js` — 네이버 Directions 5 프록시 (`NAVER_KEY_ID`, `NAVER_KEY_SECRET`) — gateway 가 호출
+- `vercel.json` — `/api/tmap`·`/api/kakao`·`/api/naver`·`/api/stats` → `api/gateway.js` 리라이트
 - `api/reverse.js` — 현재 위치 역지오코딩 프록시 (`TMAP_APP_KEY`) — GPS 버튼을 누르면 출발지가 `내 위치 (안양시 동안구 시민대로 230)` 처럼 표시되고, 주소를 못 찾으면 `내 위치`로 둡니다.
 - `manifest.json`, `sw.js`, `icons/` — PWA 설치용
 - `og.png` — 카톡·문자 공유 카드 이미지(1200×630, 실제 화면 캡처 기반)

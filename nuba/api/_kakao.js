@@ -15,8 +15,11 @@
  *   KAKAO_REST_KEY : 카카오 developers REST API 키 (카카오모빌리티 사용 설정)
  *
  * 사용: /api/kakao?origin=126.95633,37.39267&destination=127.028,37.4981&priority=RECOMMEND&car_type=1
+ *
+ * 카운터(_stats.js): 요청마다(캐시 HIT·MISS 모두) 기본 경로/커스텀 경로 구분을 센다. 헤더 X-Nuba-Route.
  */
 const https = require('https');
+const stats = require('./_stats');
 
 const KEY = process.env.KAKAO_REST_KEY || process.env.KAKAO_KEY || process.env.KAKAO_APP_KEY;
 
@@ -83,7 +86,7 @@ module.exports = (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  res.setHeader('Access-Control-Expose-Headers', 'X-Nuba-Cache, X-Nuba-Cache-Age');
+  res.setHeader('Access-Control-Expose-Headers', 'X-Nuba-Cache, X-Nuba-Cache-Age, X-Nuba-Route');
   if (req.method === 'OPTIONS') {
     res.status(204).end();
     return;
@@ -108,8 +111,18 @@ module.exports = (req, res) => {
 
   const key = cacheKey(origin, destination, priority, carType);
 
-  /* 캐시 적중 — 업스트림 호출 없이 즉시 반환 */
+  /* 카운터 — 캐시 HIT·MISS 어느 쪽이든 요청 1건으로 센다 */
   const hit = cacheGet(key);
+  const o = origin.split(',');
+  const d = destination.split(',');
+  const isDefault = stats.recordRoute({
+    api: 'kakao',
+    startX: o[0], startY: o[1], endX: d[0], endY: d[1],
+    cache: hit ? 'hit' : 'miss'
+  });
+  res.setHeader('X-Nuba-Route', isDefault ? 'default_route' : 'custom_route');
+
+  /* 캐시 적중 — 업스트림 호출 없이 즉시 반환 */
   if (hit) {
     res.setHeader('X-Nuba-Cache', 'HIT');
     res.setHeader('X-Nuba-Cache-Age', String(Math.max(0, Math.round((Date.now() - hit.storedAt) / 1000))));
@@ -133,11 +146,13 @@ module.exports = (req, res) => {
     r.on('end', () => {
       const status = r.statusCode || 502;
       cachePut(key, status, data);      // 200 정상 응답만 저장
+      if (status >= 400) stats.recordError('kakao', status);
       res.status(status).send(data);
     });
   });
 
   upstream.on('error', () => {
+    stats.recordError('kakao', 502);
     res.status(502).json({ error: '카카오모빌리티 연결 실패' });
   });
 

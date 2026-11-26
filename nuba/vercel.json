@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    { "source": "/api/tmap", "destination": "/api/gateway?ep=tmap" },
+    { "source": "/api/kakao", "destination": "/api/gateway?ep=kakao" },
+    { "source": "/api/naver", "destination": "/api/gateway?ep=naver" },
+    { "source": "/api/stats", "destination": "/api/gateway?ep=stats" }
+  ]
+}
