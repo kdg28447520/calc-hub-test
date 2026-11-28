@@ -46,16 +46,27 @@ function breakerStore() {
 }
 
 /**
- * 호출자 IP. Vercel 은 x-forwarded-for 첫 값을 실제 클라이언트로 넣는다.
- * 값을 찾지 못하면 'unknown' 하나로 묶어 전체 제한이 아니라 공용 버킷으로 센다.
+ * 호출자 IP.
+ *   Vercel 엣지가 붙여 주는 x-real-ip 를 먼저 믿는다(클라이언트가 위조해 보내도 엣지가 채운다).
+ *   없으면 x-forwarded-for 의 마지막 값(프록시가 덧붙인 값), 그다음 첫 값을 쓴다.
+ *   값을 찾지 못하면 'unknown' 하나로 묶어 공용 버킷으로 센다.
  */
 function clientIp(req) {
   const h = (req && req.headers) || {};
-  const xff = h['x-forwarded-for'];
-  const raw = Array.isArray(xff) ? xff[0] : xff;
-  if (typeof raw === 'string' && raw.trim()) return raw.split(',')[0].trim().slice(0, 64);
-  const real = h['x-real-ip'] || h['cf-connecting-ip'];
+
+  const real = h['x-real-ip'];
   if (typeof real === 'string' && real.trim()) return real.trim().slice(0, 64);
+
+  const xff = h['x-forwarded-for'];
+  const raw = Array.isArray(xff) ? xff.join(',') : xff;
+  if (typeof raw === 'string' && raw.trim()) {
+    const parts = raw.split(',').map(s => s.trim()).filter(Boolean);
+    if (parts.length) return parts[parts.length - 1].slice(0, 64);
+  }
+
+  const cf = h['cf-connecting-ip'];
+  if (typeof cf === 'string' && cf.trim()) return cf.trim().slice(0, 64);
+
   return 'unknown';
 }
 
