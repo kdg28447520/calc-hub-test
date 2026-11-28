@@ -1471,6 +1471,8 @@
   }
   // 오늘 웹 무료 비교를 이미 다 쓴 방문자는 첫 화면부터 API 를 부르지 않고 토스 앱으로 안내
   if (!IS_TOSS_MINI && freeLeft() <= 0) {
+    const kpiRow = document.querySelector('.kpi-metric-row');
+    if (kpiRow) kpiRow.classList.add('hidden');   /* 결과가 없는데 '– 분 소요'만 띄우지 않게 */
     renderLimitCard();
   } else {
     executeRouteSearch('gangnam', { auto: true });
