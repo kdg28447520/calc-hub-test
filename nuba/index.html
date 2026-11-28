@@ -154,6 +154,12 @@
       .map-legend, .map-routename { display: none !important; }
     }
 
+    /* 화면이 낮은 폰(높이 800px 이하): 지도·안내문을 줄여 비교 카드 3개 자리를 지킨다 */
+    @media (max-width: 639px) and (max-height: 800px) {
+      .map-sheet { height: 26vh; height: 26dvh; }
+      #tossBannerNote { display: none !important; }
+    }
+
     /* 아주 낮은 화면(가로 모드 폰)에서는 지도 비중을 낮춰 조작 영역을 확보 */
     @media (max-width: 639px) and (max-height: 620px) {
       .map-sheet { height: 42vh; height: 42dvh; min-height: 200px; }
