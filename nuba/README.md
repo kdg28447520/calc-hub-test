@@ -32,6 +32,7 @@ Vercel 은 `api/*.js` 파일마다 람다를 따로 띄워 메모리를 공유�
 | `GET /api/kakao` | `/api/gateway?ep=kakao` |
 | `GET /api/naver` | `/api/gateway?ep=naver` |
 | `GET /api/stats` | `/api/gateway?ep=stats` |
+| `POST /api/cta?pos=top_banner\|limit_card` | `/api/gateway?ep=cta` |
 
 `api/poi.js`·`api/reverse.js` 는 그대로 각자 함수입니다(카운터 대상 아님).
 
@@ -45,15 +46,27 @@ Vercel 은 `api/*.js` 파일마다 람다를 따로 띄워 메모리를 공유�
 - 조회: **`GET /api/stats`** — 웜 인스턴스 기준 `route`, `by_api`, `cache`, `recent_custom_routes` JSON. 키·비밀값은 담지 않습니다.
 - 카운터는 인스턴스 메모리라 콜드 스타트 시 0부터 다시 셉니다. 영구 집계는 Vercel Runtime Logs 의 `{"tag":"nuba_route",...}` 한 줄 로그로 합니다.
 
+## 토스 CTA 클릭 전환 카운터 (2026-11-28 추가)
+
+일반 웹에서 **「토스 앱에서 무제한으로 비교하기」** 버튼을 누른 횟수입니다. 당근·스레드 광고로 들어온 사람이 실제로 토스 미니앱으로 넘어가는지(전환) 보는 지표입니다.
+
+- 수집: `POST /api/cta?pos=top_banner|limit_card` — 프론트가 클릭 순간 `navigator.sendBeacon` 으로 1건 보내고, 실패하면 `fetch(..., { keepalive: true })` 로 한 번 더 시도합니다. **두 방법 모두 페이지 이동·새 창 열기를 막지 않습니다(비차단).**
+- 보내는 값은 위치 이름 하나(`top_banner` 상단 배너 / `limit_card` 무료 2회 소진 카드 / 그 밖은 `other`)뿐입니다. IP·UA·검색어·도착지는 보내지도 저장하지도 않습니다.
+- 방어: 길찾기 프록시와 같은 규칙입니다 — 출처 잠금(`_origin.js`, 허용 목록 밖 403) + IP당 분당 30건(`_guard.js`, 429). GET 은 405.
+- 집계: **`GET /api/stats`** 응답의 `toss_cta_clicks` 섹션 — `total`, `by_position{top_banner, limit_card, other}`, `share_pct`, `first_click_at`·`last_click_at`, `recent_clicks`(최근 10건).
+- 영구 집계는 Vercel Runtime Logs 의 `{"tag":"nuba_cta_click","pos":...,"total":...,"ts":...}` 한 줄 로그로 합니다(인스턴스 메모리 카운터는 콜드 스타트에 0으로 돌아감).
+- 앱인토스(토스 미니앱) 안에서는 CTA 자체가 없어 이 카운터에 잡히지 않습니다(프론트도 `IS_TOSS_MINI` 면 보내지 않는 이중 차단).
+
 ## 파일
 
 - `index.html` — 앱 전체(화면 + 프록시 호출 + 지도 렌더링). 지도에는 3사 경로가 브랜드 색(티맵 빨강 `#ef4444` · 네이버 초록 `#16a34a` · 카카오 노랑 `#f59e0b`)으로 동시에 그려지고, 선택한 노선만 흰 외곽선 + 굵은 선으로 앞에 강조됩니다.
 - `api/gateway.js` — 세 길찾기 프록시 + `/api/stats` 의 단일 진입점(카운터 공유용)
 - `api/_stats.js` — 기본 경로/커스텀 경로·캐시 카운터 공통 모듈 (라우트로 노출되는 파일 아님)
+- `api/_cta.js` — 토스 앱 열기 CTA 클릭 카운터·핸들러 (`POST /api/cta`, `tag=nuba_cta_click` 로그)
 - `api/_tmap.js` — SK TMAP 길찾기 프록시 (`TMAP_APP_KEY`) — gateway 가 호출
 - `api/_kakao.js` — 카카오모빌리티 길찾기 프록시 (`KAKAO_REST_KEY`) — gateway 가 호출
 - `api/_naver.js` — 네이버 Directions 5 프록시 (`NAVER_KEY_ID`, `NAVER_KEY_SECRET`) — gateway 가 호출
-- `vercel.json` — `/api/tmap`·`/api/kakao`·`/api/naver`·`/api/stats` → `api/gateway.js` 리라이트
+- `vercel.json` — `/api/tmap`·`/api/kakao`·`/api/naver`·`/api/stats`·`/api/cta` → `api/gateway.js` 리라이트
 - `api/reverse.js` — 현재 위치 역지오코딩 프록시 (`TMAP_APP_KEY`) — GPS 버튼을 누르면 출발지가 `내 위치 (안양시 동안구 시민대로 230)` 처럼 표시되고, 주소를 못 찾으면 `내 위치`로 둡니다.
 - `manifest.json`, `sw.js`, `icons/` — PWA 설치용
 - `og.png` — 카톡·문자 공유 카드 이미지(1200×630, 실제 화면 캡처 기반)
@@ -92,7 +105,7 @@ Vercel 은 `api/*.js` 파일마다 람다를 따로 띄워 메모리를 공유�
 - **첫 화면의 기본 경로 자동 조회는 세지 않는다.** 광고 심사자가 1회 열었을 때 바로 정상 서비스가 보이도록 한 장치다.
 - 3회째부터는 **3사 API 를 부르지 않고** 결과 영역을 카드로 바꿔 "오늘 웹 무료 비교(2회)를 모두 사용했어요" + 토스 앱 CTA 를 보여 준다(서버 한도 절약 겸함). 무료 횟수를 다 쓴 사람이 새로고침해도 API 는 불리지 않는다.
 - 지난 날짜 키는 처음 불러올 때 정리한다. `localStorage` 가 막힌 브라우저는 메모리 카운트로 같은 규칙을 지킨다.
-- 검색 박스 위에는 토스 블루(`#3182F6`) 풀폭 **CTA 버튼**(터치 영역 40px)과 "오늘 웹 무료 비교 N회 남음" 안내를 둔다.
+- 검색 박스 위에는 토스 블루(`#3182F6`) 풀폭 **CTA 버튼**(터치 영역 40px)과 "오늘 웹 무료 비교 N회 남음" 안내를 둔다. 배너·제한 카드의 CTA 를 누르면 위치(`top_banner` / `limit_card`)를 `POST /api/cta` 로 비차단 전송해 전환을 센다(위 '토스 CTA 클릭 전환 카운터').
 - **앱인토스 내부 예외(필수)**: `IS_TOSS_MINI` 가 참이면 무료 횟수·카운트·배너·남은 횟수 줄을 모두 쓰지 않는다. 판정은 ① 토스 번들의 `window.NUBA_TOSS` ② `*.tossmini.com`·`*.toss.im` 호스트 ③ UA 에 `toss`/`apps-in-toss`/`ait.` 셋 중 하나라도 걸리면 토스로 본다.
 - 토스 번들(`/workspace/nuba-toss`)은 `scripts/build-web.mjs` 의 (9) 단계에서 배너 마크업·남은 횟수 줄을 아예 들어낸다(깜빡임·오노출 방지). 마크업 모양이 바뀌면 `must()` 가 번들 빌드를 실패시킨다.
 

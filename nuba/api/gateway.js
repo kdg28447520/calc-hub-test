@@ -11,12 +11,14 @@
  *   GET  /api/kakao   → /api/gateway?ep=kakao
  *   GET  /api/naver   → /api/gateway?ep=naver
  *   GET  /api/stats   → /api/gateway?ep=stats   (라우트 카운터 조회)
+ *   POST /api/cta     → /api/gateway?ep=cta     (토스 앱 열기 CTA 클릭 카운터)
  *
  * ep 쿼리가 없어도(리라이트 설정이 바뀌는 경우) URL 경로나 파라미터 모양으로 한 번 더 판별한다.
  */
 'use strict';
 
 const stats = require('./_stats');
+const cta = require('./_cta');
 const originGate = require('./_origin');
 
 const HANDLERS = {
@@ -25,7 +27,7 @@ const HANDLERS = {
   naver: require('./_naver')
 };
 
-const KNOWN = ['tmap', 'kakao', 'naver', 'stats'];
+const KNOWN = ['tmap', 'kakao', 'naver', 'stats', 'cta'];
 
 function detectEndpoint(req) {
   const q = (req && req.query) || {};
@@ -35,7 +37,7 @@ function detectEndpoint(req) {
   }
 
   const url = String((req && req.url) || '');
-  const m = url.match(/\/api\/(tmap|kakao|naver|stats)(?:[/?#]|$)/);
+  const m = url.match(/\/api\/(tmap|kakao|naver|stats|cta)(?:[/?#]|$)/);
   if (m) return { ep: m[1], via: 'url' };
 
   let body = req && req.body;
@@ -66,6 +68,8 @@ function sendStats(req, res, via) {
 
   const body = stats.snapshot();
   body.dispatch = { endpoint: 'stats', via: via };
+  /* 토스 앱 열기 CTA 클릭 전환 카운터 (같은 필드 이름을 프론트·문서에서 쓴다) */
+  body.toss_cta_clicks = cta.snapshot();
   /* 출처 잠금 현황 — 이 인스턴스가 처리한 요청 기준(관찰/차단 건수·허용 경로·호스트) */
   body.origin_guard = originGate.snapshot();
   /* 라우팅 진단용 — 호출자 자신의 요청 정보만 담는다(값이 아니라 파라미터 이름만) */
@@ -86,7 +90,7 @@ module.exports = (req, res) => {
     res.status(404).json({
       ok: false,
       error: '알 수 없는 엔드포인트입니다.',
-      endpoints: ['POST /api/tmap', 'GET /api/kakao', 'GET /api/naver', 'GET /api/stats']
+      endpoints: ['POST /api/tmap', 'GET /api/kakao', 'GET /api/naver', 'GET /api/stats', 'POST /api/cta']
     });
     return;
   }
@@ -94,6 +98,10 @@ module.exports = (req, res) => {
   if (hit.ep === 'stats') {
     sendStats(req, res, hit.via);
     return;
+  }
+
+  if (hit.ep === 'cta') {
+    return cta.handle(req, res);
   }
 
   const handler = HANDLERS[hit.ep];

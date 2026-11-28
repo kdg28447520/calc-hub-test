@@ -222,6 +222,7 @@
 
       <!-- 토스 앱에서 열기 — 스레드·당근 등 외부에서 온 사용자가 토스 미니앱으로 이어지게 (일반 웹에만 노출) -->
       <a id="tossBanner" href="https://minion.toss.im/BjrRrzxA" target="_blank" rel="noopener noreferrer"
+         onclick="window.logTossCtaClick && logTossCtaClick('top_banner')"
          class="toss-banner-row shrink-0 block px-3 pt-2.5 pb-2 border-b border-[#E8EAEC] bg-white hover:bg-[#FAFCFF] transition-colors"
          title="토스 앱에서 누빠 열기" aria-label="토스 앱에서 누빠 열기">
         <span class="toss-cta-btn w-full h-11 rounded-lg bg-[#3182F6] hover:bg-[#2B74E0] active:bg-[#1B64DA] text-white shadow-sm flex items-center justify-center gap-2 px-3">
@@ -535,6 +536,28 @@
   let memDay = '';
   let memUsed = 0;
 
+  /* ============================================================
+     토스 열기 CTA 클릭 전환 로깅 (비차단)
+     · 상단 배너(top_banner)·무료 제한 카드(limit_card)를 누른 순간 1건
+     · navigator.sendBeacon 우선, 없거나 실패하면 fetch(..., { keepalive: true })
+       → 두 방법 모두 페이지 이동·새 창 열기를 막지 않는다
+     · 앱인토스(토스 미니앱) 안에서는 CTA 자체가 없고, 여기서도 한 번 더 막는다
+     · 보내는 값은 위치 이름 하나뿐 — IP·UA·검색어·도착지는 보내지 않는다
+     ============================================================ */
+  const CTA_POSITIONS = ['top_banner', 'limit_card'];
+  function logTossCtaClick(pos) {
+    if (IS_TOSS_MINI) return;
+    const where = CTA_POSITIONS.indexOf(pos) === -1 ? 'other' : pos;
+    const url = `${API_BASE}/api/cta?pos=${encodeURIComponent(where)}`;
+    try {
+      if (navigator.sendBeacon && navigator.sendBeacon(url)) return;
+    } catch (e) { /* 아래 fetch 로 재시도 */ }
+    try {
+      fetch(url, { method: 'POST', keepalive: true, mode: 'cors' }).catch(() => {});
+    } catch (e) { /* 전환 집계 실패가 CTA 이동을 막지 않는다 */ }
+  }
+  window.logTossCtaClick = logTossCtaClick;   /* 인라인 onclick 에서 호출 */
+
   function todayStamp() {
     const d = new Date();
     const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -619,6 +642,7 @@
           <p class="text-[11.5px] leading-relaxed text-[#5D5F60]">토스 앱에서는 횟수 제한 없이 계속 비교할 수 있어요. 웹 무료 비교는 내일 다시 2회 채워져요.</p>
         </div>
         <a href="${TOSS_APP_URL}" target="_blank" rel="noopener noreferrer"
+           onclick="window.logTossCtaClick && logTossCtaClick('limit_card')"
            class="w-full h-12 rounded-lg bg-[#3182F6] hover:bg-[#2B74E0] active:bg-[#1B64DA] text-white text-[13px] font-bold flex items-center justify-center gap-2 shadow-sm">
           <span class="w-5 h-5 rounded-md bg-white text-[#3182F6] text-[11px] font-black flex items-center justify-center shrink-0">T</span>
           <span>토스 앱에서 무제한으로 비교하기</span>

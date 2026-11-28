@@ -32,7 +32,8 @@ const LIMITS = {
   kakao: 30,
   naver: 30,
   poi: 30,
-  reverse: 10
+  reverse: 10,
+  cta: 30
 };
 
 /* 메모리 보호 — 추적 IP 수 상한 */
