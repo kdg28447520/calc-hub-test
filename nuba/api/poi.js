@@ -10,6 +10,7 @@
  *      HTTP 200 + 정상 형식(searchPoiInfo)만 캐싱한다. 429·4xx·5xx 는 캐싱하지 않는다.
  *   2) 동시 요청 합치기 — 같은 검색어를 동시에 여러 명이 쳐도 업스트림은 한 번만 부른다.
  *   3) IP당 분당 30건 제한 + 업스트림 429 뒤 60초 쿨다운 (_guard.js)
+ *   4) 출처(Origin/Referer) 잠금 — 우리 웹앱·토스 미니앱에서 온 요청만 통과(_origin.js)
  *   - 응답 헤더 X-Nuba-Cache: HIT | MISS | SHARED
  *
  * 필요한 환경변수:
@@ -87,23 +88,14 @@ function cachePut(key, status, body) {
 module.exports = (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  // 앱인토스(토스 미니앱) 웹뷰처럼 다른 오리진에서도 호출할 수 있도록 CORS 를 허용한다.
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  res.setHeader('Access-Control-Expose-Headers', 'X-Nuba-Cache, X-Nuba-Cache-Age, X-Nuba-Guard, Retry-After');
-  if (req.method === 'OPTIONS') {
-    res.status(204).end();
-    return;
-  }
+
+  /* 출처 잠금(Origin/Referer) + CORS + IP 레이트리밋 — _guard.allow() 안에서 처리한다 */
+  if (!guard.allow(req, res, 'poi')) return;
 
   if (!APP_KEY) {
     res.status(503).json({ error: 'TMAP_APP_KEY 환경변수가 설정되지 않았습니다.' });
     return;
   }
-
-  /* 반복 호출 방어 — 자동완성은 연타가 잦으므로 IP당 분당 30건 */
-  if (!guard.allow(req, res, 'poi')) return;
 
   const keyword = String((req.query && req.query.keyword) || '').trim().slice(0, 60);
   if (!keyword) {

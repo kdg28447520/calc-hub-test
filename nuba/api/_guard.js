@@ -14,8 +14,15 @@
  * 한계
  *   Vercel 서버리스는 인스턴스마다 메모리가 따로다. 그래서 이 제한은 '한 인스턴스 기준'이며,
  *   절대적인 방화벽이 아니라 한도 폭주를 크게 줄이는 안전장치다.
+ *
+ * 출처 잠금(2026-11-28 추가)
+ *   allow() 맨 앞에서 _origin.js 로 Origin/Referer 를 먼저 본다.
+ *   허용 목록(우리 배포본 + 토스 앱인토스 미니앱) 밖이면 403 으로 끝내고 레이트리밋까지 가지 않는다.
+ *   CORS 헤더도 이 단계에서 붙는다(* 대신 허용된 Origin 만 되돌려 준다).
  */
 'use strict';
+
+const origin = require('./_origin');
 
 const WINDOW_MS = 60 * 1000;
 
@@ -126,9 +133,14 @@ function sendRateLimited(res, verdict) {
 }
 
 /**
- * 핸들러 맨 앞에서 호출. 허용이면 true, 제한이면 응답까지 끝내고 false.
+ * 핸들러 맨 앞에서 호출. 허용이면 true, 거부·제한이면 응답까지 끝내고 false.
+ *   1) 출처(Origin/Referer) 잠금 — 403 / 프리플라이트 204 도 여기서 끝난다
+ *   2) IP 레이트리밋 — 429
  */
 function allow(req, res, kind) {
+  const gate = origin.check(req, res);
+  if (!gate.ok) return false;
+
   const verdict = checkRate(req, kind);
   if (!verdict.ok) {
     sendRateLimited(res, verdict);
@@ -171,6 +183,7 @@ function sendCooldown(res, kind, left) {
 module.exports = {
   WINDOW_MS,
   LIMITS,
+  origin,
   clientIp,
   checkRate,
   sendRateLimited,

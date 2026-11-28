@@ -17,6 +17,7 @@
 'use strict';
 
 const stats = require('./_stats');
+const originGate = require('./_origin');
 
 const HANDLERS = {
   tmap: require('./_tmap'),
@@ -65,6 +66,8 @@ function sendStats(req, res, via) {
 
   const body = stats.snapshot();
   body.dispatch = { endpoint: 'stats', via: via };
+  /* 출처 잠금 현황 — 이 인스턴스가 처리한 요청 기준(관찰/차단 건수·허용 경로·호스트) */
+  body.origin_guard = originGate.snapshot();
   /* 라우팅 진단용 — 호출자 자신의 요청 정보만 담는다(값이 아니라 파라미터 이름만) */
   body.request = {
     method: req.method,

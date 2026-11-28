@@ -82,23 +82,14 @@ function cachePut(key, status, body) {
 module.exports = (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  // 앱인토스(토스 미니앱) 웹뷰처럼 다른 오리진에서도 호출할 수 있도록 CORS 를 허용한다.
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  res.setHeader('Access-Control-Expose-Headers', 'X-Nuba-Cache, X-Nuba-Cache-Age, X-Nuba-Route, X-Nuba-Guard, Retry-After');
-  if (req.method === 'OPTIONS') {
-    res.status(204).end();
-    return;
-  }
+
+  /* 출처 잠금(Origin/Referer) + CORS + IP 레이트리밋 — _guard.allow() 안에서 처리한다 */
+  if (!guard.allow(req, res, 'naver')) return;
 
   if (!KEY_ID || !KEY_SECRET) {
     res.status(503).json({ code: -1, message: 'NAVER_KEY_ID / NAVER_KEY_SECRET 환경변수가 설정되지 않았습니다.' });
     return;
   }
-
-  /* 반복 호출 방어 — IP당 분당 30건 */
-  if (!guard.allow(req, res, 'naver')) return;
 
   const start = req.query.start;
   const goal = req.query.goal;
