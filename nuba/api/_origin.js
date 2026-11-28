@@ -43,9 +43,12 @@
 
 'use strict';
 
-/* 관찰(shadow) → 적용(enforce) 전환 스위치. 이 줄만 바꾸면 된다.
+/* 관찰(shadow) → 적용(enforce) 전환 스위치.
+ *   2026-11-28 09:38~09:45 관찰 모드로 실제 트래픽을 확인한 결과, 토스 미니앱은
+ *   Origin: https://nuba.apps.tossmini.com 으로 호출하고 있었고 31건 모두 허용 판정이었다.
+ *   그래서 enforce 로 전환했다.
  *   급할 때는 Vercel 환경변수 NUBA_ORIGIN_MODE=shadow 로 재배포 없이 잠금을 잠시 풀 수 있다. */
-const MODE = process.env.NUBA_ORIGIN_MODE || 'shadow';
+const MODE = process.env.NUBA_ORIGIN_MODE || 'enforce';
 const SHADOW = MODE !== 'enforce';
 
 /* 정확히 이 호스트면 허용 */
