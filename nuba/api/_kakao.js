@@ -20,6 +20,7 @@
  */
 const https = require('https');
 const stats = require('./_stats');
+const guard = require('./_guard');
 
 const KEY = process.env.KAKAO_REST_KEY || process.env.KAKAO_KEY || process.env.KAKAO_APP_KEY;
 
@@ -86,7 +87,7 @@ module.exports = (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  res.setHeader('Access-Control-Expose-Headers', 'X-Nuba-Cache, X-Nuba-Cache-Age, X-Nuba-Route');
+  res.setHeader('Access-Control-Expose-Headers', 'X-Nuba-Cache, X-Nuba-Cache-Age, X-Nuba-Route, X-Nuba-Guard, Retry-After');
   if (req.method === 'OPTIONS') {
     res.status(204).end();
     return;
@@ -96,6 +97,9 @@ module.exports = (req, res) => {
     res.status(503).json({ error: 'KAKAO_REST_KEY 환경변수가 설정되지 않았습니다.' });
     return;
   }
+
+  /* 반복 호출 방어 — IP당 분당 30건 */
+  if (!guard.allow(req, res, 'kakao')) return;
 
   const q = req.query || {};
   const origin = String(q.origin || '').trim();
@@ -146,6 +150,7 @@ module.exports = (req, res) => {
     r.on('end', () => {
       const status = r.statusCode || 502;
       cachePut(key, status, data);      // 200 정상 응답만 저장
+      if (status === 429) guard.trip('kakao', 60);
       if (status >= 400) stats.recordError('kakao', status);
       res.status(status).send(data);
     });

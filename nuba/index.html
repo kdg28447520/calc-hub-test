@@ -129,6 +129,7 @@
         padding-bottom: max(4px, env(safe-area-inset-bottom, 4px));
       }
       .brand-header-row { display: none !important; }
+      .toss-banner-row { padding: 5px 12px !important; }
       .search-box-row { padding: 6px 12px 4px 12px !important; }
       .search-pills-row { display: none !important; }
       .kpi-metric-row { padding: 4px 12px !important; }
@@ -210,6 +211,20 @@
           </div>
         </div>
       </div>
+
+      <!-- 토스 앱에서 열기 — 스레드·당근 등 외부에서 온 사용자가 토스 미니앱으로도 이어지게 -->
+      <a id="tossBanner" href="https://minion.toss.im/BjrRrzxA" target="_blank" rel="noopener noreferrer"
+         class="toss-banner-row shrink-0 flex items-center justify-between gap-2 px-4 py-1.5 border-b border-[#E8EAEC] bg-[#F5F9FF] hover:bg-[#EDF4FF] active:bg-[#E4EEFF] transition-colors"
+         title="토스 앱에서 누빠 열기" aria-label="토스 앱에서 누빠 열기">
+        <span class="flex items-center gap-1.5 min-w-0">
+          <span class="w-4 h-4 rounded-[5px] bg-[#0064FF] text-white text-[9px] font-black flex items-center justify-center shrink-0">T</span>
+          <span class="text-[11px] font-bold text-[#131416] truncate">토스 앱에서 누빠 열기</span>
+        </span>
+        <span class="text-[10px] font-semibold text-[#0064FF] flex items-center gap-0.5 shrink-0">
+          바로가기
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+        </span>
+      </a>
 
       <!-- Search box -->
       <div class="search-box-row px-4 py-2.5 border-b border-[#E8EAEC] bg-[#F9FBFC] shrink-0 space-y-2">
@@ -804,9 +819,17 @@
   let activeInputTarget = 'dest';
   let searchDebounceTimer = null;
 
+  /* 같은 검색어를 다시 치면 TMAP 를 또 부르지 않도록 브라우저에서 5분 캐시 */
+  const poiCache = new Map();
+  const POI_CACHE_TTL = 5 * 60 * 1000;
+  function poiCacheKey(q) { return q.replace(/\s+/g, ' ').trim().toLowerCase(); }
+
   async function searchTmapPois(keyword) {
     const q = (keyword || '').trim();
     if (!q) return [];
+    const ck = poiCacheKey(q);
+    const cached = poiCache.get(ck);
+    if (cached && Date.now() - cached.at < POI_CACHE_TTL) return cached.results;
     async function fetchPoi(query) {
       try {
         const url = `${CFG.POI_PROXY}?keyword=${encodeURIComponent(query)}&count=8`;
@@ -829,6 +852,8 @@
     }
     let results = await fetchPoi(q);
     if (results.length === 0 && q.length > 2) results = await fetchPoi(q.slice(0, -1));
+    if (poiCache.size > 200) poiCache.clear();
+    poiCache.set(ck, { at: Date.now(), results });
     return results;
   }
 
@@ -1290,6 +1315,11 @@
   window.addEventListener('resize', () => { map.invalidateSize(); recenterMap(); });
 
   /* initial: run a real search for the default route */
+  // 앱인토스(토스 미니앱) 안에서 이미 열려 있으면 '토스 앱에서 열기' 배너는 숨긴다
+  if (/Toss/i.test(navigator.userAgent)) {
+    const tossBanner = document.getElementById('tossBanner');
+    if (tossBanner) tossBanner.parentNode.removeChild(tossBanner);
+  }
   renderFavChips();
   renderPresetChips('gangnam');
   executeRouteSearch('gangnam');

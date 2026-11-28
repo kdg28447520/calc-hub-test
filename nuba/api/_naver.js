@@ -20,6 +20,7 @@
  */
 const https = require('https');
 const stats = require('./_stats');
+const guard = require('./_guard');
 
 const KEY_ID = process.env.NAVER_KEY_ID;
 const KEY_SECRET = process.env.NAVER_KEY_SECRET;
@@ -85,7 +86,7 @@ module.exports = (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  res.setHeader('Access-Control-Expose-Headers', 'X-Nuba-Cache, X-Nuba-Cache-Age, X-Nuba-Route');
+  res.setHeader('Access-Control-Expose-Headers', 'X-Nuba-Cache, X-Nuba-Cache-Age, X-Nuba-Route, X-Nuba-Guard, Retry-After');
   if (req.method === 'OPTIONS') {
     res.status(204).end();
     return;
@@ -95,6 +96,9 @@ module.exports = (req, res) => {
     res.status(503).json({ code: -1, message: 'NAVER_KEY_ID / NAVER_KEY_SECRET 환경변수가 설정되지 않았습니다.' });
     return;
   }
+
+  /* 반복 호출 방어 — IP당 분당 30건 */
+  if (!guard.allow(req, res, 'naver')) return;
 
   const start = req.query.start;
   const goal = req.query.goal;
@@ -143,6 +147,7 @@ module.exports = (req, res) => {
     r.on('end', () => {
       const status = r.statusCode || 502;
       cachePut(key, status, body);      // 200 정상 응답만 저장
+      if (status === 429) guard.trip('naver', 60);
       if (status >= 400) stats.recordError('naver', status);
       res.status(status).send(body);
     });
