@@ -117,9 +117,9 @@
         position: absolute; inset: 0; gap: 0; border-radius: 0; display: flex; flex-direction: column-reverse;
         width: 100vw; height: 100vh; height: 100dvh; overflow: hidden;
       }
-      /* 지도를 화면의 위 33%로 유지해 아래 비교 카드 3개가 한눈에 다 보이게 확보 */
+      /* 지도를 화면의 위 29%로 유지해, 커진 토스 CTA 와 아래 비교 카드 3개가 한눈에 다 보이게 확보 */
       .map-sheet {
-        flex: 0 0 auto; height: 33vh; height: 33dvh; min-height: 200px;
+        flex: 0 0 auto; height: 29vh; height: 29dvh; min-height: 200px;
         border: none; border-radius: 0; position: relative; overflow: hidden; z-index: 10;
       }
       .control-sheet {
@@ -338,7 +338,7 @@
           <span id="sortLabel">실시간 빠른 순서 정렬</span>
           <span id="statusLine">–</span>
         </div>
-        <p id="freeRemainLine" class="hidden px-1 pt-0.5 text-[10.5px] font-semibold text-[#3182F6] leading-tight"></p>
+        <p id="freeRemainLine" class="hidden px-1 text-[10.5px] font-semibold text-[#3182F6] leading-tight"></p>
         <div id="rows"></div>
         <p class="api-note text-[10px] leading-relaxed text-[#8A8C8E] px-1 pt-1">
           카카오모빌리티 · SK TMAP · 네이버 Directions 5 실시간 호출
@@ -596,7 +596,7 @@
         line.innerText = left > 0
           ? `오늘 웹 무료 비교 ${left}회 남음 (하루 2회)`
           : '오늘 웹 무료 비교 2회를 모두 사용했어요';
-        line.className = 'px-1 pt-0.5 text-[10.5px] font-semibold leading-tight ' +
+        line.className = 'px-1 text-[10.5px] font-semibold leading-tight ' +
           (left > 0 ? 'text-[#3182F6]' : 'text-[#92400E]');
       }
     }
@@ -621,6 +621,8 @@
       </div>`;
     document.getElementById('sortLabel').innerText = '웹 무료 비교 사용 완료';
     document.getElementById('statusLine').innerText = `2/${FREE_LIMIT}`;
+    const remain = document.getElementById('freeRemainLine');
+    if (remain) remain.classList.add('hidden');   /* 카드 안내와 문구가 겹치지 않게 */
     document.getElementById('kpiDiffBadge').innerText = '무료 2회 사용';
     document.getElementById('kpiDiffBadge').className = 'text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#FDF3E7] text-[#92400E] whitespace-nowrap shrink-0';
     setLive(false, '무료 비교 완료');
