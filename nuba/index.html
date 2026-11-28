@@ -627,12 +627,12 @@
       </div>`;
     document.getElementById('sortLabel').innerText = '웹 무료 비교 사용 완료';
     document.getElementById('statusLine').innerText = `2/${FREE_LIMIT}`;
-    const remain = document.getElementById('freeRemainLine');
-    if (remain) remain.classList.add('hidden');   /* 카드 안내와 문구가 겹치지 않게 */
     document.getElementById('kpiDiffBadge').innerText = '무료 2회 사용';
     document.getElementById('kpiDiffBadge').className = 'text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#FDF3E7] text-[#92400E] whitespace-nowrap shrink-0';
     setLive(false, '무료 비교 완료');
     syncFreeUi();
+    const remain = document.getElementById('freeRemainLine');
+    if (remain) remain.classList.add('hidden');   /* 카드 안내와 같은 문구가 두 번 나오지 않게 */
   }
 
   /* ---------- 내 즐겨찾기 (localStorage: this device only) ---------- */
